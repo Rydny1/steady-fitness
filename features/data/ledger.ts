@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, DivisionT, Json } from "@/lib/supabase/types";
+import { pageAll } from "@/lib/page-all";
 import {
   CALLUS_START,
   countLiftRecords,
@@ -104,10 +105,14 @@ export async function loadTrophyInput(supabase: Db, userId: string): Promise<Tro
         .eq("user_id", userId)
         .not("waist_cm", "is", null)
         .order("measured_on"),
-      supabase
-        .from("workout_sets")
-        .select("session_id,exercise_slug,reps,weight_kg")
-        .eq("user_id", userId),
+      pageAll((a, b) =>
+        supabase
+          .from("workout_sets")
+          .select("session_id,exercise_slug,reps,weight_kg")
+          .eq("user_id", userId)
+          .order("id")
+          .range(a, b),
+      ),
       supabase
         .from("photos")
         .select("id", { count: "exact", head: true })
@@ -138,7 +143,7 @@ export async function loadTrophyInput(supabase: Db, userId: string): Promise<Tro
   const waists = (measures.data ?? []).map((m) => m.waist_cm).filter((v): v is number => v !== null);
 
   const dayBySession = new Map((sessions.data ?? []).map((s) => [s.id, s.day] as const));
-  const records = (sets.data ?? [])
+  const records = (sets ?? [])
     .filter((s) => s.reps !== null)
     .map((s) => ({
       exerciseId: s.exercise_slug,

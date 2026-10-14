@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { claimSignupSlot } from "@/lib/signup";
+import { env } from "@/lib/env";
 import { copy } from "@/content/copy";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -96,12 +97,23 @@ export async function createAccount(
   if (!(await claimSignupSlot())) return { error: copy.errors.tooFast };
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
+  const { data: created, error } = await admin.auth.admin.createUser({
     email: parsed.data.email,
     password: parsed.data.password,
     email_confirm: true,
+    // The database only accepts accounts that carry this token (checked against Vault), so the
+    // public Auth endpoint cannot be used to skip the 12-character rule, consent or the rate guard.
+    user_metadata: {
+      steady_signup_token: env().SIGNUP_TOKEN,
+      consent_health_data_at: new Date().toISOString(),
+      consent_version: 1,
+    },
   });
-  if (error) return { error: copy.login.signupTaken };
+  if (error || !created.user) return { error: copy.login.signupTaken };
+  // The token has done its job. Remove it so it never sits in the user's own metadata.
+  await admin.auth.admin.updateUserById(created.user.id, {
+    user_metadata: { steady_signup_token: null },
+  });
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({

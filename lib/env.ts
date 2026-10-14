@@ -13,6 +13,7 @@ const schema = z.object({
   VAPID_PRIVATE_KEY: z.string().min(20),
   VAPID_SUBJECT: z.string().startsWith("mailto:"),
   CRON_SECRET: z.string().min(32),
+  SIGNUP_TOKEN: z.string().min(32),
   NEXT_PUBLIC_APP_URL: z.url(),
 });
 

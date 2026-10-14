@@ -172,6 +172,7 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
   if (!dayField.safeParse(day).success) return { ok: false, reason: "invalid" };
 
   let logId = parsed.data.logId;
+  let createdLogId: string | null = null;
   if (!logId) {
     const summary = items
       .map((i) =>
@@ -186,7 +187,15 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
       .single();
     if (error || !log) return { ok: false, reason: "failed" };
     logId = log.id;
+    createdLogId = log.id;
   }
+
+  // A save is all or nothing: if a later step fails, what this call already wrote is removed,
+  // so a retry cannot double the foods.
+  const rollback = async (foodIds: string[]) => {
+    if (foodIds.length > 0) await supabase.from("food_entries").delete().in("id", foodIds);
+    if (createdLogId) await supabase.from("logs").delete().eq("id", createdLogId);
+  };
 
   const foods = items.filter((i): i is Extract<DraftItem, { kind: "food" }> => i.kind === "food");
   const acts = items.filter((i): i is Extract<DraftItem, { kind: "activity" }> => i.kind === "activity");
@@ -209,7 +218,6 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
     ).select("id");
     if (error) return { ok: false, reason: "failed" };
     foodIds = (inserted ?? []).map((r) => r.id);
-    await touchSavedFoods(supabase, foods);
   }
 
   if (acts.length > 0) {
@@ -227,13 +235,22 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
         source,
       })),
     );
-    if (error) return { ok: false, reason: "failed" };
+    if (error) {
+      await rollback(foodIds);
+      return { ok: false, reason: "failed" };
+    }
   }
 
   for (const b of bodies) {
     const ok = await upsertMeasurement(supabase, day, b);
-    if (!ok) return { ok: false, reason: "failed" };
+    if (!ok) {
+      await rollback(foodIds);
+      return { ok: false, reason: "failed" };
+    }
   }
+
+  // Saved foods are bookkeeping: touched only once everything else is safely written.
+  if (foods.length > 0) await touchSavedFoods(supabase, foods);
 
   revalidatePath("/today");
   revalidatePath("/progress");

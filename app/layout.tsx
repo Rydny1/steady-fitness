@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+import { DialogGuard } from "@/components/dialog-guard";
 
 // Every page is dynamic: the CSP nonce is set per request in proxy.ts.
 export const dynamic = "force-dynamic";
@@ -47,7 +48,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${hanken.variable} ${barlow.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <DialogGuard />
+      </body>
     </html>
   );
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, NotifyKindT } from "@/lib/supabase/types";
-import { addDays, diffDays, isoWeekday, rigaParts } from "@/lib/dates";
+import { addDays, dayOfTimestamp, diffDays, isoWeekday, rigaParts } from "@/lib/dates";
 import { sendToUser } from "@/lib/push";
 import { loadDayFacts } from "@/features/data/day-facts";
 import { latestLedger } from "@/features/data/ledger";
@@ -33,12 +33,13 @@ export async function runTick(admin: Db, now: Date): Promise<TickResult> {
   for (const p of profiles ?? []) {
     result.users += 1;
     const userId = p.user_id;
+    try {
 
     // 1. Nightly scoring, catching up any missed nights (at most 14).
     const nowMinutes = parts.hour * 60 + parts.minute;
     const lastScorable = nowMinutes >= 5 ? addDays(parts.date, -1) : addDays(parts.date, -2);
     const ledger = await latestLedger(admin, userId);
-    const first = ledger.day ? addDays(ledger.day, 1) : p.created_at.slice(0, 10);
+    const first = ledger.day ? addDays(ledger.day, 1) : dayOfTimestamp(p.created_at);
     const startDay = diffDays(lastScorable, first) > 13 ? addDays(lastScorable, -13) : first;
     for (let d = startDay; d <= lastScorable; d = addDays(d, 1)) {
       if (!(await claim(admin, `score:${userId}:${d}`))) continue;
@@ -58,6 +59,8 @@ export async function runTick(admin: Db, now: Date): Promise<TickResult> {
         // Free the key so the next tick retries this night.
         await admin.from("job_runs").delete().eq("job_key", `score:${userId}:${d}`);
         console.error("score failed", d, err instanceof Error ? err.message : "unknown");
+        // Later nights build on this one, so stop here and retry it on the next tick.
+        break;
       }
     }
 
@@ -137,6 +140,10 @@ export async function runTick(admin: Db, now: Date): Promise<TickResult> {
           console.error("report failed", err instanceof Error ? err.message : "unknown");
         }
       }
+    }
+    } catch (err) {
+      // One person's failure must not stop everyone else's night.
+      console.error("tick failed for a user", err instanceof Error ? err.message : "unknown");
     }
   }
   return result;

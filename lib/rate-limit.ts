@@ -5,6 +5,7 @@ import { addDays, todayRiga } from "@/lib/dates";
 
 // AI endpoints are limited per user per day by counting rows in `logs`
 // (SECURITY.md section 2): 60 parses, 20 photo estimates. No extra table.
+// Failed calls count too (the row is written before Gemini is called), so retries cannot burn the key.
 export const LIMITS = { parse: 60, photo: 20 } as const;
 
 type Db = SupabaseClient<Database>;
@@ -25,7 +26,6 @@ export async function aiCallsToday(
     .from("logs")
     .select("id", { count: "exact", head: true })
     .in("source", sources)
-    .not("model", "is", null)
     .gte("created_at", sinceIso());
   return count ?? 0;
 }
