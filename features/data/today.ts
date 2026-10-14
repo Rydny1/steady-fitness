@@ -1,0 +1,257 @@
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Row, SessionKeyT } from "@/lib/supabase/types";
+import { addDays, diffDays, formatTimeRiga, rigaParts, weekStart } from "@/lib/dates";
+import {
+  compareWeeks,
+  daysToNextDivision,
+  formFor,
+  formLineIndex,
+  clampCallus,
+  nextDivision,
+  previewDay,
+  winStreak,
+  type WeekComparison,
+} from "@/features/game";
+import { dayBudget } from "@/features/nutrition/targets";
+import { chapters, gafferForm, matchLines, type FormName } from "@/content/copy";
+import { comebackLines, gafferLines, quotes } from "@/content/lines";
+import { SESSION_NAMES } from "@/features/settings/defaults";
+import { loadDayFacts, ringsFor, sessionStatusFor, toRecord, type DayFacts } from "./day-facts";
+import { latestLedger, trophyState, weekResults, TROPHY_TOTAL } from "./ledger";
+
+type Db = SupabaseClient<Database>;
+
+export type TodayLine = { text: string; byline: string };
+
+export type FoodItem = {
+  id: string;
+  name: string;
+  detail: string;
+  kcal: number;
+  photoPath: string | null;
+};
+
+export type ActivityItem = {
+  id: string;
+  name: string;
+  detail: string;
+  burned: number;
+};
+
+export type TodayData = {
+  day: string;
+  hour: number;
+  profileName: string;
+  facts: DayFacts;
+  rings: ReturnType<typeof ringsFor>;
+  budgetKcal: number;
+  leftKcal: number;
+  trainDone: number;
+  trainPlanned: number;
+  sessionKey: SessionKeyT | null;
+  sessionName: string;
+  line: TodayLine;
+  form: { name: FormName; callus: number; livePoints: number; gafferLine: string };
+  chapter: { n: number; name: string; toNext: { days: number; name: string } | null };
+  match: { comparison: WeekComparison; line: string | null; winStreak: number };
+  streak: number;
+  careerDays: number;
+  trophiesEarned: number;
+  trophiesTotal: number;
+  habits: { id: string; name: string; checked: boolean }[];
+  foods: FoodItem[];
+  activities: ActivityItem[];
+  logCount: number;
+  checkin: Row<"day_checkins"> | null;
+  sickUsedThisMonth: number;
+};
+
+const PLANNED_MINUTES: Record<SessionKeyT, number> = {
+  gym_a: 45,
+  gym_b: 45,
+  gym_c: 45,
+  run: 30,
+  run_intervals: 40,
+  football: 60,
+  stretch: 10,
+  rest: 10,
+};
+
+const ACTIVITY_NAMES: Record<Row<"activity_entries">["activity_type"], string> = {
+  football: "Football",
+  run: "Run",
+  gym: "Gym",
+  circuit: "Circuit",
+  walk: "Walk",
+  stretch: "Stretch",
+  cycling: "Cycling",
+  other: "Activity",
+};
+
+/** Today's line: about 5 days a week the Gaffer, about 2 a real quote. Deterministic per day. */
+export function lineFor(day: string, formName: FormName): TodayLine {
+  const n = diffDays(day, "2026-01-01");
+  const weekday = ((n % 7) + 7) % 7;
+  const quoteDay = weekday === 2 || weekday === 6;
+  if (quoteDay && formName !== "Off form" && quotes.length > 0) {
+    const q = quotes[((n % quotes.length) + quotes.length) % quotes.length];
+    if (q) return { text: q.text, byline: q.author };
+  }
+  const pool = formName === "Off form" ? comebackLines : gafferLines;
+  const l = pool[((n % pool.length) + pool.length) % pool.length];
+  return { text: l?.text ?? "", byline: "The Gaffer" };
+}
+
+export async function loadToday(
+  supabase: Db,
+  profile: Row<"profiles">,
+  today: string,
+  now: Date,
+): Promise<TodayData> {
+  const ws = weekStart(today);
+  const lastStart = addDays(ws, -7);
+  const monthStart = `${today.slice(0, 7)}-01`;
+
+  const [days, ledger, habits, checks, foods, acts, photos, checkin, sickMonth, results, trophies] =
+    await Promise.all([
+      loadDayFacts(supabase, lastStart, today),
+      latestLedger(supabase),
+      supabase.from("habits").select("id,name,position").is("archived_at", null).order("position"),
+      supabase.from("habit_checks").select("habit_id").eq("day", today),
+      supabase
+        .from("food_entries")
+        .select("id,name,quantity,unit,kcal,protein_g,created_at")
+        .eq("day", today)
+        .order("created_at"),
+      supabase
+        .from("activity_entries")
+        .select("id,activity_type,duration_min,kcal_burned,created_at")
+        .eq("day", today)
+        .order("created_at"),
+      supabase.from("photos").select("food_entry_id,storage_path").eq("kind", "meal").eq("taken_on", today),
+      supabase.from("day_checkins").select("*").eq("day", today).maybeSingle(),
+      supabase
+        .from("day_checkins")
+        .select("day", { count: "exact", head: true })
+        .eq("sick", true)
+        .gte("day", monthStart),
+      weekResults(supabase),
+      trophyState(supabase),
+    ]);
+
+  const facts = days.find((d) => d.day === today) ?? days[days.length - 1];
+  if (!facts) throw new Error("No day facts");
+
+  const rings = ringsFor(facts, false);
+  const budget = dayBudget(facts.budgetKcal, facts.burnedKcal);
+  const left = budget - facts.eatenKcal;
+
+  const planned = facts.plannedKey;
+  const trainPlanned = planned ? PLANNED_MINUTES[planned] : PLANNED_MINUTES.rest;
+  const trainMinutes = planned
+    ? (acts.data ?? [])
+        .filter((a) => a.activity_type !== "stretch")
+        .reduce((sum, a) => sum + a.duration_min, 0)
+    : facts.stretchMinutes;
+
+  const prev = ledger;
+  const preview = previewDay({
+    logged: facts.anyEntry,
+    loggedOnDay: facts.loggedOnDay,
+    session: sessionStatusFor(facts, false),
+    eatenKcal: facts.eatenKcal,
+    budgetKcal: budget,
+    bmrKcal: facts.bmrKcal,
+    proteinG: facts.proteinG,
+    proteinTargetG: facts.proteinTargetG,
+    habitsDone: facts.habitsDone,
+    sick: facts.sick,
+    prev: {
+      callus: prev.callus,
+      division: prev.division,
+      careerDays: prev.careerDays,
+      streak: prev.streak,
+      bestStreak: prev.bestStreak,
+      offFormDays: prev.offFormDays,
+    },
+  });
+  const callusLive = clampCallus(prev.callus + preview.points);
+  const form = formFor(callusLive);
+  const formName = form.name as FormName;
+  const lines = gafferForm[formName];
+  const gaffer =
+    lines[formLineIndex(lines.length, diffDays(today, "2026-01-01"))] ?? lines[0] ?? "";
+
+  const thisWeek = days.filter((d) => d.day >= ws).map((d) => toRecord(d, today));
+  const lastWeekRecords = days.filter((d) => d.day < ws).map((d) => toRecord(d, today));
+  const hasGhost = lastWeekRecords.some((r) => r.logged);
+  const comparison = compareWeeks({
+    weekStart: ws,
+    through: today,
+    thisWeek,
+    lastWeek: hasGhost ? lastWeekRecords : null,
+  });
+
+  const nextDiv = nextDivision(prev.division);
+  const toNext = daysToNextDivision({ division: prev.division, careerDays: prev.careerDays });
+  const chapter = chapters[prev.division];
+
+  const checked = new Set((checks.data ?? []).map((c) => c.habit_id));
+  const photoByFood = new Map(
+    (photos.data ?? []).map((p) => [p.food_entry_id ?? "", p.storage_path] as const),
+  );
+
+  return {
+    day: today,
+    hour: rigaParts(now).hour,
+    profileName: profile.display_name,
+    facts,
+    rings,
+    budgetKcal: budget,
+    leftKcal: left,
+    trainDone: trainMinutes,
+    trainPlanned,
+    sessionKey: planned,
+    sessionName: planned ? SESSION_NAMES[planned] : SESSION_NAMES.rest,
+    line: lineFor(today, formName),
+    form: { name: formName, callus: callusLive, livePoints: preview.points, gafferLine: gaffer },
+    chapter: {
+      n: chapter.n,
+      name: chapter.name,
+      toNext: nextDiv && toNext !== null ? { days: toNext, name: chapters[nextDiv].name } : null,
+    },
+    match: {
+      comparison,
+      line: comparison.noGhost ? matchLines.noGhost : null,
+      winStreak: winStreak([...results].reverse()),
+    },
+    streak: prev.streak + (facts.loggedOnDay && !facts.sick ? 1 : 0),
+    careerDays: prev.careerDays,
+    trophiesEarned: Object.values(trophies).filter(Boolean).length,
+    trophiesTotal: TROPHY_TOTAL,
+    habits: (habits.data ?? []).map((h) => ({ id: h.id, name: h.name, checked: checked.has(h.id) })),
+    foods: (foods.data ?? []).map((f) => ({
+      id: f.id,
+      name: f.name,
+      detail: [
+        formatTimeRiga(f.created_at),
+        f.quantity ? `${f.quantity}${f.unit ? ` ${f.unit}` : ""}` : null,
+        f.protein_g > 0 ? `${Math.round(f.protein_g)} g protein` : null,
+      ]
+        .filter(Boolean)
+        .join(", "),
+      kcal: f.kcal,
+      photoPath: photoByFood.get(f.id) ?? null,
+    })),
+    activities: (acts.data ?? []).map((a) => ({
+      id: a.id,
+      name: ACTIVITY_NAMES[a.activity_type],
+      detail: `${formatTimeRiga(a.created_at)}, ${a.duration_min} min`,
+      burned: a.kcal_burned,
+    })),
+    logCount: (foods.data?.length ?? 0) + (acts.data?.length ?? 0),
+    checkin: checkin.data ?? null,
+    sickUsedThisMonth: sickMonth.count ?? 0,
+  };
+}

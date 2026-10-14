@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" aria-label="Couch stretch: back knee on the floor against a wall, back foot up the wall, torso upright"><rect width="480" height="270" fill="#FFFFFF"/><g fill="none" stroke="#121417" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<line x1="30" y1="226" x2="450" y2="226"/>
+<line x1="436" y1="30" x2="436" y2="226"/>
+<circle cx="372" cy="46" r="13"/>
+<path d="M372 60 L380 150"/>
+<path d="M380 150 L410 226"/>
+<path d="M410 226 L432 110"/>
+<path d="M380 150 L300 168 L292 226"/>
+<path d="M292 226 L270 226"/>
+<path d="M374 78 L306 164"/>
+</g></svg>

@@ -1,41 +1,53 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
+import type { Metadata, Viewport } from "next";
+import { Barlow_Condensed, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+// Every page is dynamic: the CSP nonce is set per request in proxy.ts.
+export const dynamic = "force-dynamic";
+
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+});
+
+const barlow = Barlow_Condensed({
+  variable: "--font-barlow",
+  subsets: ["latin"],
+  weight: ["600"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: { default: "Steady", template: "%s | Steady" },
+  description: "One steady day at a time.",
+  applicationName: "Steady",
+  appleWebApp: { capable: true, title: "Steady", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
-});
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
+    <html lang="en" className={`${hanken.variable} ${barlow.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
