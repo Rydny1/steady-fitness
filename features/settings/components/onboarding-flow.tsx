@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { completeOnboarding } from "../onboarding-action";
 import { computeTargets } from "@/features/nutrition/targets";
+import { GENERIC_TARGETS } from "../defaults";
 import { ageOn, todayRiga } from "@/lib/dates";
 import { enablePush } from "@/features/notifications/subscribe";
 import { Button } from "@/components/ui/button";
@@ -71,40 +72,60 @@ export function OnboardingFlow() {
   const [targetsShown, setTargetsShown] = useState(false);
   const [done, setDone] = useState(false);
 
+  const coreAnswered =
+    a.heightCm !== "" && a.birthDate !== "" && a.sex !== "" && a.weightKg !== "";
   const targets = useMemo(() => {
-    if (!targetsShown || a.sex === "") return null;
+    if (!targetsShown) return null;
+    if (!coreAnswered) return { ...GENERIC_TARGETS };
     return computeTargets({
-      sex: a.sex,
+      sex: a.sex === "female" ? "female" : "male",
       weightKg: num(a.weightKg),
       heightCm: num(a.heightCm),
       ageYears: ageOn(a.birthDate, todayRiga()),
-      goalWeightKg: num(a.goalKg),
+      goalWeightKg: a.goalKg === "" ? num(a.weightKg) : num(a.goalKg),
     });
-  }, [targetsShown, a]);
+  }, [targetsShown, a, coreAnswered]);
 
   const step = steps[index];
 
   async function finish() {
-    if (a.sex === "") return;
     setBusy(true);
     setError(null);
     const res = await completeOnboarding({
-      name: a.name.trim(),
-      heightCm: num(a.heightCm),
-      birthDate: a.birthDate,
-      sex: a.sex,
-      weightKg: num(a.weightKg),
-      goalKg: num(a.goalKg),
+      name: a.name.trim() === "" ? null : a.name.trim(),
+      heightCm: a.heightCm === "" ? null : num(a.heightCm),
+      birthDate: a.birthDate === "" ? null : a.birthDate,
+      sex: a.sex === "" ? null : a.sex,
+      weightKg: a.weightKg === "" ? null : num(a.weightKg),
+      goalKg: a.goalKg === "" ? null : num(a.goalKg),
       waistCm: a.waistCm === "" ? null : num(a.waistCm),
       neckCm: a.neckCm === "" ? null : num(a.neckCm),
-      wakeTime: a.wakeTime,
+      wakeTime: a.wakeTime === "" ? null : a.wakeTime,
     });
     setBusy(false);
     if (res.ok || res.reason === "exists") {
       setDone(true);
       return;
     }
-    setError(copy.errors.invalid);
+    const labels: Record<string, string> = {
+      name: "name",
+      heightCm: "height",
+      birthDate: "birth date",
+      sex: "sex",
+      weightKg: "weight",
+      goalKg: "goal weight",
+      waistCm: "waist",
+      neckCm: "neck",
+      wakeTime: "wake time",
+    };
+    if (res.reason === "invalid") {
+      const names = (res.fields ?? []).map((f) => labels[f] ?? f).filter(Boolean);
+      setError(names.length > 0 ? `Check your ${names.join(", ")}.` : copy.errors.invalid);
+    } else if (res.reason === "signed_out") {
+      setError(copy.errors.signedOut);
+    } else {
+      setError(copy.errors.generic);
+    }
   }
 
   async function askPush() {
@@ -161,6 +182,11 @@ export function OnboardingFlow() {
             {error}
           </p>
         ) : null}
+        {!coreAnswered ? (
+          <p className="mt-4 text-small text-muted">
+            Steady uses average numbers until you add your height, birth date, sex and weight. Do it any time in Profile.
+          </p>
+        ) : null}
         <Button big onClick={finish} disabled={busy} className="mt-8 w-full">
           {copy.onboarding.start}
         </Button>
@@ -170,6 +196,16 @@ export function OnboardingFlow() {
 
   if (!step) return null;
   const value = a[step.key];
+
+  function skip() {
+    if (!step) return;
+    setA({ ...a, [step.key]: step.key === "wakeTime" ? "06:30" : "" });
+    if (index === steps.length - 1) {
+      setTargetsShown(true);
+      return;
+    }
+    setIndex(index + 1);
+  }
 
   function next() {
     if (!step || !valid(step, value)) return;
@@ -234,6 +270,9 @@ export function OnboardingFlow() {
               Back
             </Button>
           ) : null}
+          <Button type="button" variant="ghost" big onClick={skip}>
+            Skip
+          </Button>
           <Button type="submit" big disabled={!valid(step, value)} className="flex-1">
             {index === steps.length - 1 ? copy.onboarding.done : copy.onboarding.next}
           </Button>

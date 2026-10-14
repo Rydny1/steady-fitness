@@ -39,3 +39,15 @@ export const SESSION_NAMES: Record<SessionKeyT, string> = {
   stretch: "Stretch",
   rest: "Rest day",
 };
+
+/** Used when a person skips the questions the budget needs. Average numbers, replaced as soon as they add their details. */
+export const GENERIC_TARGETS = { bmrKcal: 1500, budgetKcal: 1800, proteinG: 120 } as const;
+
+/** Stand-ins stored for skipped profile answers (the columns are required). */
+export const PROFILE_FALLBACK = {
+  heightCm: 175,
+  birthDate: "1996-01-01",
+  sex: "male",
+  goalKg: 75,
+  wakeTime: "06:30",
+} as const;
