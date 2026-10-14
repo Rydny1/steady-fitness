@@ -1,5 +1,6 @@
-// Batch recipes. Source of truth: CONTENT.md > Fuel. All numbers are estimates.
-// Each recipe makes 4 portions; kcal and protein are per portion.
+// Recipes. Five batch recipes (cook Sunday, 4 portions each) and two quick meals.
+// All ingredients come from Rimi, Maxima or Lidl in Riga. Numbers are estimates per portion.
+// Amounts left null are to taste: the shopping list shows the item without a quantity.
 
 export type Aisle = 'Meat and fish' | 'Fruit and veg' | 'Dairy' | 'Tins and dry' | 'Spices';
 
@@ -7,7 +8,7 @@ export const aisleOrder: Aisle[] = ['Meat and fish', 'Fruit and veg', 'Dairy', '
 
 export type Ingredient = {
   name: string;
-  /** Amount as written in CONTENT.md. Null where CONTENT.md gives none. */
+  /** Amount as written ("800 g", "2 cans", "4"). Null where no amount is given. */
   amount: string | null;
   aisle: Aisle;
 };
@@ -15,7 +16,9 @@ export type Ingredient = {
 export type Meal = {
   slug: string;
   name: string;
-  portions: 4;
+  /** Batch recipes make 4 portions for the week. Quick meals are one portion, no prep. */
+  kind: 'batch' | 'quick';
+  portions: number;
   /** Approximate kcal per portion. */
   kcal: number;
   /** Approximate grams of protein per portion. */
@@ -30,148 +33,189 @@ export const batchPlan = {
   summary:
     'Sunday: cook 2 recipes = 8 portions = lunch and dinner Mon to Thu. Thursday night: 1 recipe for Fri and Sat. Rotate so no recipe repeats two weeks running.',
   fridge: 'Fridge max 3 days. Freeze anything for day 4.',
-  perPortion: 'Each recipe makes 4 portions. Per portion approx. 510 to 580 kcal, about 50 g protein.',
+  perPortion: 'Each batch recipe makes 4 portions. Per portion approx. 360 to 390 kcal, 32 to 42 g protein.',
 } as const;
 
 export const meals: Meal[] = [
   {
-    slug: 'jollof-chicken',
-    name: 'Jollof chicken rice',
+    slug: 'teriyaki-chicken',
+    name: 'Teriyaki chicken and broccoli bowls',
+    kind: 'batch',
     portions: 4,
-    kcal: 575,
-    protein: 50,
+    kcal: 380,
+    protein: 42,
     ingredients: [
       { name: 'Chicken breast', amount: '800 g', aisle: 'Meat and fish' },
-      { name: 'Red peppers', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Onions', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Chilli (or scotch bonnet if Rimi has it)', amount: '1', aisle: 'Fruit and veg' },
-      { name: 'Frozen mixed veg', amount: '300 g', aisle: 'Fruit and veg' },
-      { name: 'Basmati rice, dry', amount: '240 g', aisle: 'Tins and dry' },
-      { name: 'Tomato paste', amount: '140 g', aisle: 'Tins and dry' },
-      { name: 'Oil', amount: '2 tbsp', aisle: 'Tins and dry' },
-      { name: 'Stock cube', amount: null, aisle: 'Tins and dry' },
-      { name: 'Thyme', amount: null, aisle: 'Spices' },
-      { name: 'Curry powder', amount: null, aisle: 'Spices' },
-      { name: 'Bay leaf', amount: null, aisle: 'Spices' },
+      { name: 'Broccoli', amount: '400 g', aisle: 'Fruit and veg' },
+      { name: 'Garlic', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Ginger', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Rice, dry', amount: '200 g', aisle: 'Tins and dry' },
+      { name: 'Soy sauce', amount: null, aisle: 'Tins and dry' },
+      { name: 'Honey', amount: null, aisle: 'Tins and dry' },
+      { name: 'Sesame seeds', amount: null, aisle: 'Spices' },
     ],
     steps: [
-      'Blend peppers, onion, chilli.',
-      'Fry paste in oil 5 min, add blend, cook down 15 min.',
-      'Add spices, stock, rice, water. Lid on, low heat 25 min.',
-      'Bake or pan-sear chicken separately, slice, portion on top.',
+      'Dice the chicken and cook it in a pan.',
+      'Make the sauce: soy sauce, honey, garlic, ginger.',
+      'Toss the chicken in the sauce.',
+      'Steam the broccoli.',
+      'Portion with rice. Sprinkle with sesame seeds.',
     ],
   },
   {
-    slug: 'suya-beef',
-    name: 'Suya beef with sweet potato',
+    slug: 'greek-chicken',
+    name: 'Greek chicken bowl',
+    kind: 'batch',
     portions: 4,
-    kcal: 575,
-    protein: 48,
+    kcal: 370,
+    protein: 40,
     ingredients: [
-      { name: 'Lean beef strips or 5% mince', amount: '800 g', aisle: 'Meat and fish' },
-      { name: 'Sweet potato', amount: '900 g', aisle: 'Fruit and veg' },
-      { name: 'Peppers', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Onions', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Roasted peanuts (ground), for the suya mix', amount: '40 g', aisle: 'Tins and dry' },
-      { name: 'Oil', amount: '1 tbsp', aisle: 'Tins and dry' },
-      { name: 'Chilli flakes', amount: null, aisle: 'Spices' },
-      { name: 'Ginger', amount: null, aisle: 'Spices' },
-      { name: 'Garlic powder', amount: null, aisle: 'Spices' },
-      { name: 'Paprika', amount: null, aisle: 'Spices' },
-      { name: 'Onion powder', amount: null, aisle: 'Spices' },
-      { name: 'Salt', amount: null, aisle: 'Spices' },
+      { name: 'Chicken breast', amount: '800 g', aisle: 'Meat and fish' },
+      { name: 'Cucumber', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Tomatoes', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Red onion', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Lemon', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Feta', amount: '100 g', aisle: 'Dairy' },
+      { name: 'Rice, dry', amount: '200 g', aisle: 'Tins and dry' },
+      { name: 'Olive oil', amount: null, aisle: 'Tins and dry' },
+      { name: 'Oregano', amount: null, aisle: 'Spices' },
     ],
     steps: [
-      'Mix the suya mix: ground peanuts, chilli flakes, ginger, garlic powder, paprika, onion powder, salt.',
-      'Coat beef in suya mix, sear hot.',
-      'Roast sweet potato cubes 200 C 30 min.',
-      'Raw onion slices on top when serving.',
+      'Marinate the chicken in lemon, oregano and olive oil.',
+      'Pan-cook or bake it.',
+      'Chop the cucumber, tomatoes and red onion.',
+      'Portion with rice and crumbled feta.',
     ],
   },
   {
     slug: 'turkey-chilli',
-    name: 'Spicy turkey bean chilli',
+    name: 'Turkey chilli with beans',
+    kind: 'batch',
     portions: 4,
-    kcal: 510,
-    protein: 50,
+    kcal: 360,
+    protein: 38,
     ingredients: [
       { name: 'Turkey mince', amount: '800 g', aisle: 'Meat and fish' },
-      { name: 'Onion', amount: '1', aisle: 'Fruit and veg' },
-      { name: 'Peppers', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Kidney beans, drained', amount: '2 cans', aisle: 'Tins and dry' },
-      { name: 'Chopped tomatoes', amount: '2 cans', aisle: 'Tins and dry' },
-      { name: 'Oil', amount: '1 tbsp', aisle: 'Tins and dry' },
+      { name: 'Onion', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Peppers', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Kidney beans, tinned', amount: '2 cans', aisle: 'Tins and dry' },
+      { name: 'Chopped tomatoes, tinned', amount: '2 cans', aisle: 'Tins and dry' },
       { name: 'Cumin', amount: null, aisle: 'Spices' },
       { name: 'Smoked paprika', amount: null, aisle: 'Spices' },
-      { name: 'Chilli', amount: null, aisle: 'Spices' },
-      { name: 'Garlic', amount: null, aisle: 'Spices' },
+      { name: 'Chilli flakes', amount: null, aisle: 'Spices' },
     ],
     steps: [
-      'Brown turkey, add veg 5 min, spices, tomatoes, beans.',
+      'Brown the turkey.',
+      'Add everything else.',
       'Simmer 30 min.',
     ],
-    note: 'Rice optional (adds about 200 kcal per 150 g cooked).',
+    note: 'No rice needed. The beans are the carbs.',
   },
   {
-    slug: 'chicken-yassa',
-    name: 'Chicken yassa (Senegalese onion-lemon)',
+    slug: 'egg-fried-rice',
+    name: 'Egg fried rice with chicken and veg',
+    kind: 'batch',
     portions: 4,
-    kcal: 590,
-    protein: 51,
+    kcal: 390,
+    protein: 35,
     ingredients: [
-      { name: 'Chicken breast', amount: '800 g', aisle: 'Meat and fish' },
-      { name: 'Onions', amount: '800 g', aisle: 'Fruit and veg' },
-      { name: 'Lemons', amount: '3', aisle: 'Fruit and veg' },
+      { name: 'Chicken breast', amount: '600 g', aisle: 'Meat and fish' },
+      { name: 'Frozen mixed veg', amount: '300 g', aisle: 'Fruit and veg' },
       { name: 'Garlic', amount: null, aisle: 'Fruit and veg' },
-      { name: 'Chilli', amount: null, aisle: 'Fruit and veg' },
-      { name: 'Rice, dry', amount: '240 g', aisle: 'Tins and dry' },
-      { name: 'Mustard', amount: '3 tbsp', aisle: 'Tins and dry' },
-      { name: 'Oil', amount: '2 tbsp', aisle: 'Tins and dry' },
-      { name: 'Stock cube', amount: null, aisle: 'Tins and dry' },
+      { name: 'Eggs', amount: '4', aisle: 'Dairy' },
+      { name: 'Rice, dry', amount: '300 g', aisle: 'Tins and dry' },
+      { name: 'Soy sauce', amount: null, aisle: 'Tins and dry' },
+      { name: 'Sesame oil', amount: null, aisle: 'Tins and dry' },
     ],
     steps: [
-      'Marinate chicken in lemon, mustard, garlic overnight Saturday.',
-      'Sear chicken.',
-      'Cook sliced onions slowly 25 min in the marinade until soft.',
-      'Combine, simmer 10 min. Serve on rice.',
+      'Cook the rice and let it cool.',
+      'Scramble the eggs and set them aside.',
+      'Stir-fry the chicken, then add the veg and the rice.',
+      'Add the eggs back with a splash of soy sauce.',
     ],
   },
   {
-    slug: 'fish-stew',
-    name: 'West African fish stew with potatoes',
+    slug: 'tuna-pasta',
+    name: 'Spicy tuna pasta',
+    kind: 'batch',
     portions: 4,
-    kcal: 540,
-    protein: 50,
+    kcal: 370,
+    protein: 32,
     ingredients: [
-      { name: 'Frozen cod or pollock', amount: '1 kg', aisle: 'Meat and fish' },
-      { name: 'Potatoes', amount: '1 kg', aisle: 'Fruit and veg' },
-      { name: 'Peppers', amount: '2', aisle: 'Fruit and veg' },
-      { name: 'Onion', amount: '1', aisle: 'Fruit and veg' },
-      { name: 'Ginger', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Tuna, tinned', amount: '3 cans', aisle: 'Meat and fish' },
       { name: 'Garlic', amount: null, aisle: 'Fruit and veg' },
-      { name: 'Chilli', amount: null, aisle: 'Fruit and veg' },
-      { name: 'Chopped tomatoes', amount: '2 cans', aisle: 'Tins and dry' },
-      { name: 'Oil', amount: '2 tbsp', aisle: 'Tins and dry' },
-      { name: 'Thyme', amount: null, aisle: 'Spices' },
+      { name: 'Pasta, dry', amount: '300 g', aisle: 'Tins and dry' },
+      { name: 'Chopped tomatoes, tinned', amount: null, aisle: 'Tins and dry' },
+      { name: 'Olives', amount: null, aisle: 'Tins and dry' },
+      { name: 'Capers (optional)', amount: null, aisle: 'Tins and dry' },
+      { name: 'Chilli flakes', amount: null, aisle: 'Spices' },
     ],
     steps: [
-      'Blend tomatoes, peppers, onion, ginger, garlic, chilli.',
-      'Fry 15 min.',
-      'Add fish chunks, simmer 10 min gently.',
-      'Boil potatoes separately.',
+      'Cook the pasta.',
+      'Fry the garlic and chilli, add the tomatoes and simmer 10 min.',
+      'Stir in the drained tuna.',
+      'Combine with the pasta.',
     ],
+  },
+  {
+    slug: 'avocado-egg-toast',
+    name: 'Avocado egg toast',
+    kind: 'quick',
+    portions: 1,
+    kcal: 350,
+    protein: 22,
+    ingredients: [
+      { name: 'Eggs', amount: '2', aisle: 'Dairy' },
+      { name: 'Avocado', amount: '0.5', aisle: 'Fruit and veg' },
+      { name: 'Whole grain bread', amount: '2 slices', aisle: 'Tins and dry' },
+      { name: 'Salt and pepper', amount: null, aisle: 'Spices' },
+      { name: 'Chilli flakes', amount: null, aisle: 'Spices' },
+    ],
+    steps: [
+      'Toast the bread.',
+      'Mash the avocado on top.',
+      'Fry or boil the eggs and put them on top.',
+    ],
+    note: 'No prep. Under 10 minutes.',
+  },
+  {
+    slug: 'yogurt-bowl',
+    name: 'Greek yogurt power bowl',
+    kind: 'quick',
+    portions: 1,
+    kcal: 280,
+    protein: 30,
+    ingredients: [
+      { name: 'Skyr or Greek yogurt', amount: '250 g', aisle: 'Dairy' },
+      { name: 'Banana', amount: '1', aisle: 'Fruit and veg' },
+      { name: 'Berries or any fruit', amount: null, aisle: 'Fruit and veg' },
+      { name: 'Oats', amount: '30 g', aisle: 'Tins and dry' },
+      { name: 'Honey', amount: null, aisle: 'Tins and dry' },
+    ],
+    steps: ['Layer it all. Done in 2 minutes.'],
+    note: 'No prep.',
   },
 ];
 
-/**
- * Public image path for a meal slug, or null when no photo was found.
- * No photo for chicken-yassa: use the UI's neutral placeholder.
- */
+/** The five batch recipes, for the weekly prep. */
+export const batchMeals: Meal[] = meals.filter((m) => m.kind === 'batch');
+/** The quick meals, logged with one tap. */
+export const quickMeals: Meal[] = meals.filter((m) => m.kind === 'quick');
+
+const MEAL_IMAGES = new Set([
+  'teriyaki-chicken',
+  'greek-chicken',
+  'turkey-chilli',
+  'egg-fried-rice',
+  'tuna-pasta',
+  'avocado-egg-toast',
+  'yogurt-bowl',
+]);
+
+/** Public image path for a meal slug, or null when no photo exists for it. */
 export function mealImage(slug: string): string | null {
   return MEAL_IMAGES.has(slug) ? `/images/meals/${slug}.webp` : null;
 }
-
-const MEAL_IMAGES = new Set(['jollof-chicken', 'suya-beef', 'turkey-chilli', 'fish-stew']);
 
 /** Header photo for the Fuel page. */
 export const fuelHeaderImage = '/images/fuel/batch-prep.webp';

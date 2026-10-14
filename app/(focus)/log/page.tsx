@@ -6,9 +6,9 @@ import { LogScreen } from "@/features/logging/components/log-screen";
 export const metadata = { title: "Log" };
 
 export default async function LogPage() {
-  const { supabase, today } = await requireProfile();
+  const { supabase, user, today } = await requireProfile();
   const [facts, saved, weight] = await Promise.all([
-    loadDayFacts(supabase, today, today),
+    loadDayFacts(supabase, user.id, today, today),
     supabase
       .from("saved_foods")
       .select("id,name,quantity,unit,kcal,protein_g")

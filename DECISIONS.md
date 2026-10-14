@@ -1,0 +1,28 @@
+# Decisions
+
+Every call made outside the spec docs, and every change the owner asked for after the spec was written.
+
+## Owner changes after the spec (this supersedes the docs where they differ)
+- **Daily quote card**: real quotes only, person's name under the quote, under 20 words, verified against a source. Bank of 60 or more in `content/quotes/quotes.ts` (re-exported by `content/lines.ts`). All the old harsh Coach lines are gone. A set tagged `comeback` is used on Off form days. Rotation is deterministic by day number, so nothing repeats inside the bank length.
+- **You vs last week**: matching last week in a round wins the round. Only doing worse loses it. A round where both sides did nothing (0 against 0) stays a draw so nothing wins for free.
+- **No football theme**: levels are Starting line, Showing up, Building, Consistent, Strong, Disciplined, Proven, One year. Challenges are Early bird, Protein week, On time, Move more, Mirror check, Scale check, Lights out (Clean week unchanged). "The Coach" replaces "The Gaffer". Also renamed for the same reason: form word Unplayable is now Peak form, trophies First whistle and Hat-trick are Day one and Three in a row, "Full time" is "Week done". Football as an activity (the sport) stays.
+- **Database**: enum `division_t` is now `level_t` with the eight new values (migration 0003). Challenge keys in `weekly_challenges.challenge_key` keep their old internal ids (early_kickoff and so on) because they are only keys, the display names changed.
+- **Info tooltips**: a (?) beside every concept a new user would not know, text in `content/tooltips.ts`, opens in a bottom sheet.
+- **Progress**: season record (W-D-L plus a dot per week) and level history timeline under the weekly challenge. Photos section has front, side and back, a grid sorted by date, a compare slider, and a nudge when the last photo is 14 days old (also a Saturday push, notification kind `photo_day`). The weight card says when the goal is reached at this pace, and this week and total movement.
+- **Food**: five batch recipes and two quick meals replace the West African set, quick buys unchanged. Quick meals appear in the quick buys grid, batch recipes in the weekly prep and shopping list. You can add your own recipes (name, kcal and protein per portion), they become saved foods and one-tap logs. Targets can be set by hand in Profile, with an option to switch the Monday adaptive budget off.
+
+## Build decisions
+- Next.js 16 (proxy.ts instead of middleware.ts), Tailwind 3, `cacheComponents` off. Every page is dynamic because the CSP nonce is per request.
+- Budget formula follows the spec literally: 0.75 x 1.3 x BMR is below BMR, so the BMR floor applies and the starting budget equals BMR plus exercise add-back. The Monday adaptive budget then moves it by at most 150 kcal a week from real data. Owner can set any budget at or above BMR by hand.
+- Progression step is 2 kg (CONTENT.md), not 2.5 (PRODUCT.md).
+- Exercise add-back stored in `activity_entries.kcal_burned` is 50 percent of MET x kg x hours.
+- "Logged" for score and streak means a `logs` row created on the day itself. A log started and never saved still counts as engaging. Back-filled days score as not logged.
+- Extra tables beyond 0001 (migration 0002): `user_flags` (remembered state: Answer back, level event, trophies earned, shopping ticks, picks, adaptive toggle) and `observer_notes` (the Coach's feed). Both have RLS forced.
+- Answer back starts by itself after a lost week or a missed day that cost Callus, and finishes after 3 clean days (half the lost Callus returns).
+- The nod (rare extra line) is implemented as a pure function in the game engine but not wired to a push yet.
+- **Sign-ups are open** (owner's request, supersedes SECURITY.md section 1 "turn off new sign-ups"): anyone can create an account at /signup with an email and a 12+ character password, after ticking explicit consent for health data (GDPR Art. 9) and reading /privacy. Accounts are created confirmed through the admin API (no email round trip yet), limited to 5 new accounts an hour per address (claimed in `job_runs`). Two-step sign-in is still required for every account. Isolation is Row Level Security on every table plus per-folder Storage policies. Still to do by the owner before inviting people: turn on email verification and a CAPTCHA in Supabase Auth, put Gemini on the paid tier (the free tier lets Google use inputs for training, and the key shares 20 requests a day per model across all users), and sign data processing terms with Supabase, Vercel and Google.
+- Delete everything uses the secret-key client once (to delete the auth user, which cascades every table). It is the only place outside `api/cron` that imports it.
+- Photos: client re-encodes to JPEG 1600 px (drops EXIF and GPS), uploads straight to private Storage, signed URLs last one hour. The export zip is built by a 60-line stored-zip writer (`lib/zip.ts`) so no zip dependency was added.
+- Packages added: zod, @google/genai, web-push, server-only, vitest, @vitest/coverage-v8, eslint-plugin-security, prettier, @playwright/test, @types/web-push. All pinned to exact versions.
+- Gemini: model chain from `GEMINI_MODEL` then `GEMINI_FALLBACK_MODELS` (comma separated), one attempt per model, 12 s each. The key currently shows 5 requests a minute and 20 a day per model, so three models give three times the headroom.
+- Offline queue holds tap logs only (saved foods, quick buys, barcode results), never AI calls.

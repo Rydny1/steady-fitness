@@ -91,3 +91,29 @@ export async function saveCheckin(input: unknown): Promise<SimpleOutcome> {
   revalidatePath("/progress");
   return { ok: true };
 }
+
+const seenSchema = z.object({ key: z.enum(["chapter_event", "adaptive_note"]) });
+
+/** The level card and the adaptive budget note each show once. */
+export async function markSeen(input: unknown): Promise<SimpleOutcome> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, reason: "signed_out" };
+  const parsed = seenSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+
+  const { data: row } = await supabase
+    .from("user_flags")
+    .select("value")
+    .eq("key", parsed.data.key)
+    .maybeSingle();
+  if (!row) return { ok: true };
+  const value = { ...(row.value as Record<string, unknown>), seen: true };
+  const { error } = await supabase
+    .from("user_flags")
+    .update({ value, updated_at: new Date().toISOString() })
+    .eq("key", parsed.data.key);
+  if (error) return { ok: false, reason: "failed" };
+  revalidatePath("/today");
+  return { ok: true };
+}

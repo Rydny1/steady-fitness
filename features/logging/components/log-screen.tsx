@@ -321,7 +321,7 @@ export function LogScreen({
             {transcript || interim ? (
               <>
                 {transcript}
-                {interim ? <span className="text-[#9aa0a6]"> {interim}</span> : null}
+                {interim ? <span className="text-faint"> {interim}</span> : null}
               </>
             ) : (
               <span className="text-muted">
@@ -558,7 +558,7 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium">{it.name}</div>
-          <div className={cn("text-[14px]", low ? "text-[#8a5a00]" : "text-muted")}>
+          <div className={cn("text-[14px]", low ? "text-warn" : "text-muted")}>
             {it.quantity ? `${it.quantity}${it.unit ? ` ${it.unit}` : ""}` : "1 portion"}
             {low ? `. ${copy.log.check}` : ""}
           </div>

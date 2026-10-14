@@ -44,10 +44,13 @@ Downloaded from `https://images.unsplash.com/photo-{id}`, converted to WebP, max
 
 | File | Unsplash photo id | Photographer |
 |---|---|---|
-| meals/jollof-chicken.webp | 1664992960082-0ea299a9c53e | Keesha's Kitchen |
-| meals/suya-beef.webp | 1708597521669-f7312f312b29 | Dennis Zhang |
+| meals/teriyaki-chicken.webp | https://unsplash.com/photos/ZK8kPP8I4rY | Zayed Ahmed Zadu (sesame-glazed chicken rice bowl, no broccoli visible) |
+| meals/greek-chicken.webp | https://unsplash.com/photos/a32qDsxmR8Q | Chloe Forbes-Kindlen (chicken salad with feta and olives, no rice) |
+| meals/egg-fried-rice.webp | https://unsplash.com/photos/rQX9eVpSFz8 | Christopher Alvarenga |
+| meals/tuna-pasta.webp | https://unsplash.com/photos/EzthXJOati8 | Alexandra Tran (tomato pasta, tuna not visible) |
+| meals/avocado-egg-toast.webp | https://unsplash.com/photos/4zm5e0ZgYjE | Alison Marras |
+| meals/yogurt-bowl.webp | https://unsplash.com/photos/uy_V12d-VXU | Vicky Ng |
 | meals/turkey-chilli.webp | 1659603606213-cb19636f9f34 | Green And Great |
-| meals/fish-stew.webp | 1730112696140-19e61bb43d36 | Jon Handley |
 | fuel/batch-prep.webp | 1666819691716-827f78d892f3 | Leanna Myers |
 | snacks/quark.webp | 1720356778303-6cdc6d2e95ce | Lala Azizli (cottage cheese with blackberries) |
 | snacks/skyr.webp | 1633104060731-32143505bacc | Shayna Douglas |
@@ -58,19 +61,74 @@ Downloaded from `https://images.unsplash.com/photo-{id}`, converted to WebP, max
 | snacks/edamame.webp | 1557621956-ce58555aa0ce | Daniel Brubaker |
 | snacks/fruit.webp | 1766837188858-85ef44929bf2 | Evelien Van Den Brink (apples, bananas and a mango) |
 
-No photo found, skipped: meals/chicken-yassa, snacks/tuna.
+No photo found, skipped: snacks/tuna. Photographer names for the six new meal photos were read from each photo page.
 
 ## Quotes (content/quotes/quotes.ts)
 
-All stored quotes are 15 words or fewer.
+64 quotes, each 19 words or fewer, each checked against its source. Format: id: author, work, source URL, verification note.
+"primary" = the public-domain text (Project Gutenberg / Wikisource), or the person's own speech, book excerpt or site, or an episode page quoting them. "wikiquote" = a Wikiquote entry under "Quotes" (not "Misattributed" or "Disputed") that cites the original source. Wikiquote text is CC BY-SA 4.0; only the short quotation and its citation are used.
 
-- Marcus Aurelius, Meditations, George Long translation (public domain). Text checked against Project Gutenberg #15877: https://www.gutenberg.org/ebooks/15877
-- Epictetus, The Enchiridion, Thomas Wentworth Higginson translation (public domain). Text checked against Project Gutenberg #45109: https://www.gutenberg.org/ebooks/45109
-- Seneca, Letters to Lucilius, Richard M. Gummere translation (public domain). Each quote links to its letter on Wikisource: https://en.wikisource.org/wiki/Moral_letters_to_Lucilius (letters 1, 30, 47, 76, 78, 84, 92, 96). Letter numbers follow Wikiquote's "Sourced" Seneca page and were confirmed by finding the sentence on the Wikisource letter.
-- Michael Jordan: https://en.wikiquote.org/wiki/Michael_Jordan (2009 Hall of Fame address; How to be like Mike, 2005; I Can't Accept Not Trying, 1994)
-- Muhammad Ali: https://en.wikiquote.org/wiki/Muhammad_Ali (Newsweek, 25 September 1978; Jet, August 1992)
-- Bruce Lee: https://en.wikiquote.org/wiki/Bruce_Lee (Tao of Jeet Kune Do, 1975; Enter the Dragon, 1973)
-- Arnold Schwarzenegger: https://en.wikiquote.org/wiki/Arnold_Schwarzenegger (University of Southern California commencement speech, 2009)
-
-Wikiquote text is CC BY-SA 4.0; only the short quotation and its citation are used. The athlete quotes were not checked against the original recordings or books, only against Wikiquote's cited-source entries.
-No David Goggins quotes are included: the sourced Wikiquote entries are long passages with profanity, none usable at 15 words or fewer.
+- q01: Marcus Aurelius, Meditations, Book IV (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q02: Marcus Aurelius, Meditations, Book IV (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q03: Marcus Aurelius, Meditations, Book VII (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q04: Marcus Aurelius, Meditations, Book XII (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q05: Marcus Aurelius, Meditations, Book II (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q06: Marcus Aurelius, Meditations, Book VIII (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q07: Marcus Aurelius, Meditations, Book V (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q08: Marcus Aurelius, Meditations, Book V (George Long translation), https://www.gutenberg.org/ebooks/15877, primary
+- q09: Epictetus, The Enchiridion (Thomas Wentworth Higginson translation), https://www.gutenberg.org/ebooks/45109, primary
+- q10: Epictetus, The Enchiridion (Thomas Wentworth Higginson translation), https://www.gutenberg.org/ebooks/45109, primary
+- q11: Epictetus, The Enchiridion (Thomas Wentworth Higginson translation), https://www.gutenberg.org/ebooks/45109, primary
+- q12: Epictetus, The Enchiridion (Thomas Wentworth Higginson translation), https://www.gutenberg.org/ebooks/45109, primary
+- q13: Epictetus, The Enchiridion (Thomas Wentworth Higginson translation), https://www.gutenberg.org/ebooks/45109, primary
+- q14: Epictetus, Discourses, 1.24.1, https://en.wikiquote.org/wiki/Epictetus, wikiquote
+- q15: Epictetus, Discourses, 1.18.18, https://en.wikiquote.org/wiki/Epictetus, wikiquote
+- q16: Epictetus, Discourses, 3.1.24, https://en.wikiquote.org/wiki/Epictetus, wikiquote
+- q17: Seneca, Letters to Lucilius, Letter I (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_1, primary
+- q18: Seneca, Letters to Lucilius, Letter I (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_1, primary
+- q19: Seneca, Letters to Lucilius, Letter XIII (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_13, primary
+- q20: Seneca, Letters to Lucilius, Letter XXX (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_30, primary
+- q21: Seneca, Letters to Lucilius, Letter LXXVI (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_76, primary
+- q22: Seneca, Letters to Lucilius, Letter LXXVIII (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_78, primary
+- q23: Seneca, Letters to Lucilius, Letter LXXXIV (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_84, primary
+- q24: Seneca, Letters to Lucilius, Letter XCII (Richard M. Gummere translation), https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_92, primary
+- q25: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q26: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q27: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q28: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q29: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q30: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q31: Confucius, The Analects (James Legge translation), https://www.gutenberg.org/ebooks/3330, primary
+- q32: Lao Tzu, Tao Te Ching (James Legge translation), https://en.wikisource.org/wiki/T%C3%A2o_Teh_King, primary
+- q33: Lao Tzu, Tao Te Ching (James Legge translation), https://en.wikisource.org/wiki/T%C3%A2o_Teh_King, primary
+- q34: Lao Tzu, Tao Te Ching (James Legge translation), https://en.wikisource.org/wiki/T%C3%A2o_Teh_King, primary
+- q35: Lao Tzu, Tao Te Ching (James Legge translation), https://en.wikisource.org/wiki/T%C3%A2o_Teh_King, primary
+- q36: Steve Jobs, Stanford commencement address, 12 June 2005, https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says, primary
+- q37: Steve Jobs, Stanford commencement address, 12 June 2005, https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says, primary
+- q38: Steve Jobs, Stanford commencement address, 12 June 2005, https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says, primary
+- q39: Steve Jobs, Stanford commencement address, 12 June 2005, https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says, primary
+- q40: Steve Jobs, Stanford commencement address, 12 June 2005, https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says, primary
+- q41: James Clear, Atomic Habits, as published on jamesclear.com (Goals vs. Systems), https://jamesclear.com/goals-systems, primary
+- q42: James Clear, Atomic Habits, https://jamesclear.com/atomic-habits-summary, primary
+- q43: James Clear, Atomic Habits, p. 38, https://jamesclear.com/atomic-habits-summary, primary
+- q44: James Clear, Atomic Habits, p. 22, https://jamesclear.com/atomic-habits-summary, primary
+- q45: James Clear, Atomic Habits, p. 22, https://jamesclear.com/atomic-habits-summary, primary
+- q46: Jocko Willink, Discipline Equals Freedom: Field Manual (2017), book title, https://jockowillink.com/, primary
+- q47: Jerzy Gregorek, The Tim Ferriss Show, episode 228 (2017), https://tim.blog/2017/03/16/jerzy-gregorek/, primary
+- q48: Bruce Lee, Jeet Kune Do, Part 6 (1997), https://en.wikiquote.org/wiki/Bruce_Lee, wikiquote
+- q49: Bruce Lee, The Warrior Within, p. 48, https://en.wikiquote.org/wiki/Bruce_Lee, wikiquote
+- q50: Bruce Lee, Striking Thoughts, p. 5, https://en.wikiquote.org/wiki/Bruce_Lee, wikiquote
+- q51: Bruce Lee, Striking Thoughts, p. 121, https://en.wikiquote.org/wiki/Bruce_Lee, wikiquote
+- q52: Bruce Lee, Striking Thoughts, p. 176, https://en.wikiquote.org/wiki/Bruce_Lee, wikiquote
+- q53: Muhammad Ali, Newsweek, 25 September 1978, https://en.wikiquote.org/wiki/Muhammad_Ali, wikiquote
+- q54: Muhammad Ali, Jet magazine, August 1992, https://en.wikiquote.org/wiki/Muhammad_Ali, wikiquote
+- q55: Muhammad Ali, 101 Best Ways to Get Ahead (2004), p. 59, https://en.wikiquote.org/wiki/Muhammad_Ali, wikiquote
+- q56: Michael Jordan, Hall of Fame induction address, 2009, https://en.wikiquote.org/wiki/Michael_Jordan, wikiquote
+- q57: Michael Jordan, How to be like Mike (2005), https://en.wikiquote.org/wiki/Michael_Jordan, wikiquote
+- q58: Michael Jordan, I Can't Accept Not Trying (1994), https://en.wikiquote.org/wiki/Michael_Jordan, wikiquote
+- q59: Arnold Schwarzenegger, University of Southern California commencement speech, 2009, https://en.wikiquote.org/wiki/Arnold_Schwarzenegger, wikiquote
+- q60: Arnold Schwarzenegger, Interview with Guenther Ziesel, 2017, https://en.wikiquote.org/wiki/Arnold_Schwarzenegger, wikiquote
+- q61: Theodore Roosevelt, An Autobiography (1913), Chapter II, https://www.bartleby.com/55/2.html, primary
+- q62: Eliud Kipchoge, Oxford Union address, 5 January 2018, https://en.wikiquote.org/wiki/Eliud_Kipchoge, wikiquote
+- q63: Eliud Kipchoge, Daily Nation, 27 August 2019, https://en.wikiquote.org/wiki/Eliud_Kipchoge, wikiquote
+- q64: Eliud Kipchoge, Boston Marathon interview, April 2023, https://en.wikiquote.org/wiki/Eliud_Kipchoge, wikiquote

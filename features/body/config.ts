@@ -12,6 +12,6 @@ export const BODY = {
   /** Longest projection shown, in days. */
   goalMaxDays: 730,
   waistToHeightLimit: 0.5,
-  goalTemplate: "Goal {kg} kg around {date} at this pace.",
-  goalNone: "At this pace there's no goal date. The trend has to fall first.",
+  goalTemplate: "At this pace, you'll reach {kg} kg around {date}.",
+  goalNone: "The trend needs to fall before a date makes sense.",
 } as const;

@@ -16,7 +16,7 @@ export function formFor(callus: number): Form {
   return found;
 }
 
-/** Index of the Gaffer line to show for a band: rotates by day number. */
+/** Index of the Coach line to show for a band: rotates by day number. */
 export function formLineIndex(lineCount: number, dayNumber: number): number {
   if (lineCount <= 0) return 0;
   return ((Math.floor(dayNumber) % lineCount) + lineCount) % lineCount;

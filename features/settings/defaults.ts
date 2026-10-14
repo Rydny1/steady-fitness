@@ -18,6 +18,7 @@ export const DEFAULT_NOTIFICATIONS: { kind: NotifyKindT; at_time: string }[] = [
   { kind: "log_nudge", at_time: "21:30" },
   { kind: "last_call", at_time: "23:00" },
   { kind: "weekly", at_time: "21:00" },
+  { kind: "photo_day", at_time: "08:30" },
 ];
 
 export const DEFAULT_HABITS: { name: string; position: number }[] = [

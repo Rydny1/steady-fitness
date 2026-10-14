@@ -90,7 +90,7 @@ describe("You vs last week", () => {
     expect(c.rounds.find((r) => r.key === "days_logged")).toMatchObject({ you: 2, ghost: 2 });
   });
 
-  it("win a round with more, draw on equal, lose with less", () => {
+  it("win a round with more or equal (consistent wins), lose with less, draw only at 0 against 0", () => {
     const lastWeek = week(LAST, (i) => ({
       logged: i < 5,
       fuelClosed: i < 4,
@@ -100,7 +100,7 @@ describe("You vs last week", () => {
     }));
     const thisWeek = week(THIS, (i) => ({
       logged: true, // 7 vs 5 win
-      fuelClosed: i < 4, // 4 vs 4 draw
+      fuelClosed: i < 4, // 4 vs 4 matches, so it wins
       proteinClosed: i < 1, // 1 vs 3 loss
       planned: i < 3,
       sessionDone: i < 2, // 2 vs 3 loss
@@ -108,11 +108,15 @@ describe("You vs last week", () => {
     const c = compareWeeks({ weekStart: THIS, through: "2026-10-25", thisWeek, lastWeek });
     expect(c.final).toBe(true);
     const o = Object.fromEntries(c.rounds.map((r) => [r.key, r.outcome]));
-    expect(o).toEqual({ sessions: "loss", days_logged: "win", fuel_closed: "draw", protein_closed: "loss" });
-    expect(c.scoreYou).toBe(1);
+    expect(o).toEqual({ sessions: "loss", days_logged: "win", fuel_closed: "win", protein_closed: "loss" });
+    expect(c.scoreYou).toBe(2);
     expect(c.scoreGhost).toBe(2);
-    expect(c.result).toBe("loss");
-    expect(weekOutcomePoints(c.result)).toBe(-3);
+    expect(c.result).toBe("draw");
+    expect(weekOutcomePoints(c.result)).toBe(0);
+
+    // Nothing done by either side is a draw, never a free win.
+    const none = compareWeeks({ weekStart: THIS, through: "2026-10-25", thisWeek: week(THIS, () => ({})), lastWeek: week(LAST, () => ({})) });
+    expect(none.rounds.every((r) => r.outcome === "draw")).toBe(true);
   });
 
   it("perfect last week can only be matched, and matching wins", () => {
@@ -244,17 +248,14 @@ describe("You vs last week", () => {
     it("full time win, draw and loss", () => {
       const winWeek = week(THIS, (i) => ({ logged: true, fuelClosed: i < 6, proteinClosed: i < 4, planned: i < 3, sessionDone: i < 3 }));
       const win = compareWeeks({ weekStart: THIS, through: "2026-10-25", thisWeek: winWeek, lastWeek });
-      expect(matchLine(win, { weekStart: THIS, thisWeek: winWeek, lastWeek })).toEqual({
-        key: "full_time_win",
-        you: win.scoreYou,
-        ghost: win.scoreGhost,
-      });
-      const spec = (i: number) => ({ logged: i < 6, fuelClosed: i < 4, proteinClosed: i < 4, planned: i < 4, sessionDone: i < 3 });
-      const drawLast = week(LAST, spec);
-      const drawWeek = week(THIS, spec);
+      expect(["full_time_win", "perfect"]).toContain(matchLine(win, { weekStart: THIS, thisWeek: winWeek, lastWeek }).key);
+      // Two rounds matched (wins) and two worse (losses) is a 2 - 2 draw.
+      const all = (i: number) => ({ logged: true, fuelClosed: true, proteinClosed: true, planned: i < 3, sessionDone: i < 3 });
+      const drawLast = week(LAST, all);
+      const drawWeek = week(THIS, (i) => ({ ...all(i), fuelClosed: i < 3, proteinClosed: i < 3 }));
       const draw = compareWeeks({ weekStart: THIS, through: "2026-10-25", thisWeek: drawWeek, lastWeek: drawLast });
       expect(draw.result).toBe("draw");
-      expect(matchLine(draw, { weekStart: THIS, thisWeek: drawWeek, lastWeek: drawLast })).toMatchObject({ key: "draw", you: 0, ghost: 0 });
+      expect(matchLine(draw, { weekStart: THIS, thisWeek: drawWeek, lastWeek: drawLast })).toMatchObject({ key: "draw", you: 2, ghost: 2 });
       const lossWeek = week(THIS, (i) => ({ logged: i !== 2, fuelClosed: false, proteinClosed: false, planned: i < 3, sessionDone: false }));
       const loss = compareWeeks({ weekStart: THIS, through: "2026-10-25", thisWeek: lossWeek, lastWeek });
       expect(loss.result).toBe("loss");

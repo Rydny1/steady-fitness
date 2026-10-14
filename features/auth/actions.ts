@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { claimSignupSlot } from "@/lib/signup";
 import { copy } from "@/content/copy";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -64,6 +66,50 @@ export async function updatePassword(
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { error: copy.errors.generic };
   redirect("/today");
+}
+
+const signUpSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email().max(254),
+    password: z.string().min(12).max(200),
+    confirm: z.string().max(200),
+    agree: z.literal("on"),
+  })
+  .refine((v) => v.password === v.confirm);
+
+/**
+ * Normal sign-up: email and a 12+ character password, explicit consent for health data
+ * (GDPR Art. 9). Created confirmed (no email round trip yet), limited to 5 new accounts an hour
+ * per address, then signed in. Two-step sign-in is set up on the next screen.
+ */
+export async function createAccount(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = signUpSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+    agree: formData.get("agree"),
+  });
+  if (!parsed.success) return { error: copy.login.signupInvalid };
+  if (!(await claimSignupSlot())) return { error: copy.errors.tooFast };
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: true,
+  });
+  if (error) return { error: copy.login.signupTaken };
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (signInError) return { error: copy.login.error };
+  redirect("/mfa");
 }
 
 export async function signOut(): Promise<void> {

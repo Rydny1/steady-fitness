@@ -5,7 +5,7 @@ import { buildCsp } from "@/lib/csp";
 // Runs on every page request: CSP nonce, session refresh, login and MFA gate.
 // Route handlers under /api do their own auth and return 401 JSON.
 
-const PUBLIC_PATHS = ["/login", "/auth/confirm", "/auth/forgot-password"];
+const PUBLIC_PATHS = ["/login", "/signup", "/privacy", "/auth/confirm", "/auth/forgot-password"];
 
 function isPublic(path: string) {
   return PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`));

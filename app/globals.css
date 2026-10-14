@@ -14,6 +14,14 @@
   --protein: #2563eb;
   --train: #e5432d;
   --train-soft: #fde7e3;
+  --fuel-soft: #e7f3ec;
+  --fuel-ink: #0b6e3f;
+  --ink-line: #2a2e33;
+  --ink-faint: #6b7178;
+  --ink-soft: #e6e8eb;
+  --dash: #c4c8cd;
+  --faint: #9aa0a6;
+  --warn: #8a5a00;
   --amber: #f2b300;
   --danger: #c2301f;
   --nav-h: 96px;
