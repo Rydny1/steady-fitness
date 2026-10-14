@@ -1,63 +1,53 @@
 import type { Config } from "tailwindcss";
 
+// Every colour comes from the tokens in app/globals.css (DESIGN.md > Tokens).
 export default {
-  darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./features/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
-        },
+        bg: "var(--bg)",
+        card: "var(--card)",
+        ink: "var(--ink)",
+        "ink-2": "var(--ink-2)",
+        muted: "var(--muted)",
+        "muted-dark": "var(--muted-dark)",
+        line: "var(--line)",
+        fuel: "var(--fuel)",
+        protein: "var(--protein)",
+        train: "var(--train)",
+        "train-soft": "var(--train-soft)",
+        amber: "var(--amber)",
+        danger: "var(--danger)",
+      },
+      fontFamily: {
+        sans: ["var(--font-hanken)", "system-ui", "sans-serif"],
+        num: ["var(--font-barlow)", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        nav: ["12px", { lineHeight: "1.3" }],
+        caption: ["13px", { lineHeight: "1.35" }],
+        small: ["15px", { lineHeight: "1.4" }],
+        body: ["17px", { lineHeight: "1.4" }],
+        section: ["22px", { lineHeight: "1.2" }],
+        sub: ["28px", { lineHeight: "1.15" }],
+        title: ["34px", { lineHeight: "1.1" }],
+        form: ["56px", { lineHeight: "0.95" }],
+        score: ["72px", { lineHeight: "0.95" }],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        hero: "28px",
+        list: "24px",
+        tile: "20px",
+        inner: "18px",
+        ctl: "16px",
       },
+      maxWidth: { app: "520px" },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 } satisfies Config;

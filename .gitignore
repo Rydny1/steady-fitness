@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# secrets and local files
+.env*
+!.env.example
+ACCOUNT.local.txt
+coverage/
+playwright-report/
+test-results/
+.vercel
