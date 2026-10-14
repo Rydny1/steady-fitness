@@ -1,10 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { todayRiga } from "@/lib/dates";
 import { buildZip, type ZipEntry } from "@/lib/zip";
 
 // All photos in one zip. Downloads each file through the user's own session (RLS).
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Downloads start from our own pages. Refuse requests that began on another site.
+  const site = req.headers.get("sec-fetch-site");
+  if (site && site !== "same-origin" && site !== "none") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

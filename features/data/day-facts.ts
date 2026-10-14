@@ -4,6 +4,7 @@ import type { Database, Row, SessionKeyT } from "@/lib/supabase/types";
 import { dayOfTimestamp, isoWeekday, rangeDays } from "@/lib/dates";
 import { computeRings, sessionStatus, type DayRecord } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { pageAll } from "@/lib/page-all";
 
 type Db = SupabaseClient<Database>;
 
@@ -73,12 +74,16 @@ export async function loadDayFacts(
       .eq("user_id", userId)
       .gte("day", from)
       .lte("day", to),
-    supabase
-      .from("activity_entries")
-      .select("day,activity_type,session_key,duration_min,kcal_burned")
-      .eq("user_id", userId)
-      .gte("day", from)
-      .lte("day", to),
+    pageAll((a, b) =>
+      supabase
+        .from("activity_entries")
+        .select("day,activity_type,session_key,duration_min,kcal_burned")
+        .eq("user_id", userId)
+        .gte("day", from)
+        .lte("day", to)
+        .order("created_at")
+        .range(a, b),
+    ),
     supabase
       .from("workout_sessions")
       .select("day,session_key,started_at,finished_at")
@@ -86,18 +91,27 @@ export async function loadDayFacts(
       .gte("day", from)
       .lte("day", to)
       .not("finished_at", "is", null),
-    supabase
-      .from("logs")
-      .select("day,created_at")
-      .eq("user_id", userId)
-      .gte("day", from)
-      .lte("day", to),
-    supabase
-      .from("habit_checks")
-      .select("day")
-      .eq("user_id", userId)
-      .gte("day", from)
-      .lte("day", to),
+    pageAll((a, b) =>
+      supabase
+        .from("logs")
+        .select("day,created_at")
+        .eq("user_id", userId)
+        .gte("day", from)
+        .lte("day", to)
+        .order("created_at")
+        .range(a, b),
+    ),
+    pageAll((a, b) =>
+      supabase
+        .from("habit_checks")
+        .select("day,habit_id")
+        .eq("user_id", userId)
+        .gte("day", from)
+        .lte("day", to)
+        .order("day")
+        .order("habit_id")
+        .range(a, b),
+    ),
     supabase
       .from("day_checkins")
       .select("day,sick,sleep_hours")
@@ -119,11 +133,11 @@ export async function loadDayFacts(
   const targetRows = targets.data ?? [];
 
   const foodBy = new Map((food.data ?? []).map((r) => [r.day ?? "", r] as const));
-  const actsBy = groupBy(acts.data ?? [], (r) => r.day);
+  const actsBy = groupBy(acts ?? [], (r) => r.day);
   const sessBy = groupBy(sessions.data ?? [], (r) => r.day);
-  const logsBy = groupBy(logs.data ?? [], (r) => r.day);
+  const logsBy = groupBy(logs ?? [], (r) => r.day);
   const checkCount = new Map<string, number>();
-  for (const c of checks.data ?? []) checkCount.set(c.day, (checkCount.get(c.day) ?? 0) + 1);
+  for (const c of checks ?? []) checkCount.set(c.day, (checkCount.get(c.day) ?? 0) + 1);
   const weighed = new Set((weights.data ?? []).map((w) => w.measured_on));
   const checkinBy = new Map((checkins.data ?? []).map((c) => [c.day, c] as const));
 

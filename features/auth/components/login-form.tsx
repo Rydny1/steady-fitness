@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { signIn, type FormState } from "../actions";
 import { Field } from "@/components/ui/field";
+import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
 
@@ -22,10 +23,9 @@ export function LoginForm() {
           inputMode="email"
           required
         />
-        <Field
+        <PasswordField
           label={copy.login.password}
           name="password"
-          type="password"
           autoComplete="current-password"
           required
         />

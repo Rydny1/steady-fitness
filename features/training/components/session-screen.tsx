@@ -192,7 +192,7 @@ export function SessionScreen({
           <X size={20} strokeWidth={2} aria-hidden="true" />
         </Link>
         <div className="flex-1">
-          <div className="text-body font-semibold">{title}</div>
+          <h1 className="text-body font-semibold">{title}</h1>
           <div className="text-[14px] text-muted">
             Exercise {index + 1} of {list.length}
           </div>

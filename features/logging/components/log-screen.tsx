@@ -283,6 +283,7 @@ export function LogScreen({
 
   return (
     <main className="flex min-h-dvh flex-col">
+      <h1 className="sr-only">{copy.log.title}</h1>
       <div className="flex items-center justify-between px-4 pt-[52px]">
         <Link
           href="/today"

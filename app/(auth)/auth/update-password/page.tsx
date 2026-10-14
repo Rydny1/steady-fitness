@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { updatePassword, type FormState } from "@/features/auth/actions";
-import { Field } from "@/components/ui/field";
+import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
 
@@ -17,10 +17,9 @@ export default function UpdatePasswordPage() {
       </h1>
       <p className="mt-3 text-body text-muted">{copy.login.updateSub}</p>
       <form action={action} className="mt-8 flex flex-col gap-4">
-        <Field
+        <PasswordField
           label={copy.login.password}
           name="password"
-          type="password"
           autoComplete="new-password"
           minLength={12}
           required

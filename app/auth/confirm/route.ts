@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const nextParam = searchParams.get("next") ?? "/today";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/today";
+  // Only a plain in-app path. A double slash or a slash and backslash is read by browsers as another site.
+  const safe = nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.includes("\\");
+  const next = safe ? nextParam : "/today";
 
   if (tokenHash && type) {
     const supabase = await createClient();
