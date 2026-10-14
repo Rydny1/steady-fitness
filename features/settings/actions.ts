@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { todayRiga } from "@/lib/dates";
+import { ageOn, todayRiga } from "@/lib/dates";
+import { computeTargets } from "@/features/nutrition/targets";
 
 export type SettingsOutcome =
   | { ok: true }
@@ -151,6 +152,74 @@ export async function saveNotificationPrefs(input: unknown): Promise<SettingsOut
   if (error) return { ok: false, reason: "failed" };
   await supabase.from("profiles").update({ wake_time: parsed.data.wakeTime }).eq("user_id", user.id);
   revalidatePath("/settings");
+  return { ok: true };
+}
+
+const detailsSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  heightCm: z.number().min(120).max(230),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  sex: z.enum(["male", "female"]),
+  goalKg: z.number().min(35).max(250),
+  recalc: z.boolean(),
+});
+
+/** "About you": the details onboarding may have skipped. Optionally recalculates the budget. */
+export async function saveProfileDetails(input: unknown): Promise<SettingsOutcome> {
+  const { supabase, user } = await userOrNull();
+  if (!user) return { ok: false, reason: "signed_out" };
+  const parsed = detailsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const v = parsed.data;
+
+  const today = todayRiga();
+  const age = ageOn(v.birthDate, today);
+  if (age < 13 || age > 100) return { ok: false, reason: "invalid" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      display_name: v.name,
+      height_cm: v.heightCm,
+      birth_date: v.birthDate,
+      sex: v.sex,
+      goal_weight_kg: v.goalKg,
+    })
+    .eq("user_id", user.id);
+  if (error) return { ok: false, reason: "failed" };
+
+  // Everything is real now, so the "skipped" reminder goes away.
+  await supabase.from("user_flags").delete().eq("key", "profile_skipped");
+
+  if (v.recalc) {
+    const { data: w } = await supabase
+      .from("measurements")
+      .select("weight_kg")
+      .not("weight_kg", "is", null)
+      .order("measured_on", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (w?.weight_kg) {
+      const t = computeTargets({
+        sex: v.sex,
+        weightKg: Number(w.weight_kg),
+        heightCm: v.heightCm,
+        ageYears: age,
+        goalWeightKg: v.goalKg,
+      });
+      await supabase.from("targets").upsert(
+        {
+          effective_from: today,
+          bmr_kcal: t.bmrKcal,
+          budget_kcal: t.budgetKcal,
+          protein_g: t.proteinG,
+        },
+        { onConflict: "user_id,effective_from" },
+      );
+    }
+  }
+  revalidatePath("/settings");
+  revalidatePath("/today");
   return { ok: true };
 }
 

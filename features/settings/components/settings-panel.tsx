@@ -9,6 +9,7 @@ import {
   saveHabits,
   saveNotificationPrefs,
   savePlan,
+  saveProfileDetails,
   saveTargets,
   type SettingsOutcome,
 } from "../actions";
@@ -34,6 +35,8 @@ export type PanelProps = {
   mfaOn: boolean;
   email: string;
   adaptiveOn: boolean;
+  about: { name: string; heightCm: number; birthDate: string; sex: "male" | "female"; goalKg: number };
+  skipped: string[];
 };
 
 const SESSION_OPTIONS: { key: SessionKeyT; label: string }[] = [
@@ -56,7 +59,7 @@ const KIND_LABEL: Record<NotifyKindT, string> = {
   photo_day: "Photo day, every 2 weeks",
 };
 
-type Sheet = null | "targets" | "plan" | "habits" | "notifications" | "privacy" | "delete" | "import";
+type Sheet = null | "about" | "targets" | "plan" | "habits" | "notifications" | "privacy" | "delete" | "import";
 
 export function SettingsPanel(p: PanelProps) {
   const router = useRouter();
@@ -125,6 +128,7 @@ export function SettingsPanel(p: PanelProps) {
       {group(
         copy.settings.targets,
         <>
+          {row("About you", p.skipped.length > 0 ? "Add details" : "Edit", () => setSheet("about"))}
           {row("Daily budget", `${p.budgetKcal.toLocaleString("en-GB")} kcal`, () => setSheet("targets"))}
           {row("Protein", `${p.proteinG} g`, () => setSheet("targets"))}
           {row("Goal weight", `${p.goalKg} kg`, () => setSheet("targets"), undefined, true)}
@@ -170,6 +174,9 @@ export function SettingsPanel(p: PanelProps) {
         </button>
       </form>
 
+      {sheet === "about" ? (
+        <AboutSheet p={p} pending={pending} error={error} onClose={() => setSheet(null)} onSave={(v) => run(() => saveProfileDetails(v))} />
+      ) : null}
       {sheet === "targets" ? (
         <TargetsSheet p={p} pending={pending} error={error} onClose={() => setSheet(null)} onSave={(v) => run(() => saveTargets(v))} />
       ) : null}
@@ -243,6 +250,98 @@ function ErrorLine({ error }: { error: string | null }) {
       {error}
     </p>
   ) : null;
+}
+
+function AboutSheet({
+  p,
+  pending,
+  error,
+  onClose,
+  onSave,
+}: {
+  p: PanelProps;
+  pending: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSave: (v: {
+    name: string;
+    heightCm: number;
+    birthDate: string;
+    sex: "male" | "female";
+    goalKg: number;
+    recalc: boolean;
+  }) => void;
+}) {
+  const [name, setName] = useState(p.about.name);
+  const [height, setHeight] = useState(String(p.about.heightCm));
+  const [birth, setBirth] = useState(p.about.birthDate);
+  const [sex, setSex] = useState<"male" | "female">(p.about.sex);
+  const [goal, setGoal] = useState(String(p.about.goalKg));
+  const [recalc, setRecalc] = useState(true);
+  return (
+    <SheetFrame title="About you" onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave({
+            name,
+            heightCm: Number(height.replace(",", ".")),
+            birthDate: birth,
+            sex,
+            goalKg: Number(goal.replace(",", ".")),
+            recalc,
+          });
+        }}
+        className="flex flex-col gap-4"
+      >
+        {p.skipped.length > 0 ? (
+          <p className="text-small text-muted">
+            You skipped some questions, so Steady is using average numbers. Fill these in for a budget that fits you.
+          </p>
+        ) : null}
+        <label className="flex flex-col gap-2">
+          <span className="text-[14px] font-semibold">Name</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={inputCls} />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-2">
+            <span className="text-[14px] font-semibold">Height, cm</span>
+            <input value={height} onChange={(e) => setHeight(e.target.value)} inputMode="decimal" className={inputCls} />
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className="text-[14px] font-semibold">Goal weight, kg</span>
+            <input value={goal} onChange={(e) => setGoal(e.target.value)} inputMode="decimal" className={inputCls} />
+          </label>
+        </div>
+        <label className="flex flex-col gap-2">
+          <span className="text-[14px] font-semibold">Birth date</span>
+          <input type="date" value={birth} onChange={(e) => setBirth(e.target.value)} className={inputCls} />
+        </label>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Sex, for the calorie formula">
+          {(["male", "female"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={sex === s}
+              onClick={() => setSex(s)}
+              className={cn("h-12 rounded-full text-body font-semibold", sex === s ? "bg-ink text-white" : "bg-card text-ink")}
+            >
+              {s === "male" ? "Male" : "Female"}
+            </button>
+          ))}
+        </div>
+        <label className="flex min-h-11 items-center gap-3">
+          <input type="checkbox" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} className="m-0 h-6 w-6 accent-fuel" />
+          <span className="text-body">Recalculate my budget and protein</span>
+        </label>
+        <ErrorLine error={error} />
+        <Button type="submit" big disabled={pending} className="w-full">
+          Save
+        </Button>
+      </form>
+    </SheetFrame>
+  );
 }
 
 function TargetsSheet({

@@ -14,7 +14,7 @@ export const metadata = { title: "Profile" };
 export default async function SettingsPage() {
   const { supabase, user, profile } = await requireProfile();
 
-  const [targets, plan, habits, prefs, ledger, trophies, logged, weights, factors, adaptiveFlag] =
+  const [targets, plan, habits, prefs, ledger, trophies, logged, weights, factors, adaptiveFlag, skippedFlag] =
     await Promise.all([
       supabase
         .from("targets")
@@ -35,6 +35,7 @@ export default async function SettingsPage() {
         .order("measured_on"),
       supabase.auth.mfa.listFactors(),
       supabase.from("user_flags").select("value").eq("key", "adaptive_budget").maybeSingle(),
+      supabase.from("user_flags").select("value").eq("key", "profile_skipped").maybeSingle(),
     ]);
 
   const w = weights.data ?? [];
@@ -84,6 +85,14 @@ export default async function SettingsPage() {
         wakeTime={profile.wake_time}
         mfaOn={(factors.data?.totp ?? []).some((f) => f.status === "verified")}
         email={user.email ?? ""}
+        about={{
+          name: profile.display_name,
+          heightCm: Number(profile.height_cm),
+          birthDate: profile.birth_date,
+          sex: profile.sex,
+          goalKg: Number(profile.goal_weight_kg),
+        }}
+        skipped={(skippedFlag.data?.value as { fields?: string[] } | null)?.fields ?? []}
         adaptiveOn={(adaptiveFlag.data?.value as { enabled?: boolean } | null)?.enabled !== false}
       />
       <p className="sr-only">{copy.settings.title}</p>
