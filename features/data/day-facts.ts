@@ -28,6 +28,11 @@ export type DayFacts = {
   sick: boolean;
   sleepHours: number | null;
   firstSessionStartHour: number | null;
+  /** Minutes after midnight (Riga) of logs created on the day itself. */
+  logMinutes: number[];
+  /** Minutes after midnight of gym session starts. */
+  gymStartMinutes: number[];
+  weightLogged: boolean;
 };
 
 export type Targets = Pick<Row<"targets">, "effective_from" | "bmr_kcal" | "budget_kcal" | "protein_g">;
@@ -48,34 +53,64 @@ export function planKey(plan: PlanMap, day: string): SessionKeyT | null {
   return !key || key === "rest" || key === "stretch" ? null : key;
 }
 
-/** Loads the facts for each day in [from, to], in order. Reads only, through RLS. */
+/** Loads the facts for each day in [from, to], in order. Every query filters by user id, so the same
+ * code is safe with the user's session (RLS) and with the cron secret-key client. */
 export async function loadDayFacts(
   supabase: Db,
+  userId: string,
   from: string,
   to: string,
 ): Promise<DayFacts[]> {
-  const [targets, plan, food, acts, sessions, logs, checks, checkins] = await Promise.all([
-    supabase.from("targets").select("effective_from,bmr_kcal,budget_kcal,protein_g"),
-    supabase.from("weekly_plan").select("weekday,session_key"),
-    supabase.from("v_day_food").select("day,kcal_in,protein_g").gte("day", from).lte("day", to),
+  const [targets, plan, food, acts, sessions, logs, checks, checkins, weights] = await Promise.all([
+    supabase
+      .from("targets")
+      .select("effective_from,bmr_kcal,budget_kcal,protein_g")
+      .eq("user_id", userId),
+    supabase.from("weekly_plan").select("weekday,session_key").eq("user_id", userId),
+    supabase
+      .from("v_day_food")
+      .select("day,kcal_in,protein_g")
+      .eq("user_id", userId)
+      .gte("day", from)
+      .lte("day", to),
     supabase
       .from("activity_entries")
       .select("day,activity_type,session_key,duration_min,kcal_burned")
+      .eq("user_id", userId)
       .gte("day", from)
       .lte("day", to),
     supabase
       .from("workout_sessions")
       .select("day,session_key,started_at,finished_at")
+      .eq("user_id", userId)
       .gte("day", from)
       .lte("day", to)
       .not("finished_at", "is", null),
-    supabase.from("logs").select("day,created_at").gte("day", from).lte("day", to),
-    supabase.from("habit_checks").select("day").gte("day", from).lte("day", to),
+    supabase
+      .from("logs")
+      .select("day,created_at")
+      .eq("user_id", userId)
+      .gte("day", from)
+      .lte("day", to),
+    supabase
+      .from("habit_checks")
+      .select("day")
+      .eq("user_id", userId)
+      .gte("day", from)
+      .lte("day", to),
     supabase
       .from("day_checkins")
       .select("day,sick,sleep_hours")
+      .eq("user_id", userId)
       .gte("day", from)
       .lte("day", to),
+    supabase
+      .from("measurements")
+      .select("measured_on")
+      .eq("user_id", userId)
+      .not("weight_kg", "is", null)
+      .gte("measured_on", from)
+      .lte("measured_on", to),
   ]);
 
   const planMap: PlanMap = new Map(
@@ -89,6 +124,7 @@ export async function loadDayFacts(
   const logsBy = groupBy(logs.data ?? [], (r) => r.day);
   const checkCount = new Map<string, number>();
   for (const c of checks.data ?? []) checkCount.set(c.day, (checkCount.get(c.day) ?? 0) + 1);
+  const weighed = new Set((weights.data ?? []).map((w) => w.measured_on));
   const checkinBy = new Map((checkins.data ?? []).map((c) => [c.day, c] as const));
 
   return rangeDays(from, to).map((day): DayFacts => {
@@ -129,6 +165,13 @@ export async function loadDayFacts(
       sick: ck?.sick ?? false,
       sleepHours: ck?.sleep_hours ?? null,
       firstSessionStartHour: starts.length > 0 ? Math.min(...starts) : null,
+      logMinutes: dayLogs
+        .filter((l) => dayOfTimestamp(l.created_at) === day)
+        .map((l) => Math.round(hourRiga(l.created_at) * 60)),
+      gymStartMinutes: daySess
+        .filter((s) => s.session_key.startsWith("gym"))
+        .map((s) => Math.round(hourRiga(s.started_at) * 60)),
+      weightLogged: weighed.has(day),
     };
   });
 }

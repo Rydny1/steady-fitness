@@ -35,7 +35,7 @@ const base: DayScoreInput = {
   sick: false,
   prev: {
     callus: 50,
-    division: "sunday_league",
+    division: "starting_line",
     careerDays: 0,
     streak: 0,
     bestStreak: 0,
@@ -148,7 +148,7 @@ describe("Callus clamping", () => {
   it("clamps at 100", () => {
     const s = scoreDay(day({}, { callus: 97 }));
     expect(s.callus).toBe(100);
-    expect(s.form.name).toBe("Unplayable");
+    expect(s.form.name).toBe("Peak form");
   });
 
   it("clampCallus rounds and bounds", () => {
@@ -163,7 +163,7 @@ describe("sick day", () => {
     const s = scoreDay(
       day(
         { sick: true, logged: false, loggedOnDay: false },
-        { streak: 8, bestStreak: 10, callus: 44, careerDays: 20, division: "academy", offFormDays: 2 },
+        { streak: 8, bestStreak: 10, callus: 44, careerDays: 20, division: "showing_up", offFormDays: 2 },
       ),
     );
     expect(s.sick).toBe(true);
@@ -172,7 +172,7 @@ describe("sick day", () => {
     expect(s.streak).toBe(8);
     expect(s.bestStreak).toBe(10);
     expect(s.careerDays).toBe(20);
-    expect(s.division).toBe("academy");
+    expect(s.division).toBe("showing_up");
     expect(s.offFormDays).toBe(2);
     expect(s.promoted || s.dropped).toBe(false);
     expect(pointsForDay(day({ sick: true })).points).toBe(0);
@@ -236,13 +236,13 @@ describe("form bands", () => {
     expect(formFor(59).name).toBe("Finding form");
     expect(formFor(60).name).toBe("In form");
     expect(formFor(84).name).toBe("In form");
-    expect(formFor(85).name).toBe("Unplayable");
-    expect(formFor(100).name).toBe("Unplayable");
+    expect(formFor(85).name).toBe("Peak form");
+    expect(formFor(100).name).toBe("Peak form");
     expect(formFor(-4).key).toBe("off_form");
-    expect(formFor(140).key).toBe("unplayable");
+    expect(formFor(140).key).toBe("peak_form");
   });
 
-  it("rotates Gaffer lines by day", () => {
+  it("rotates Coach lines by day", () => {
     expect(formLineIndex(3, 0)).toBe(0);
     expect(formLineIndex(3, 4)).toBe(1);
     expect(formLineIndex(3, -1)).toBe(2);
@@ -252,60 +252,60 @@ describe("form bands", () => {
 
 describe("divisions", () => {
   it("promotes when career days reach the mark and Callus clears the bar", () => {
-    const r = applyDivision({ division: "sunday_league", careerDays: 7, offFormDays: 0 }, 60);
-    expect(r).toMatchObject({ division: "academy", promoted: true, dropped: false, from: "sunday_league", careerDays: 7 });
+    const r = applyDivision({ division: "starting_line", careerDays: 7, offFormDays: 0 }, 60);
+    expect(r).toMatchObject({ division: "showing_up", promoted: true, dropped: false, from: "starting_line", careerDays: 7 });
   });
 
   it("does not promote under the Callus bar or before the mark", () => {
-    expect(applyDivision({ division: "sunday_league", careerDays: 7, offFormDays: 0 }, 59).promoted).toBe(false);
-    expect(applyDivision({ division: "sunday_league", careerDays: 6, offFormDays: 0 }, 90).promoted).toBe(false);
+    expect(applyDivision({ division: "starting_line", careerDays: 7, offFormDays: 0 }, 59).promoted).toBe(false);
+    expect(applyDivision({ division: "starting_line", careerDays: 6, offFormDays: 0 }, 90).promoted).toBe(false);
   });
 
   it("uses the higher bars further up", () => {
-    expect(applyDivision({ division: "starter", careerDays: 120, offFormDays: 0 }, 64).promoted).toBe(false);
-    expect(applyDivision({ division: "starter", careerDays: 120, offFormDays: 0 }, 65).division).toBe("captain");
-    expect(applyDivision({ division: "captain", careerDays: 180, offFormDays: 0 }, 69).promoted).toBe(false);
-    expect(applyDivision({ division: "captain", careerDays: 180, offFormDays: 0 }, 70).division).toBe("champions_league");
-    expect(applyDivision({ division: "champions_league", careerDays: 365, offFormDays: 0 }, 79).promoted).toBe(false);
-    expect(applyDivision({ division: "champions_league", careerDays: 365, offFormDays: 0 }, 80).division).toBe("ballon_dor");
+    expect(applyDivision({ division: "strong", careerDays: 120, offFormDays: 0 }, 64).promoted).toBe(false);
+    expect(applyDivision({ division: "strong", careerDays: 120, offFormDays: 0 }, 65).division).toBe("disciplined");
+    expect(applyDivision({ division: "disciplined", careerDays: 180, offFormDays: 0 }, 69).promoted).toBe(false);
+    expect(applyDivision({ division: "disciplined", careerDays: 180, offFormDays: 0 }, 70).division).toBe("proven");
+    expect(applyDivision({ division: "proven", careerDays: 365, offFormDays: 0 }, 79).promoted).toBe(false);
+    expect(applyDivision({ division: "proven", careerDays: 365, offFormDays: 0 }, 80).division).toBe("one_year");
   });
 
   it("promotes one step a day at most", () => {
-    const r = applyDivision({ division: "academy", careerDays: 100, offFormDays: 0 }, 70);
-    expect(r.division).toBe("reserves");
+    const r = applyDivision({ division: "showing_up", careerDays: 100, offFormDays: 0 }, 70);
+    expect(r.division).toBe("building");
     const r2 = applyDivision({ division: r.division, careerDays: r.careerDays, offFormDays: 0 }, 70);
-    expect(r2.division).toBe("first_team");
-    expect(r2.from).toBe("reserves");
+    expect(r2.division).toBe("consistent");
+    expect(r2.from).toBe("building");
   });
 
   it("no promotion past the top", () => {
-    const r = applyDivision({ division: "ballon_dor", careerDays: 900, offFormDays: 0 }, 100);
+    const r = applyDivision({ division: "one_year", careerDays: 900, offFormDays: 0 }, 100);
     expect(r.promoted).toBe(false);
-    expect(r.division).toBe("ballon_dor");
+    expect(r.division).toBe("one_year");
   });
 
   it("off form 3 days running drops one division and resets career days to its mark", () => {
-    const two = applyDivision({ division: "reserves", careerDays: 30, offFormDays: 1 }, 20);
-    expect(two).toMatchObject({ dropped: false, offFormDays: 2, division: "reserves" });
-    const three = applyDivision({ division: "reserves", careerDays: 30, offFormDays: 2 }, 20);
-    expect(three).toMatchObject({ dropped: true, division: "academy", careerDays: 7, offFormDays: 0, from: "reserves" });
+    const two = applyDivision({ division: "building", careerDays: 30, offFormDays: 1 }, 20);
+    expect(two).toMatchObject({ dropped: false, offFormDays: 2, division: "building" });
+    const three = applyDivision({ division: "building", careerDays: 30, offFormDays: 2 }, 20);
+    expect(three).toMatchObject({ dropped: true, division: "showing_up", careerDays: 7, offFormDays: 0, from: "building" });
   });
 
   it("a good day resets the off-form counter", () => {
-    expect(applyDivision({ division: "reserves", careerDays: 30, offFormDays: 2 }, 30).offFormDays).toBe(0);
-    expect(applyDivision({ division: "reserves", careerDays: 30, offFormDays: 1 }, 29).offFormDays).toBe(2);
+    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 2 }, 30).offFormDays).toBe(0);
+    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 1 }, 29).offFormDays).toBe(2);
   });
 
   it("nothing to drop at Sunday League, the counter keeps running", () => {
-    const r = applyDivision({ division: "sunday_league", careerDays: 4, offFormDays: 5 }, 10);
-    expect(r).toMatchObject({ dropped: false, division: "sunday_league", careerDays: 4, offFormDays: 6 });
+    const r = applyDivision({ division: "starting_line", careerDays: 4, offFormDays: 5 }, 10);
+    expect(r).toMatchObject({ dropped: false, division: "starting_line", careerDays: 4, offFormDays: 6 });
   });
 
   it("promotion and drop on the same day: the drop wins, promotion never fires with Callus under 30", () => {
-    const r = applyDivision({ division: "academy", careerDays: 21, offFormDays: 2 }, 10);
+    const r = applyDivision({ division: "showing_up", careerDays: 21, offFormDays: 2 }, 10);
     expect(r.dropped).toBe(true);
     expect(r.promoted).toBe(false);
-    expect(r.division).toBe("sunday_league");
+    expect(r.division).toBe("starting_line");
     expect(r.careerDays).toBe(0);
   });
 
@@ -313,14 +313,14 @@ describe("divisions", () => {
     const s = scoreDay(
       day(
         { logged: false, loggedOnDay: false },
-        { callus: 30, division: "reserves", careerDays: 30, offFormDays: 2 },
+        { callus: 30, division: "building", careerDays: 30, offFormDays: 2 },
       ),
     );
     expect(s.callus).toBe(18);
     expect(s.dropped).toBe(true);
-    expect(s.division).toBe("academy");
+    expect(s.division).toBe("showing_up");
     expect(s.careerDays).toBe(7);
-    expect(s.previousDivision).toBe("reserves");
+    expect(s.previousDivision).toBe("building");
   });
 
   it("scoreDay drives a promotion end to end, and a sub-bar day holds back", () => {
@@ -328,25 +328,25 @@ describe("divisions", () => {
     expect(up.callus).toBe(66);
     expect(up.careerDays).toBe(7);
     expect(up.promoted).toBe(true);
-    expect(up.division).toBe("academy");
+    expect(up.division).toBe("showing_up");
     const held = scoreDay(day({ eatenKcal: 1700, proteinG: 0, habitsDone: 0 }, { callus: 50, careerDays: 6 }));
     expect(held.callus).toBe(57);
     expect(held.promoted).toBe(false);
   });
 
   it("helpers", () => {
-    expect(divisionIndex("sunday_league")).toBe(0);
-    expect(divisionIndex("ballon_dor")).toBe(7);
-    expect(divisionMark("captain")).toBe(120);
-    expect(nextDivision("academy")).toBe("reserves");
-    expect(nextDivision("ballon_dor")).toBeNull();
-    expect(previousDivision("academy")).toBe("sunday_league");
-    expect(previousDivision("sunday_league")).toBeNull();
-    expect(daysToNextDivision({ division: "academy", careerDays: 10 })).toBe(11);
-    expect(daysToNextDivision({ division: "academy", careerDays: 40 })).toBe(0);
-    expect(daysToNextDivision({ division: "ballon_dor", careerDays: 400 })).toBeNull();
-    expect(nextDivisionBar("starter")).toBe(65);
-    expect(nextDivisionBar("ballon_dor")).toBeNull();
+    expect(divisionIndex("starting_line")).toBe(0);
+    expect(divisionIndex("one_year")).toBe(7);
+    expect(divisionMark("disciplined")).toBe(120);
+    expect(nextDivision("showing_up")).toBe("building");
+    expect(nextDivision("one_year")).toBeNull();
+    expect(previousDivision("showing_up")).toBe("starting_line");
+    expect(previousDivision("starting_line")).toBeNull();
+    expect(daysToNextDivision({ division: "showing_up", careerDays: 10 })).toBe(11);
+    expect(daysToNextDivision({ division: "showing_up", careerDays: 40 })).toBe(0);
+    expect(daysToNextDivision({ division: "one_year", careerDays: 400 })).toBeNull();
+    expect(nextDivisionBar("strong")).toBe(65);
+    expect(nextDivisionBar("one_year")).toBeNull();
   });
 });
 

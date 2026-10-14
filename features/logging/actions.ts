@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { overLimit } from "@/lib/rate-limit";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
 import { activityKcal } from "@/features/nutrition/targets";
+import { observe } from "@/features/insights/observer";
 import {
   saveEntriesSchema,
   type DraftItem,
@@ -236,6 +238,17 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
   revalidatePath("/today");
   revalidatePath("/progress");
   revalidatePath("/train");
+
+  // The Coach notices one true thing, after the response so logging stays fast.
+  const userId = auth.user.id;
+  const hasFood = foods.length > 0;
+  after(async () => {
+    try {
+      await observe(supabase, userId, new Date(), { justLogged: true, justLoggedFood: hasFood });
+    } catch (err) {
+      console.error("observer failed", err instanceof Error ? err.message : "unknown");
+    }
+  });
   return { ok: true, foodIds };
 }
 

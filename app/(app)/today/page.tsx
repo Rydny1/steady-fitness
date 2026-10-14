@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 import { requireProfile } from "@/lib/session";
+import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
 import { formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
@@ -8,6 +9,8 @@ import { FormCard } from "@/features/today/components/form-card";
 import { Promises } from "@/features/today/components/promises";
 import { LogList } from "@/features/today/components/log-list";
 import { CheckinCard } from "@/features/today/components/checkin-sheet";
+import { LevelCard } from "@/features/today/components/level-card";
+import { AdaptiveNote } from "@/features/today/components/adaptive-note";
 import { signedUrls } from "@/features/photos/signed-urls";
 import { copy } from "@/content/copy";
 
@@ -27,6 +30,9 @@ export default async function TodayPage() {
 
   return (
     <main>
+      {d.levelEvent ? (
+        <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
+      ) : null}
       <div className="flex items-center justify-between px-6 pt-14">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
         <Link
@@ -34,7 +40,7 @@ export default async function TodayPage() {
           aria-label="Profile"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-card text-body font-semibold"
         >
-          {profile.display_name.slice(0, 1).toUpperCase()}
+          {capitalize(profile.display_name.slice(0, 1))}
         </Link>
       </div>
       <h1 className="mx-6 mt-[6px] text-title font-bold tracking-[-0.8px]">
@@ -64,9 +70,11 @@ export default async function TodayPage() {
       </section>
 
       <FormCard d={d} />
+      {d.adaptiveNote ? <AdaptiveNote text={d.adaptiveNote} /> : null}
 
       <Link
         href={d.sessionKey ? `/train/${d.sessionKey}` : "/train"}
+        prefetch={false}
         className="mx-4 mt-4 flex items-center gap-[14px] rounded-list bg-card p-4"
       >
         <span className="flex h-12 w-12 flex-none items-center justify-center rounded-[14px] bg-train-soft">
@@ -89,6 +97,15 @@ export default async function TodayPage() {
         sickUsed={d.sickUsedThisMonth}
         show={d.hour >= 18}
       />
+      {d.photoDue ? (
+        <Link
+          href="/progress#photos"
+          className="mx-4 mt-4 flex min-h-[56px] items-center justify-between rounded-list bg-card px-[18px]"
+        >
+          <span className="text-body">{copy.progress.photoDay}</span>
+          <span className="text-small font-semibold">Add photo</span>
+        </Link>
+      ) : null}
       <Promises habits={d.habits} day={today} />
       <LogList foods={d.foods} activities={d.activities} photoUrls={photoUrls} />
     </main>

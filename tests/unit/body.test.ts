@@ -97,13 +97,13 @@ describe("goal date", () => {
     expect(p.daysAway).toBeGreaterThan(70);
     expect(p.daysAway).toBeLessThan(130);
     expect(p.kgPerWeek).toBeLessThan(0);
-    expect(goalLine(p)).toMatch(/^Goal 80 kg around \d{1,2} [A-Z][a-z]{2} at this pace\.$/);
+    expect(goalLine(p)).toMatch(/^At this pace, you'll reach 80 kg around [0-9]{1,2} [A-Z][a-z]{2}.$/);
   });
 
   it("flat or rising trend gives no date", () => {
     const flat = projectGoalDate({ entries: series(start, Array(21).fill(88)), today, goalKg: 80 });
     expect(flat.kind).toBe("no_date");
-    expect(goalLine(flat)).toBe("At this pace there's no goal date. The trend has to fall first.");
+    expect(goalLine(flat)).toBe("The trend needs to fall before a date makes sense.");
     const rising = projectGoalDate({
       entries: series(start, Array.from({ length: 21 }, (_, i) => 88 + i * 0.1)),
       today,

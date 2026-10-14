@@ -35,7 +35,7 @@ export const FORM_BANDS = [
   { key: "off_form", name: "Off form", from: 0 },
   { key: "finding_form", name: "Finding form", from: 30 },
   { key: "in_form", name: "In form", from: 60 },
-  { key: "unplayable", name: "Unplayable", from: 85 },
+  { key: "peak_form", name: "Peak form", from: 85 },
 ] as const;
 
 /** Callus under this counts as an off-form day for the drop rule. */
@@ -47,14 +47,14 @@ export type DivisionRule = { division: DivisionT; days: number; bar: number };
 
 /** Ordered lowest to highest (PRODUCT.md > Divisions). */
 export const DIVISIONS: readonly DivisionRule[] = [
-  { division: "sunday_league", days: 0, bar: 0 },
-  { division: "academy", days: 7, bar: 60 },
-  { division: "reserves", days: 21, bar: 60 },
-  { division: "first_team", days: 45, bar: 60 },
-  { division: "starter", days: 75, bar: 60 },
-  { division: "captain", days: 120, bar: 65 },
-  { division: "champions_league", days: 180, bar: 70 },
-  { division: "ballon_dor", days: 365, bar: 80 },
+  { division: "starting_line", days: 0, bar: 0 },
+  { division: "showing_up", days: 7, bar: 60 },
+  { division: "building", days: 21, bar: 60 },
+  { division: "consistent", days: 45, bar: 60 },
+  { division: "strong", days: 75, bar: 60 },
+  { division: "disciplined", days: 120, bar: 65 },
+  { division: "proven", days: 180, bar: 70 },
+  { division: "one_year", days: 365, bar: 80 },
 ];
 
 /** Streak milestones (PRODUCT.md > Streak). */
@@ -156,5 +156,5 @@ export const TROPHIES = {
   photoDiaryCount: 6,
 };
 
-/** Gaffer line rotation: lines per form band are picked by day number. */
+/** Coach line rotation: lines per form band are picked by day number. */
 export const FORM_LINES_ROTATE = true;

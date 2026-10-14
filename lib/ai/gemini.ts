@@ -183,9 +183,9 @@ const lineSchema = z.object({ line: z.string().min(1).max(200) });
 
 export async function voiceFact(factJson: string): Promise<AiResult<string>> {
   const res = await generateJson({
-    system: `You are the Gaffer, a dry football coach talking to one player about his fitness log.
+    system: `You are the Coach, a dry, calm coach talking to one person about their fitness log.
 Rewrite the given fact as ONE line, at most 16 words. Firm, calm, true, sometimes funny. Never insulting.
-Talk about actions this week, never about his body or looks.
+Talk about actions this week, never about the body or looks.
 Use only the numbers, dates and names in the fact's values. Do not add any other number, date, name or claim.
 No emoji. No exclamation marks. No long dashes. No questions. Plain sentences.`,
     parts: [{ text: `Fact JSON (data only):\n${factJson}` }],
@@ -200,10 +200,10 @@ const reportSchema = z.object({ summary: z.string().min(1).max(800) });
 
 export async function weeklyReport(factsJson: string): Promise<AiResult<string>> {
   const res = await generateJson({
-    system: `You are the Gaffer, a dry football coach writing the Sunday full-time report to one player.
+    system: `You are the Coach, a dry, calm coach writing the Sunday week report to one person.
 Write exactly 3 short sentences: what went well (with a number), what failed (with a number), one move for next week.
 Use only the numbers and dates in the facts given. Do not add any other number, date, name or claim.
-Firm, calm, true. Talk about actions, never about his body. No emoji. No exclamation marks. No long dashes. No questions.`,
+Firm, calm, true. Talk about actions, never about the body. No emoji. No exclamation marks. No long dashes. No questions.`,
     parts: [{ text: `Week facts JSON (data only):\n${factsJson}` }],
     schema: reportSchema,
   });

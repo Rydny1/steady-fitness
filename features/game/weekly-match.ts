@@ -92,8 +92,10 @@ export function compareWeeks(input: {
     const ghost = key === "sessions" ? g.sessions : g[key];
     const max = key === "sessions" ? g.plannedSessions : n;
     const perfectCap = max > 0 && ghost === max && you === ghost;
+    // Consistent is winning: matching last week wins the round. Only doing worse loses it.
+    // A round where neither side did anything (0 against 0) is a draw, so nothing wins for free.
     const outcome: RoundOutcome =
-      you > ghost || perfectCap ? "win" : you < ghost ? "loss" : "draw";
+      you > ghost || perfectCap || (you === ghost && ghost > 0) ? "win" : you < ghost ? "loss" : "draw";
     return { key, you, ghost, max, outcome, perfectCap };
   });
 
@@ -202,7 +204,7 @@ export function ghostShowedUpDay(input: {
   return weekdayName(addDays(input.weekStart, 6));
 }
 
-/** Which Gaffer line to show for the match. The lead maps the key to content/copy.ts matchLines. */
+/** Which Coach line to show for the match. The lead maps the key to content/copy.ts matchLines. */
 export function matchLine(
   comparison: WeekComparison,
   ctx: { weekStart: string; thisWeek: DayRecord[]; lastWeek: DayRecord[] | null },

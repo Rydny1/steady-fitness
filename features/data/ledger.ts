@@ -27,7 +27,7 @@ export type LedgerState = {
 export const START_STATE: LedgerState = {
   day: null,
   callus: CALLUS_START,
-  division: "sunday_league",
+  division: "starting_line",
   careerDays: 0,
   streak: 0,
   bestStreak: 0,
@@ -47,10 +47,11 @@ function readState(breakdown: Json): { bestStreak: number; offFormDays: number }
   return { bestStreak: 0, offFormDays: 0 };
 }
 
-export async function latestLedger(supabase: Db): Promise<LedgerState> {
+export async function latestLedger(supabase: Db, userId: string): Promise<LedgerState> {
   const { data } = await supabase
     .from("daily_scores")
     .select("day,callus,division,career_days,streak,breakdown")
+    .eq("user_id", userId)
     .order("day", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -75,32 +76,42 @@ const RESULT_MAP: Record<string, WeekResult> = {
 };
 
 /** Week results, oldest first. */
-export async function weekResults(supabase: Db): Promise<WeekResult[]> {
+export async function weekResults(supabase: Db, userId: string): Promise<WeekResult[]> {
   const { data } = await supabase
     .from("weekly_reviews")
     .select("week_start,result")
+    .eq("user_id", userId)
     .order("week_start", { ascending: true });
   return (data ?? []).map((r) => RESULT_MAP[r.result] ?? "no_ghost");
 }
 
-export async function loadTrophyInput(supabase: Db): Promise<TrophyInput> {
+export async function loadTrophyInput(supabase: Db, userId: string): Promise<TrophyInput> {
   const [logs, ledger, results, sessions, flags, trend, measures, sets, photos] =
     await Promise.all([
-      supabase.from("logs").select("id", { count: "exact", head: true }),
-      supabase.from("daily_scores").select("streak,breakdown"),
-      weekResults(supabase),
-      supabase.from("workout_sessions").select("id,day,session_key,started_at"),
-      supabase.from("user_flags").select("key"),
-      supabase.from("v_weight_trend").select("measured_on,weight_kg,avg_7d").order("measured_on"),
+      supabase.from("logs").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("daily_scores").select("streak,breakdown").eq("user_id", userId),
+      weekResults(supabase, userId),
+      supabase.from("workout_sessions").select("id,day,session_key,started_at").eq("user_id", userId),
+      supabase.from("user_flags").select("key").eq("user_id", userId),
+      supabase
+        .from("v_weight_trend")
+        .select("measured_on,weight_kg,avg_7d")
+        .eq("user_id", userId)
+        .order("measured_on"),
       supabase
         .from("measurements")
         .select("measured_on,waist_cm")
+        .eq("user_id", userId)
         .not("waist_cm", "is", null)
         .order("measured_on"),
-      supabase.from("workout_sets").select("session_id,exercise_slug,reps,weight_kg"),
+      supabase
+        .from("workout_sets")
+        .select("session_id,exercise_slug,reps,weight_kg")
+        .eq("user_id", userId),
       supabase
         .from("photos")
         .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
         .eq("kind", "progress"),
     ]);
 
@@ -151,8 +162,8 @@ export async function loadTrophyInput(supabase: Db): Promise<TrophyInput> {
   };
 }
 
-export async function trophyState(supabase: Db): Promise<Record<TrophyKey, boolean>> {
-  return evaluateTrophies(await loadTrophyInput(supabase));
+export async function trophyState(supabase: Db, userId: string): Promise<Record<TrophyKey, boolean>> {
+  return evaluateTrophies(await loadTrophyInput(supabase, userId));
 }
 
 export const TROPHY_TOTAL = TROPHY_KEYS.length;

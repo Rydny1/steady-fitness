@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Row, SessionKeyT } from "@/lib/supabase/types";
+import type { Database, DivisionT, Row, SessionKeyT } from "@/lib/supabase/types";
 import { addDays, diffDays, formatTimeRiga, rigaParts, weekStart } from "@/lib/dates";
 import {
   compareWeeks,
@@ -14,8 +14,8 @@ import {
   type WeekComparison,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
-import { chapters, gafferForm, matchLines, type FormName } from "@/content/copy";
-import { comebackLines, gafferLines, quotes } from "@/content/lines";
+import { chapters, coachForm, matchLines, type FormName } from "@/content/copy";
+import { comebackQuotes, quotes } from "@/content/lines";
 import { SESSION_NAMES } from "@/features/settings/defaults";
 import { loadDayFacts, ringsFor, sessionStatusFor, toRecord, type DayFacts } from "./day-facts";
 import { latestLedger, trophyState, weekResults, TROPHY_TOTAL } from "./ledger";
@@ -52,7 +52,7 @@ export type TodayData = {
   sessionKey: SessionKeyT | null;
   sessionName: string;
   line: TodayLine;
-  form: { name: FormName; callus: number; livePoints: number; gafferLine: string };
+  form: { name: FormName; callus: number; livePoints: number; coachLine: string };
   chapter: { n: number; name: string; toNext: { days: number; name: string } | null };
   match: { comparison: WeekComparison; line: string | null; winStreak: number };
   streak: number;
@@ -65,6 +65,14 @@ export type TodayData = {
   logCount: number;
   checkin: Row<"day_checkins"> | null;
   sickUsedThisMonth: number;
+  /** The last progress photo is 14 or more days old, or there is none. */
+  photoDue: boolean;
+  /** One level change not yet seen: a full-screen card shows it once. */
+  levelEvent: { kind: "promoted" | "dropped"; division: DivisionT; from: DivisionT } | null;
+  /** The Coach's latest true line today, from the Observer. */
+  observer: string | null;
+  /** This Monday's adaptive budget note, shown once. */
+  adaptiveNote: string | null;
 };
 
 const PLANNED_MINUTES: Record<SessionKeyT, number> = {
@@ -89,18 +97,15 @@ const ACTIVITY_NAMES: Record<Row<"activity_entries">["activity_type"], string> =
   other: "Activity",
 };
 
-/** Today's line: about 5 days a week the Gaffer, about 2 a real quote. Deterministic per day. */
+/**
+ * Today's line: one real quote a day, the person's name under it. Rotates daily, so nothing
+ * repeats inside the bank length (60 or more). On Off form days it draws from the gentler set.
+ */
 export function lineFor(day: string, formName: FormName): TodayLine {
   const n = diffDays(day, "2026-01-01");
-  const weekday = ((n % 7) + 7) % 7;
-  const quoteDay = weekday === 2 || weekday === 6;
-  if (quoteDay && formName !== "Off form" && quotes.length > 0) {
-    const q = quotes[((n % quotes.length) + quotes.length) % quotes.length];
-    if (q) return { text: q.text, byline: q.author };
-  }
-  const pool = formName === "Off form" ? comebackLines : gafferLines;
-  const l = pool[((n % pool.length) + pool.length) % pool.length];
-  return { text: l?.text ?? "", byline: "The Gaffer" };
+  const pool = formName === "Off form" && comebackQuotes.length >= 15 ? comebackQuotes : quotes;
+  const q = pool[((n % pool.length) + pool.length) % pool.length];
+  return { text: q?.text ?? "", byline: q?.author ?? "" };
 }
 
 export async function loadToday(
@@ -113,10 +118,10 @@ export async function loadToday(
   const lastStart = addDays(ws, -7);
   const monthStart = `${today.slice(0, 7)}-01`;
 
-  const [days, ledger, habits, checks, foods, acts, photos, checkin, sickMonth, results, trophies] =
+  const [days, ledger, habits, checks, foods, acts, photos, checkin, sickMonth, results, trophies, lastPhoto, flagRows, observerRow] =
     await Promise.all([
-      loadDayFacts(supabase, lastStart, today),
-      latestLedger(supabase),
+      loadDayFacts(supabase, profile.user_id, lastStart, today),
+      latestLedger(supabase, profile.user_id),
       supabase.from("habits").select("id,name,position").is("archived_at", null).order("position"),
       supabase.from("habit_checks").select("habit_id").eq("day", today),
       supabase
@@ -136,8 +141,23 @@ export async function loadToday(
         .select("day", { count: "exact", head: true })
         .eq("sick", true)
         .gte("day", monthStart),
-      weekResults(supabase),
-      trophyState(supabase),
+      weekResults(supabase, profile.user_id),
+      trophyState(supabase, profile.user_id),
+      supabase
+        .from("photos")
+        .select("taken_on")
+        .eq("kind", "progress")
+        .order("taken_on", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("user_flags").select("key,value").in("key", ["chapter_event", "adaptive_note"]),
+      supabase
+        .from("observer_notes")
+        .select("text")
+        .eq("day", today)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
   const facts = days.find((d) => d.day === today) ?? days[days.length - 1];
@@ -179,8 +199,8 @@ export async function loadToday(
   const callusLive = clampCallus(prev.callus + preview.points);
   const form = formFor(callusLive);
   const formName = form.name as FormName;
-  const lines = gafferForm[formName];
-  const gaffer =
+  const lines = coachForm[formName];
+  const coach =
     lines[formLineIndex(lines.length, diffDays(today, "2026-01-01"))] ?? lines[0] ?? "";
 
   const thisWeek = days.filter((d) => d.day >= ws).map((d) => toRecord(d, today));
@@ -196,6 +216,20 @@ export async function loadToday(
   const nextDiv = nextDivision(prev.division);
   const toNext = daysToNextDivision({ division: prev.division, careerDays: prev.careerDays });
   const chapter = chapters[prev.division];
+
+  const evFlag = (flagRows.data ?? []).find((f) => f.key === "chapter_event")?.value as
+    | { kind?: string; division?: DivisionT; from?: DivisionT; seen?: boolean }
+    | undefined;
+  let levelEvent: TodayData["levelEvent"] = null;
+  if (evFlag && evFlag.seen === false && evFlag.division && evFlag.from) {
+    if (evFlag.kind === "promoted" || evFlag.kind === "dropped") {
+      levelEvent = { kind: evFlag.kind, division: evFlag.division, from: evFlag.from };
+    }
+  }
+  const adFlag = (flagRows.data ?? []).find((f) => f.key === "adaptive_note")?.value as
+    | { text?: string; seen?: boolean }
+    | undefined;
+  const adaptive = adFlag && adFlag.seen === false && adFlag.text ? adFlag.text : null;
 
   const checked = new Set((checks.data ?? []).map((c) => c.habit_id));
   const photoByFood = new Map(
@@ -215,7 +249,7 @@ export async function loadToday(
     sessionKey: planned,
     sessionName: planned ? SESSION_NAMES[planned] : SESSION_NAMES.rest,
     line: lineFor(today, formName),
-    form: { name: formName, callus: callusLive, livePoints: preview.points, gafferLine: gaffer },
+    form: { name: formName, callus: callusLive, livePoints: preview.points, coachLine: coach },
     chapter: {
       n: chapter.n,
       name: chapter.name,
@@ -253,5 +287,9 @@ export async function loadToday(
     logCount: (foods.data?.length ?? 0) + (acts.data?.length ?? 0),
     checkin: checkin.data ?? null,
     sickUsedThisMonth: sickMonth.count ?? 0,
+    photoDue: !lastPhoto.data || diffDays(today, lastPhoto.data.taken_on) >= 14,
+    levelEvent: levelEvent,
+    observer: observerRow.data?.text ?? null,
+    adaptiveNote: adaptive,
   };
 }

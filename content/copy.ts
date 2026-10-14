@@ -1,4 +1,4 @@
-// All app copy. Two voices: the app (plain, neutral) and the Gaffer (GAME.md).
+// All app copy. Two voices: the app (plain, neutral) and the Coach (GAME.md).
 // No emoji, no exclamation marks, no long dashes.
 
 import type { DivisionT, NotifyKindT } from "@/lib/supabase/types";
@@ -13,6 +13,16 @@ export const copy = {
     forgot: "Forgot password",
     privacy: "Private. Your logs, numbers and photos are visible only to you.",
     error: "Email or password is wrong",
+    createAccount: "Create your account",
+    createSub: "Free. Your logs, numbers and photos stay private to you. At least 12 characters.",
+    confirm: "Repeat password",
+    signupSubmit: "Create account",
+    signupInvalid: "Use your email and a password of 12 or more characters, typed the same twice.",
+    signupTaken: "That email can't be used. Sign in instead, or try another email.",
+    agree: "I agree to the privacy policy and consent to Steady storing my health data (weight, measurements, food, workouts, photos).",
+    privacyLink: "Read the privacy policy",
+    haveAccount: "I already have an account",
+    newHere: "New here? Create an account",
     forgotTitle: "Reset your password",
     forgotSub: "Enter your email and Steady sends a link.",
     forgotSent: "If that email has an account, a link is on its way.",
@@ -49,7 +59,7 @@ export const copy = {
     promises: "Five promises",
     todayLog: "Today",
     todaysLine: "Today's line",
-    gaffer: "The Gaffer",
+    coach: "The Coach",
     youAre: "You are",
     callus: "Callus",
     vsLastWeek: "You vs last week",
@@ -64,10 +74,10 @@ export const copy = {
     over: (n: string) => `${n} kcal over.`,
     sessionToDo: (s: string) => `${s} still to do.`,
     restDay: "Rest day.",
-    chapterLine: (n: number, name: string) => `Chapter ${n}, ${name}`,
+    chapterLine: (n: number, name: string) => `Level ${n}, ${name}`,
     toNext: (days: number, name: string) => `${days} days to ${name}`,
     atTop: "Top of the ladder",
-    barBar: "Callus needs to reach the bar for the next chapter",
+    barBar: "Callus needs to reach the bar for the next level",
     logs: (n: number) => (n === 1 ? "1 log" : `${n} logs`),
     of: (a: number, b: number) => `${a} of ${b}`,
     sickDay: "Sick day. Streak paused.",
@@ -134,13 +144,16 @@ export const copy = {
   fuel: {
     title: "Fuel",
     prep: "This week's prep",
-    pickTwo: "Pick 2 recipes for Sunday",
+    pickTwo: "Pick 2 batch recipes for Sunday",
     pickThursday: "Pick 1 for Thursday night",
     shopping: "Shopping list",
     quickBuys: "Quick buys",
     plates: "Your plates",
     steps: "Sunday prep",
     portions: "4 portions",
+    mine: "Your recipes",
+    addRecipe: "Add recipe",
+    mineEmpty: "Add a recipe with its kcal and protein. It becomes a one-tap log.",
     fridge: "Fridge: 3 days max. Freeze anything for day 4.",
   },
   progress: {
@@ -150,8 +163,12 @@ export const copy = {
     weight: "Weight",
     calories: "Calories",
     body: "Body",
-    noticed: "The Gaffer noticed",
+    noticed: "The Coach noticed",
     trophyRoom: "Trophies",
+    season: "Season record",
+    seasonEmpty: "Your first full week sets the record.",
+    levels: "Levels",
+    levelNow: "Now",
     photos: "Photos",
     weekRings: "Week",
     weightEmpty:
@@ -169,15 +186,15 @@ export const copy = {
     answerBack: "Answer back",
     answerBackLine:
       "Log every day and do every planned session for 3 days. Half the Callus you lost comes back.",
-    goalDate: (kg: string, date: string) => `Goal ${kg} kg around ${date} at this pace.`,
-    noGoalDate: "At this pace there's no goal date. The trend has to fall first.",
+    goalDate: (kg: string, date: string) => `At this pace, you'll reach ${kg} kg around ${date}.`,
+    noGoalDate: "The trend needs to fall before a date makes sense.",
     weeklyReport: "Weekly report",
     sevenDay: "7-day average",
     lossRate: "Weekly loss rate",
     waistHeight: "Waist to height",
     bodyFat: "Body fat est.",
     bmi: "BMI",
-    photoDay: "Photo day. Same spot, same light, morning.",
+    photoDay: "Mirror check. Same spot, same light, morning.",
   },
   checkin: {
     title: "Evening check-in",
@@ -249,11 +266,11 @@ export const copy = {
   },
 } as const;
 
-// ---- The Gaffer (GAME.md) ----
+// ---- The Coach (GAME.md) ----
 
-export type FormName = "Off form" | "Finding form" | "In form" | "Unplayable";
+export type FormName = "Off form" | "Finding form" | "In form" | "Peak form";
 
-export const gafferForm: Record<FormName, readonly string[]> = {
+export const coachForm: Record<FormName, readonly string[]> = {
   "Off form": [
     "Off form. Happens to everyone. Staying there is optional.",
     "Log today. That's the whole comeback plan.",
@@ -267,8 +284,8 @@ export const gafferForm: Record<FormName, readonly string[]> = {
     "In form. Keep it boring and it stays that way.",
     "This is what showing up looks like.",
   ],
-  Unplayable: [
-    "Unplayable. Now don't get clever.",
+  "Peak form": [
+    "Peak form. Now don't get clever.",
     "This is where people relax. Don't.",
   ],
 };
@@ -277,50 +294,44 @@ export const chapters: Record<
   DivisionT,
   { n: number; name: string; story: string }
 > = {
-  sunday_league: {
+  starting_line: {
     n: 1,
-    name: "Sunday League",
-    story:
-      "Muddy pitch. Nobody watching. Nobody expects anything. That's your advantage.",
+    name: "Starting line",
+    story: "Everyone starts here. No history, no excuses. Just today.",
   },
-  academy: {
+  showing_up: {
     n: 2,
-    name: "Academy",
-    story:
-      "Someone noticed. Now you train with people who wanted it first. Most will quit. Don't be most.",
+    name: "Showing up",
+    story: "Seven days in. Most people stop before this. You didn't.",
   },
-  reserves: {
+  building: {
     n: 3,
-    name: "Reserves",
-    story: "On the bench of a real team. I know your name now.",
+    name: "Building",
+    story: "The habit is forming. Keep it boring and it stays.",
   },
-  first_team: {
+  consistent: {
     n: 4,
-    name: "First Team",
-    story:
-      "Squad number. Your name on a shirt. Now the work has to be there every week.",
+    name: "Consistent",
+    story: "Weeks of showing up. Now the work has to be there every week.",
   },
-  starter: {
+  strong: {
     n: 5,
-    name: "Starter",
-    story:
-      "Ninety minutes, every week. Other people will notice the change before you do.",
+    name: "Strong",
+    story: "Strength is built in the weeks nobody sees. Others will notice before you do.",
   },
-  captain: {
+  disciplined: {
     n: 6,
-    name: "Captain",
-    story:
-      "The armband. Nobody gets it for talent. You get it for being there when it's cold and boring.",
+    name: "Disciplined",
+    story: "Nobody gets here on talent. You got here by showing up when it was cold and boring.",
   },
-  champions_league: {
+  proven: {
     n: 7,
-    name: "Champions League",
-    story:
-      "Bright lights. The work is the same as Sunday League. That's the secret.",
+    name: "Proven",
+    story: "Half a year. The work is the same as day one. That is the secret.",
   },
-  ballon_dor: {
+  one_year: {
     n: 8,
-    name: "Ballon d'Or",
+    name: "One year",
     story: "A year. Every day accounted for. Look at your first photo.",
   },
 };
@@ -334,12 +345,12 @@ export const matchLines = {
   losingRound: (round: string, n: number) =>
     `${round} is the only round you're losing. ${n} good days flip it.`,
   fullTimeWin: (y: number, g: number) =>
-    `Full time. ${y} - ${g}. You beat last week's you.`,
+    `Week done. ${y} - ${g}. You matched or beat last week's you.`,
   draw: (y: number, g: number) =>
-    `${y} - ${g}. Level with yourself. Next week, edge it.`,
+    `${y} - ${g}. Level with last week. Next week, edge it.`,
   loss: (y: number, g: number, day: string) =>
     `Last week's you won ${g} - ${y}. He's not better than you. He just showed up on ${day}.`,
-  perfect: "4 - 0. Last week's you never had a chance.",
+  perfect: "4 - 0. You matched or beat every round.",
   streak: (n: number) => `You've beaten yourself ${n} weeks running.`,
 } as const;
 
@@ -355,12 +366,12 @@ export const challengeCards: Record<
   { name: string; goal: string; why: string }
 > = {
   early_kickoff: {
-    name: "Early kickoff",
+    name: "Early bird",
     goal: "3 gym sessions started before 07:30",
     why: "Picked because you trained after 18:00 three or more times last week.",
   },
   protein_five: {
-    name: "Protein five",
+    name: "Protein week",
     goal: "Protein ring closed 5 of 7 days",
     why: "Picked because the protein ring closed on fewer than 4 days last week.",
   },
@@ -370,37 +381,37 @@ export const challengeCards: Record<
     why: "Picked because 2 or more days went over budget last week.",
   },
   full_ninety: {
-    name: "Full ninety",
+    name: "On time",
     goal: "Log every day before 21:00",
     why: "Picked because 2 or more logs landed after 22:00 last week.",
   },
   ten_k_minutes: {
-    name: "Long legs",
+    name: "Move more",
     goal: "150 walk or run minutes",
     why: "Picked because you walked or ran under 90 minutes last week.",
   },
   photo_day: {
-    name: "Photo day",
+    name: "Mirror check",
     goal: "Front, side and back progress photos",
     why: "Picked because there are no progress photos in 14 days.",
   },
   weigh_in_three: {
-    name: "Three weigh-ins",
+    name: "Scale check",
     goal: "Weight logged on 3 days",
     why: "Picked because you weighed in fewer than 2 times last week.",
   },
   sleep_seven: {
-    name: "Seven hours",
+    name: "Lights out",
     goal: "7 or more hours of sleep on 5 nights",
     why: "Picked because your sleep averaged under 6.5 hours last week.",
   },
 };
 
 export const trophies = [
-  { key: "first_whistle", name: "First whistle", hint: "Log once.", line: "Day one. Most people never get a day two." },
+  { key: "first_whistle", name: "Day one", hint: "Log once.", line: "Day one. Most people never get a day two." },
   { key: "seven_straight", name: "Seven straight", hint: "Log 7 days in a row.", line: "A week. Now it's a habit you can lose." },
   { key: "beat_yourself", name: "Beat yourself", hint: "Win a week against last week.", line: "You beat the only rival who matters." },
-  { key: "hat_trick", name: "Hat-trick", hint: "Beat yourself 3 weeks running.", line: "Three straight. He's struggling to keep up." },
+  { key: "hat_trick", name: "Three in a row", hint: "Beat yourself 3 weeks running.", line: "Three straight. He's struggling to keep up." },
   { key: "early_riser", name: "Early riser", hint: "Start 10 gym sessions before 08:00.", line: "Ten cold mornings. That's the real gym." },
   { key: "answer_back", name: "Answer back", hint: "Finish an Answer back.", line: "Knocked down. Got up. That's the game." },
   { key: "challenger", name: "Challenger", hint: "Finish 5 weekly challenges.", line: "Five challenges. You pick hard ones." },
@@ -454,5 +465,9 @@ export const notificationPools: Record<
       "Midnight takes the streak. Your call.",
     ],
   },
-  weekly: { title: "Full time", lines: [] },
+  weekly: { title: "Week done", lines: [] },
+  photo_day: {
+    title: "Mirror check",
+    lines: ["Mirror check. Front, side, back. Same spot, same light, morning."],
+  },
 };

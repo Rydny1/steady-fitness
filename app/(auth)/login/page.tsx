@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { copy } from "@/content/copy";
 
@@ -23,6 +24,12 @@ export default function LoginPage() {
         </h1>
         <p className="mt-3 text-body text-muted">{copy.login.sub}</p>
         <LoginForm />
+        <Link
+          href="/signup"
+          className="mt-1 flex min-h-11 items-center justify-center self-center px-3 text-small font-semibold"
+        >
+          {copy.login.newHere}
+        </Link>
       </div>
       <p className="mb-10 text-center text-[14px] leading-[1.45] text-muted">
         {copy.login.privacy}

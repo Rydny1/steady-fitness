@@ -1,5 +1,6 @@
 import type { Rings } from "@/features/game";
 import { copy } from "@/content/copy";
+import { InfoTip } from "@/components/info-tip";
 
 type Props = {
   rings: Rings;
@@ -58,7 +59,8 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
   )} percent, train ${Math.round(rings.train.progress * 100)} percent`;
   return (
     <>
-      <div className="mx-4 mt-6 flex items-center gap-5 rounded-hero bg-card px-5 py-6">
+      <div className="relative mx-4 mt-6 flex items-center gap-5 rounded-hero bg-card px-5 py-6">
+        <InfoTip tip="rings" className="absolute right-2 top-2" />
         <svg
           width="168"
           height="168"

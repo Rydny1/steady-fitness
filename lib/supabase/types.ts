@@ -35,20 +35,21 @@ export type PhotoKindT = "meal" | "progress";
 export type PoseT = "front" | "side" | "back";
 export type SessionStatusT = "done" | "missed" | "rest" | "none";
 export type DivisionT =
-  | "sunday_league"
-  | "academy"
-  | "reserves"
-  | "first_team"
-  | "starter"
-  | "captain"
-  | "champions_league"
-  | "ballon_dor";
+  | "starting_line"
+  | "showing_up"
+  | "building"
+  | "consistent"
+  | "strong"
+  | "disciplined"
+  | "proven"
+  | "one_year";
 export type NotifyKindT =
   | "wake_gym"
   | "wake_run"
   | "log_nudge"
   | "last_call"
-  | "weekly";
+  | "weekly"
+  | "photo_day";
 
 type Table<Row, OptionalOnInsert extends keyof Row = never> = {
   Row: Row;
@@ -356,7 +357,7 @@ export type Database = {
       photo_kind_t: PhotoKindT;
       pose_t: PoseT;
       session_status_t: SessionStatusT;
-      division_t: DivisionT;
+      level_t: DivisionT;
       notify_kind_t: NotifyKindT;
     };
     CompositeTypes: { [_ in never]: never };
