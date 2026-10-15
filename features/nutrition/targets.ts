@@ -61,9 +61,12 @@ export function activityKcal(
   return Math.round(TARGETS.exerciseAddBackShare * met * weightKg * (minutes / 60));
 }
 
-/** Budget for a day: the targets budget plus the exercise add-back. */
+/**
+ * What you can eat today and still hit your net target: the rest-day amount plus everything
+ * the exercise burned. `burnedKcal` is stored as an add-back share, so it is scaled back to the full burn.
+ */
 export function dayBudget(budgetKcal: number, burnedKcal: number): number {
-  return Math.round(budgetKcal + Math.max(0, burnedKcal));
+  return Math.round(budgetKcal + Math.max(0, burnedKcal) / TARGETS.exerciseAddBackShare);
 }
 
 /** New targets row needed when the 7-day average moved 1 kg since the row was made. */

@@ -146,7 +146,7 @@ export function SettingsPanel(p: PanelProps) {
       {group(
         copy.settings.account,
         <>
-          {row(copy.settings.security, p.mfaOn ? "On" : "Off", undefined, "/mfa")}
+          {row(copy.settings.security, p.mfaOn ? "On" : "Turn on", undefined, "/mfa")}
           {row("Password", "Change", undefined, "/auth/update-password", true)}
         </>,
       )}
@@ -296,7 +296,7 @@ function AboutSheet({
       >
         {p.skipped.length > 0 ? (
           <p className="text-small text-muted">
-            You skipped some questions, so Steady is using average numbers. Fill these in for a budget that fits you.
+            You skipped some questions, so Steady is using average numbers. Fill these in for a limit that fits you.
           </p>
         ) : null}
         <label className="flex flex-col gap-2">
@@ -333,7 +333,7 @@ function AboutSheet({
         </div>
         <label className="flex min-h-11 items-center gap-3">
           <input type="checkbox" checked={recalc} onChange={(e) => setRecalc(e.target.checked)} className="m-0 h-6 w-6 accent-fuel" />
-          <span className="text-body">Recalculate my budget and protein</span>
+          <span className="text-body">Recalculate my limit and protein</span>
         </label>
         <ErrorLine error={error} />
         <Button type="submit" big disabled={pending} className="w-full">
@@ -376,7 +376,7 @@ function TargetsSheet({
         className="flex flex-col gap-4"
       >
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Daily budget, kcal (not below {p.bmrKcal})</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Eat up to, kcal (rest day, not below {p.bmrKcal})</span>
           <input value={budget} onChange={(e) => setBudget(e.target.value)} inputMode="numeric" className={inputCls} />
         </label>
         <label className="flex flex-col gap-2">
@@ -395,7 +395,7 @@ function TargetsSheet({
             className="m-0 h-6 w-6 accent-fuel"
           />
           <span>
-            <span className="block text-body">Adjust my budget every Monday</span>
+            <span className="block text-body">Adjust my limit every Monday</span>
             <span className="block text-caption text-muted">
               Off keeps the numbers above exactly as you set them.
             </span>

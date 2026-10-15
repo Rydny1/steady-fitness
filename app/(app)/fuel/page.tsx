@@ -1,8 +1,6 @@
-import Link from "next/link";
 import Image from "next/image";
 import { requireProfile } from "@/lib/session";
 import { weekStart } from "@/lib/dates";
-import { addDays } from "@/lib/dates";
 import { batchMeals, quickMeals, mealImage, fuelHeaderImage, batchPlan } from "@/content/meals";
 import { snacks, snackImage, formatKcal } from "@/content/snacks";
 import { buildShoppingList, picksNeeded } from "@/features/nutrition/shopping-list";
@@ -14,7 +12,6 @@ import {
 } from "@/features/nutrition/components/fuel-picks";
 import { QuickBuys, type QuickBuy } from "@/features/nutrition/components/quick-buys";
 import { MyRecipes } from "@/features/nutrition/components/my-recipes";
-import { signedUrls } from "@/features/photos/signed-urls";
 import { copy } from "@/content/copy";
 
 export const metadata = { title: "Fuel" };
@@ -23,16 +20,9 @@ export default async function FuelPage() {
   const { supabase, today } = await requireProfile();
   const ws = weekStart(today);
 
-  const [picksRow, checksRow, photos, mine] = await Promise.all([
+  const [picksRow, checksRow, mine] = await Promise.all([
     supabase.from("user_flags").select("value").eq("key", `fuel_picks:${ws}`).maybeSingle(),
     supabase.from("user_flags").select("value").eq("key", `shop:${ws}`).maybeSingle(),
-    supabase
-      .from("photos")
-      .select("id,storage_path")
-      .eq("kind", "meal")
-      .gte("taken_on", addDays(today, -30))
-      .order("taken_on", { ascending: false })
-      .limit(18),
     supabase.from("saved_foods").select("id,name,kcal,protein_g").order("name"),
   ]);
 
@@ -58,12 +48,6 @@ export default async function FuelPage() {
   const pickedMeals = picked.flatMap((slug) => batchMeals.filter((m) => m.slug === slug));
   const planKcal = pickedMeals.reduce((s, m) => s + m.kcal * m.portions, 0);
   const planPortions = pickedMeals.reduce((s, m) => s + m.portions, 0);
-
-  const urls = await signedUrls(
-    supabase,
-    "meal-photos",
-    (photos.data ?? []).map((p) => p.storage_path),
-  );
 
   const quick: QuickBuy[] = [
     ...quickMeals.map((m) => ({
@@ -129,26 +113,6 @@ export default async function FuelPage() {
 
       <MyRecipes recipes={mine.data ?? []} day={today} />
 
-      <div className="mx-4 mt-8 flex items-center justify-between">
-        <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.plates}</h2>
-        <Link href="/log" className="flex min-h-11 items-center text-small font-semibold">
-          Add photo
-        </Link>
-      </div>
-      {(photos.data ?? []).length === 0 ? (
-        <p className="mx-4 mt-3 text-small text-muted">{copy.progress.mealPhotosEmpty}</p>
-      ) : (
-        <ul className="mx-4 mt-[10px] grid grid-cols-3 gap-[6px]">
-          {(photos.data ?? []).map((p) => (
-            <li key={p.id} className="aspect-square overflow-hidden rounded-[14px] bg-line">
-              {urls[p.storage_path] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={urls[p.storage_path]} alt="Meal" className="h-full w-full object-cover" loading="lazy" />
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
     </main>
   );
 }

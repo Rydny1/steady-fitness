@@ -57,7 +57,8 @@ describe("targets", () => {
   });
 
   it("day budget adds the burn and ignores negatives", () => {
-    expect(dayBudget(1830, 298)).toBe(2128);
+    // The stored burn is the 50 percent add-back, so the full burn (596) is added to the limit.
+    expect(dayBudget(1830, 298)).toBe(2426);
     expect(dayBudget(1830, -5)).toBe(1830);
   });
 

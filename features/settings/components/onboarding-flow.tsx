@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { completeOnboarding } from "../onboarding-action";
 import { computeTargets } from "@/features/nutrition/targets";
 import { GENERIC_TARGETS } from "../defaults";
@@ -218,12 +219,33 @@ export function OnboardingFlow() {
 
   return (
     <Shell>
-      <p className="text-small text-muted">
-        {index + 1} of {steps.length}
-      </p>
-      <h1 className="mt-2 text-sub font-bold tracking-[-0.5px]">{step.label}</h1>
+      <div className="flex h-12 items-center gap-3">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => setIndex(index - 1)}
+          disabled={index === 0}
+          className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-card text-ink disabled:opacity-0"
+        >
+          <ChevronLeft size={22} strokeWidth={2} aria-hidden="true" />
+        </button>
+        <div
+          className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={steps.length}
+          aria-valuenow={index + 1}
+          aria-label={`Question ${index + 1} of ${steps.length}`}
+        >
+          <div className="h-full rounded-full bg-ink transition-[width]" style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
+        </div>
+        <button type="button" onClick={skip} className="flex h-11 flex-none items-center px-2 text-small font-semibold text-muted">
+          Skip
+        </button>
+      </div>
+      <h1 className="mt-8 text-sub font-bold tracking-[-0.5px]">{step.label}</h1>
       <form
-        className="mt-8 flex flex-col gap-6"
+        className="mt-8 flex flex-1 flex-col gap-6"
         onSubmit={(e) => {
           e.preventDefault();
           next();
@@ -264,16 +286,8 @@ export function OnboardingFlow() {
             {step.unit ? <span className="text-body text-muted">{step.unit}</span> : null}
           </label>
         )}
-        <div className="flex gap-2">
-          {index > 0 ? (
-            <Button variant="secondary" big onClick={() => setIndex(index - 1)}>
-              Back
-            </Button>
-          ) : null}
-          <Button type="button" variant="ghost" big onClick={skip}>
-            Skip
-          </Button>
-          <Button type="submit" big disabled={!valid(step, value)} className="flex-1">
+        <div className="sticky bottom-0 mt-auto bg-page pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
+          <Button type="submit" big disabled={!valid(step, value)} className="w-full">
             {index === steps.length - 1 ? copy.onboarding.done : copy.onboarding.next}
           </Button>
         </div>
@@ -284,7 +298,7 @@ export function OnboardingFlow() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col justify-center px-4 py-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[max(12px,env(safe-area-inset-top))]">
       {children}
     </main>
   );

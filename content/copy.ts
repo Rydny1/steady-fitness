@@ -32,9 +32,9 @@ export const copy = {
     updateSubmit: "Save password",
   },
   mfa: {
-    setupTitle: "Add two-step sign-in",
+    setupTitle: "Turn on two-step sign-in",
     setupSub:
-      "Scan this code with an authenticator app, then enter the 6 digits it shows.",
+      "Optional, and worth it. Scan this with an authenticator app, then enter the 6 digits it shows.",
     secretLabel: "Or type this key",
     codeLabel: "6-digit code",
     verify: "Verify",
@@ -64,7 +64,7 @@ export const copy = {
     callus: "Callus",
     vsLastWeek: "You vs last week",
     streak: "day streak",
-    career: "days in career",
+    career: "days in",
     trophies: "trophies",
     start: "Start",
     ringFuel: "Fuel",
@@ -81,7 +81,7 @@ export const copy = {
     logs: (n: number) => (n === 1 ? "1 log" : `${n} logs`),
     of: (a: number, b: number) => `${a} of ${b}`,
     sickDay: "Sick day. Streak paused.",
-    noGhost: "No ghost yet. This week you set the bar.",
+    noGhost: "Not done yet.",
   },
   log: {
     title: "Log",
@@ -232,7 +232,7 @@ export const copy = {
   },
   onboarding: {
     title: "Set up Steady",
-    sub: "Eight answers. Then Steady sets your budget.",
+    sub: "Eight answers. Then Steady sets your limit.",
     name: "What should Steady call you?",
     height: "Height in cm",
     birth: "Birth date",
@@ -244,8 +244,8 @@ export const copy = {
     wake: "Wake time",
     next: "Next",
     done: "Finish",
-    budgetTitle: "This is your budget.",
-    budgetSub: "Spend it well.",
+    budgetTitle: "Your daily limit.",
+    budgetSub: "Eat up to this. Exercise adds more.",
     pushLine: "Steady sends four kinds of nudges. All can be changed.",
     allow: "Allow notifications",
     skip: "Not now",
@@ -340,7 +340,7 @@ export const droppedChapter = (name: string) =>
   `Back to ${name}. You know the way up. You've walked it.`;
 
 export const matchLines = {
-  noGhost: "No ghost yet. This week you set the bar.",
+  noGhost: "Not done yet.",
   winning: "Ahead of last week. Don't ease off.",
   losingRound: (round: string, n: number) =>
     `${round} is the only round you're losing. ${n} good days flip it.`,
@@ -408,18 +408,18 @@ export const challengeCards: Record<
 };
 
 export const trophies = [
-  { key: "first_whistle", name: "Day one", hint: "Log once.", line: "Day one. Most people never get a day two." },
-  { key: "seven_straight", name: "Seven straight", hint: "Log 7 days in a row.", line: "A week. Now it's a habit you can lose." },
-  { key: "beat_yourself", name: "Beat yourself", hint: "Win a week against last week.", line: "You beat the only rival who matters." },
-  { key: "hat_trick", name: "Three in a row", hint: "Beat yourself 3 weeks running.", line: "Three straight. He's struggling to keep up." },
-  { key: "early_riser", name: "Early riser", hint: "Start 10 gym sessions before 08:00.", line: "Ten cold mornings. That's the real gym." },
-  { key: "answer_back", name: "Answer back", hint: "Finish an Answer back.", line: "Knocked down. Got up. That's the game." },
-  { key: "challenger", name: "Challenger", hint: "Finish 5 weekly challenges.", line: "Five challenges. You pick hard ones." },
-  { key: "first_kilo", name: "First kilo", hint: "Get your 7-day average 1 kg down.", line: "One kilo. Nobody noticed. You did." },
-  { key: "five_kilos", name: "Five kilos", hint: "Get your 7-day average 5 kg down.", line: "Five kilos. Look at the photos." },
-  { key: "waist_down_5", name: "Waist down 5", hint: "Take 5 cm off your waist.", line: "Belt needs a new hole." },
-  { key: "ten_bests", name: "Ten bests", hint: "Set 10 lift records.", line: "Stronger than last month. Measurably." },
-  { key: "photo_diary", name: "Photo diary", hint: "Take 6 progress photos.", line: "Proof you can see." },
+  { key: "first_whistle", name: "Spark", hint: "Log your first meal or workout.", line: "Day one. Most people never get a day two." },
+  { key: "seven_straight", name: "Momentum", hint: "Log 7 days in a row.", line: "A week. Now it's a habit you can lose." },
+  { key: "beat_yourself", name: "Outdone", hint: "Beat last week's score.", line: "You beat the only rival who matters." },
+  { key: "hat_trick", name: "Surge", hint: "Beat last week 3 weeks running.", line: "Three straight. He's struggling to keep up." },
+  { key: "early_riser", name: "Daybreak", hint: "Start 10 gym sessions before 8am.", line: "Ten cold mornings. That's the real gym." },
+  { key: "answer_back", name: "Rebound", hint: "Bounce back after a bad day.", line: "Knocked down. Got up. That's the game." },
+  { key: "challenger", name: "Driven", hint: "Finish 5 weekly challenges.", line: "Five challenges. You pick hard ones." },
+  { key: "first_kilo", name: "Lighter", hint: "Get your 7-day average 1 kg down.", line: "One kilo. Nobody noticed. You did." },
+  { key: "five_kilos", name: "Transformed", hint: "Get your 7-day average 5 kg down.", line: "Five kilos. Look at the photos." },
+  { key: "waist_down_5", name: "Trim", hint: "Take 5 cm off your waist.", line: "Belt needs a new hole." },
+  { key: "ten_bests", name: "Peak", hint: "Set 10 lift records.", line: "Stronger than last month. Measurably." },
+  { key: "photo_diary", name: "Proof", hint: "Take 6 progress photos.", line: "Proof you can see." },
 ] as const;
 
 export type TrophyKey = (typeof trophies)[number]["key"];

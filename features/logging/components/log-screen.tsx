@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, Mic, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Mic, X } from "lucide-react";
 import { copy } from "@/content/copy";
 import { cn } from "@/lib/utils";
 import {
@@ -22,8 +22,6 @@ import {
 import { fullBurn } from "@/features/nutrition/energy";
 import { activityKcal } from "@/features/nutrition/targets";
 import { compressImage, type Compressed } from "@/features/photos/compress";
-import { uploadPhoto } from "@/features/photos/upload";
-import { recordMealPhoto } from "@/features/photos/actions";
 import {
   barcodeSupported,
   lookupBarcode,
@@ -72,6 +70,9 @@ export function LogScreen({
   const [busy, setBusy] = useState<null | "parse" | "photo" | "save">(null);
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<Compressed | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [product, setProduct] = useState<BarcodeProduct | null>(null);
@@ -243,7 +244,7 @@ export function LogScreen({
     setBusy("save");
     const res = await saveEntries(input);
     setBusy(null);
-    if (res.ok) router.push("/today");
+    if (res.ok) router.push("/today?saved=1");
     else setMessage(copy.errors.generic);
   }
 
@@ -276,11 +277,8 @@ export function LogScreen({
       setMessage(copy.errors.generic);
       return;
     }
-    if (photo && res.foodIds[0]) {
-      const path = await uploadPhoto("meal-photos", photo.blob);
-      if (path) await recordMealPhoto({ path, takenOn: day, foodEntryId: res.foodIds[0] });
-    }
-    router.push("/today");
+    // Meal photos are only used to read the plate. They are not kept.
+    router.push("/today?saved=1");
     router.refresh();
   }
 
@@ -408,17 +406,14 @@ export function LogScreen({
               <p className="text-body text-muted">{copy.log.estimate}</p>
             )}
             <div className="flex flex-wrap gap-2">
-              <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-card px-5 text-small font-semibold">
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-card px-5 text-small font-semibold"
+              >
                 <Camera size={18} strokeWidth={1.9} aria-hidden="true" />
                 {copy.log.photo}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="sr-only"
-                  onChange={(e) => void onPickPhoto(e.target.files?.[0])}
-                />
-              </label>
+              </button>
               {photo ? (
                 <Button onClick={() => void estimate()} disabled={busy !== null}>
                   {copy.log.estimate}
@@ -553,7 +548,10 @@ export function LogScreen({
         <button
           type="button"
           aria-label="Add a meal photo"
-          onClick={() => setMode("photo")}
+          onClick={() => {
+            setMode("photo");
+            setPickerOpen(true);
+          }}
           className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-card"
         >
           <Camera size={24} strokeWidth={1.9} aria-hidden="true" />
@@ -567,6 +565,69 @@ export function LogScreen({
           {copy.log.save}
         </Button>
       </div>
+
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => {
+          void onPickPhoto(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => {
+          void onPickPhoto(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      {pickerOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add a photo"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div className="sheet w-full max-w-app rounded-t-hero p-4" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => {
+                setPickerOpen(false);
+                cameraRef.current?.click();
+              }}
+              className="flex h-14 w-full items-center gap-3 rounded-ctl bg-card px-4 text-body font-semibold"
+            >
+              <Camera size={22} strokeWidth={1.9} aria-hidden="true" />
+              Take a photo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPickerOpen(false);
+                galleryRef.current?.click();
+              }}
+              className="mt-2 flex h-14 w-full items-center gap-3 rounded-ctl bg-card px-4 text-body font-semibold"
+            >
+              <ImageIcon size={22} strokeWidth={1.9} aria-hidden="true" />
+              Choose from gallery
+            </button>
+            <button type="button" onClick={() => setPickerOpen(false)} className="mt-2 h-12 w-full text-body font-semibold text-muted">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {editing !== null && items[editing] ? (
         <EditSheet

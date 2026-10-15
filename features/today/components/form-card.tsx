@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { TodayData } from "@/features/data/today";
 import { copy } from "@/content/copy";
 import { InfoTip } from "@/components/info-tip";
+import type { TipKey } from "@/content/tooltips";
 
 export function FormCard({ d }: { d: TodayData }) {
   const { comparison } = d.match;
@@ -62,26 +63,30 @@ export function FormCard({ d }: { d: TodayData }) {
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <Tile value={String(d.streak)} label={copy.today.streak} />
-        <Tile value={String(d.careerDays)} label={copy.today.career} />
+        <Tile value={String(d.streak)} label={copy.today.streak} tip="streak" />
+        <Tile value={String(d.careerDays)} label={copy.today.career} tip="career" />
         <Tile
           value={String(d.trophiesEarned)}
           suffix={`/${d.trophiesTotal}`}
           label={copy.today.trophies}
+          tip="trophies"
         />
       </div>
     </section>
   );
 }
 
-function Tile({ value, suffix, label }: { value: string; suffix?: string; label: string }) {
+function Tile({ value, suffix, label, tip }: { value: string; suffix?: string; label: string; tip: TipKey }) {
   return (
     <div className="rounded-inner bg-bg px-3 py-2.5">
       <div className="num text-num leading-none">
         {value}
         {suffix ? <span className="text-small text-muted">{suffix}</span> : null}
       </div>
-      <div className="mt-0.5 text-caption leading-tight text-muted">{label}</div>
+      <div className="mt-0.5 flex items-center text-caption leading-tight text-muted">
+        {label}
+        <InfoTip tip={tip} className="-my-3 -mr-3 -ml-1 scale-90" />
+      </div>
     </div>
   );
 }

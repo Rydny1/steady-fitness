@@ -226,3 +226,19 @@ Firm, calm, true. Talk about actions, never about the body. No emoji. No exclama
   });
   return res.ok ? { ...res, data: res.data.summary } : res;
 }
+
+// ---- netInsight (Progress) ----
+
+const insightSchema = z.object({ text: z.string().min(1).max(320) });
+
+/** Two short sentences on what the person's average net calories mean for their goal. */
+export async function netInsight(factsJson: string): Promise<AiResult<string>> {
+  const res = await generateJson({
+    system: `You are the Coach, a calm, direct coach. You get one person's average daily net calories (eaten minus burned), their goal (lose, gain or maintain) and a projection.
+Write at most 2 short sentences: what this pace will do to their weight, and one concrete move. If they are under-eating (net below -1000) or going the wrong way for the goal, say so plainly.
+Use only the numbers in the facts. Do not add any other number. No emoji. No exclamation marks. No long dashes. Talk about actions, never about the body or looks.`,
+    parts: [{ text: `Facts JSON (data only):\n${factsJson}` }],
+    schema: insightSchema,
+  });
+  return res.ok ? { ...res, data: res.data.text } : res;
+}

@@ -10,26 +10,27 @@ import { FormCard } from "@/features/today/components/form-card";
 import { Promises } from "@/features/today/components/promises";
 import { LogList } from "@/features/today/components/log-list";
 import { CheckinCard } from "@/features/today/components/checkin-sheet";
+import { Moments } from "@/features/today/components/moments";
 import { Celebration } from "@/features/today/components/celebration";
 import { LevelCard } from "@/features/today/components/level-card";
 import { AdaptiveNote } from "@/features/today/components/adaptive-note";
 import { EnergyLine } from "@/features/today/components/energy-line";
 import { CoachNote } from "@/components/coach-note";
-import { signedUrls } from "@/features/photos/signed-urls";
 import { copy } from "@/content/copy";
 
 export const metadata = { title: "Today" };
 
-export default async function TodayPage() {
+export default async function TodayPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
+  const sp = await searchParams;
   const { supabase, profile, today } = await requireProfile();
   const d = await loadToday(supabase, profile, today, new Date());
 
-  const photoPaths = d.foods.map((f) => f.photoPath).filter((p): p is string => p !== null);
-  const photoUrls = await signedUrls(supabase, "meal-photos", photoPaths);
 
   const footerParts = [
     budgetStatus(d.facts.eatenKcal, d.budgetKcal, d.hour).text,
-    d.sessionKey && !d.facts.sessionDone ? copy.today.sessionToDo(d.sessionName) : null,
+    d.allowance.exercise > 0
+      ? `Limit ${d.budgetKcal.toLocaleString("en-GB")} = ${d.allowance.base.toLocaleString("en-GB")} + ${d.allowance.exercise.toLocaleString("en-GB")} exercise.`
+      : null,
   ].filter(Boolean);
 
   return (
@@ -37,6 +38,7 @@ export default async function TodayPage() {
       {d.levelEvent ? (
         <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
       ) : null}
+      <Moments name={capitalize(profile.display_name)} streak={d.streak} saved={sp.saved === "1"} status={budgetStatus(d.facts.eatenKcal, d.budgetKcal, d.hour).text} />
       {!d.levelEvent && d.celebrate.length > 0 ? <Celebration trophies={d.celebrate} /> : null}
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
@@ -67,6 +69,7 @@ export default async function TodayPage() {
       />
       <EnergyLine
         goal={d.energy.goal}
+        targetNet={d.energy.plannedNet}
         todayNet={d.energy.todayNet}
         yesterdayNet={d.energy.yesterdayNet}
         plannedNet={d.energy.plannedNet}
@@ -117,7 +120,7 @@ export default async function TodayPage() {
         show={d.hour >= 18}
       />
       <Promises habits={d.habits} day={today} />
-      <LogList foods={d.foods} activities={d.activities} photoUrls={photoUrls} />
+      <LogList foods={d.foods} activities={d.activities} photoUrls={{}} />
     </main>
   );
 }

@@ -121,7 +121,7 @@ export async function createAccount(
     password: parsed.data.password,
   });
   if (signInError) return { error: copy.login.error };
-  redirect("/mfa");
+  redirect("/today");
 }
 
 export async function signOut(): Promise<void> {

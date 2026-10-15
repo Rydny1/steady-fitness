@@ -128,7 +128,7 @@ The rule of the codebase: **business logic is pure functions, tested without a d
 
 ### Security, in plain words
 
-- Every account must set up an authenticator app (TOTP). No code, no entry.
+- Two-step sign-in (authenticator app) is optional. Turn it on in Settings and it is enforced everywhere, including in the database: a password-only session sees nothing.
 - Row-level security is on and *forced* on every table. A bug in the app can't read someone else's data, because the database says no.
 - Photos live in private buckets. They're served by short-lived signed links.
 - Strict Content-Security-Policy with a nonce per request.

@@ -201,8 +201,10 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
 
   // A save is all or nothing: if a later step fails, what this call already wrote is removed,
   // so a retry cannot double the foods.
+  let actIds: string[] = [];
   const rollback = async (foodIds: string[]) => {
     if (foodIds.length > 0) await supabase.from("food_entries").delete().in("id", foodIds);
+    if (actIds.length > 0) await supabase.from("activity_entries").delete().in("id", actIds);
     if (createdLogId) await supabase.from("logs").delete().eq("id", createdLogId);
   };
 
@@ -231,7 +233,7 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
 
   if (acts.length > 0) {
     const weight = await weightOn(supabase, day);
-    const { error } = await supabase.from("activity_entries").insert(
+    const { data: insertedActs, error } = await supabase.from("activity_entries").insert(
       acts.map((a) => ({
         log_id: logId,
         day,
@@ -243,7 +245,8 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
         rpe: a.rpe,
         source,
       })),
-    );
+    ).select("id");
+    actIds = (insertedActs ?? []).map((r) => r.id);
     if (error) {
       await rollback(foodIds);
       return { ok: false, reason: "failed" };
@@ -325,7 +328,8 @@ async function touchSavedFoods(
       .from("saved_foods")
       .select("id,use_count")
       .ilike("name", f.name.replace(/[%_]/g, (c) => `\\${c}`))
-      .maybeSingle();
+      .limit(1)
+      .then((r) => ({ data: r.data?.[0] ?? null }));
     if (saved) {
       await supabase
         .from("saved_foods")
@@ -402,7 +406,7 @@ export async function updateFoodEntry(input: unknown): Promise<SaveOutcome> {
   if (kcal === null || protein === null) {
     const m = matchFood(p.name);
     const grams = p.quantity;
-    if (m && grams !== null && (before.unit === "g" || before.unit === "ml" || before.unit === null)) {
+    if (m && grams !== null && (before.unit === "g" || before.unit === "ml")) {
       const n = nutrientsFor(m.food, grams);
       kcal = n.kcal;
       protein = n.protein_g;
