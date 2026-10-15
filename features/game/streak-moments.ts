@@ -52,10 +52,9 @@ export function fatKg(deficitKcal: number): number {
   return Math.round((Math.max(0, deficitKcal) / 7700) * 100) / 100;
 }
 
-/** One small fact under the deficit. True arithmetic, nothing invented. */
-export function deficitFact(deficitKcal: number): string | null {
-  const kg = fatKg(deficitKcal);
+/** "Down ~0.32 kg today." from the day's net (negative is a deficit). Null when it is too small to say. */
+export function moveLine(netKcal: number): string | null {
+  const kg = Math.round((Math.abs(netKcal) / 7700) * 100) / 100;
   if (kg < 0.01) return null;
-  const week = Math.round(kg * 7 * 10) / 10;
-  return `About ${kg} kg of body fat. Repeat it for a week: ${week} kg.`;
+  return `${netKcal < 0 ? "Down" : "Up"} ~${kg.toFixed(2)} kg today.`;
 }

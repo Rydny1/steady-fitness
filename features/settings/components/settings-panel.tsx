@@ -19,6 +19,7 @@ import { disablePush, enablePush, pushSupported } from "@/features/notifications
 import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
 import { cn } from "@/lib/utils";
+import { MAX_PROMISES } from "../defaults";
 import { InfoTip } from "@/components/info-tip";
 import { goalFor } from "@/features/nutrition/energy";
 import { baseBurn, limitForNet, netForLimit, readPlan, suggestNet, weeksFor } from "@/features/nutrition/plan";
@@ -529,28 +530,48 @@ function HabitsSheet({
   pending: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (habits: { id: string; name: string }[]) => void;
+  onSave: (habits: { id: string | null; name: string }[]) => void;
 }) {
-  const [names, setNames] = useState(p.habits.map((h) => h.name));
+  const [rows, setRows] = useState<{ id: string | null; name: string }[]>(p.habits.map((h) => ({ id: h.id, name: h.name })));
   return (
     <SheetFrame title={copy.today.promises} onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSave(p.habits.map((h, i) => ({ id: h.id, name: names[i] ?? h.name })));
+          onSave(rows.filter((r) => r.name.trim() !== "").map((r) => ({ id: r.id, name: r.name.trim() })));
         }}
         className="flex flex-col gap-3"
       >
-        {names.map((n, i) => (
-          <input
-            key={i}
-            value={n}
-            maxLength={40}
-            aria-label={`Promise ${i + 1}`}
-            onChange={(e) => setNames((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
-            className={inputCls}
-          />
+        {rows.map((r, i) => (
+          <div key={r.id ?? `new-${i}`} className="flex items-center gap-2">
+            <input
+              value={r.name}
+              maxLength={40}
+              aria-label={`Promise ${i + 1}`}
+              onChange={(e) => setRows((prev) => prev.map((v, j) => (j === i ? { ...v, name: e.target.value } : v)))}
+              className={cn(inputCls, "flex-1")}
+            />
+            <button
+              type="button"
+              aria-label={`Remove promise ${i + 1}`}
+              onClick={() => setRows((prev) => prev.filter((_, j) => j !== i))}
+              className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-card text-muted"
+            >
+              <X size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
         ))}
+        {rows.length < MAX_PROMISES ? (
+          <button
+            type="button"
+            onClick={() => setRows((prev) => [...prev, { id: null, name: "" }])}
+            className="flex min-h-12 items-center justify-center rounded-ctl border border-dashed border-dash text-small font-semibold text-muted"
+          >
+            Add a promise
+          </button>
+        ) : (
+          <p className="text-caption text-muted">Nine is the most.</p>
+        )}
         <ErrorLine error={error} />
         <Button type="submit" big disabled={pending} className="mt-2 w-full">
           Save

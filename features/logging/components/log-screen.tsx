@@ -19,7 +19,8 @@ import {
   speechSupported,
   type Recognition,
 } from "../speech";
-import { fullBurn } from "@/features/nutrition/energy";
+import { fullBurn, signed } from "@/features/nutrition/energy";
+import { metFor } from "@/features/nutrition/mets";
 import { activityKcal } from "@/features/nutrition/targets";
 import { compressImage, type Compressed } from "@/features/photos/compress";
 import {
@@ -45,16 +46,23 @@ type Source = "voice" | "text" | "photo" | "saved" | "barcode";
 
 const nf = new Intl.NumberFormat("en-GB");
 
+// The device's date, only used to tell "today" from an earlier day after saving.
+function todayStr(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
 export function LogScreen({
   day,
-  eatenKcal,
-  budgetKcal,
+  netKcal,
+  targetNet,
   weightKg,
   saved,
 }: {
   day: string;
-  eatenKcal: number;
-  budgetKcal: number;
+  /** The day's net so far (eaten minus the whole day's burn) and the target net. */
+  netKcal: number;
+  targetNet: number;
   weightKg: number;
   saved: SavedFood[];
 }) {
@@ -244,7 +252,7 @@ export function LogScreen({
     setBusy("save");
     const res = await saveEntries(input);
     setBusy(null);
-    if (res.ok) router.push("/today?saved=1");
+    if (res.ok) router.push(day === todayStr() ? "/today?saved=1" : `/day/${day}`);
     else setMessage(copy.errors.generic);
   }
 
@@ -252,11 +260,10 @@ export function LogScreen({
   const foodKcal = items.reduce((s, i) => (i.kind === "food" ? s + i.kcal : s), 0);
   const burned = items.reduce(
     (s, i) =>
-      i.kind === "activity" ? s + activityKcal(i.activity_type, i.duration_min, weightKg, { speedKmh: i.speed_kmh }) : s,
+      i.kind === "activity" ? s + activityKcal(i.activity_type, i.duration_min, weightKg, { speedKmh: i.speed_kmh, met: i.met }) : s,
     0,
   );
-  const after = eatenKcal + foodKcal;
-  const budget = budgetKcal + burned;
+  const netAfter = netKcal + foodKcal - fullBurn(burned);
 
   async function save() {
     if (items.length === 0) return;
@@ -278,8 +285,20 @@ export function LogScreen({
       return;
     }
     // Meal photos are only used to read the plate. They are not kept.
-    router.push("/today?saved=1");
+    router.push(day === todayStr() ? "/today?saved=1" : `/day/${day}`);
     router.refresh();
+  }
+
+  // No AI needed: add a row yourself and fill it in.
+  function addBlank(kind: "food" | "activity") {
+    const row: DraftItem =
+      kind === "food"
+        ? { kind: "food", name: "", quantity: null, unit: null, kcal: 0, protein_g: 0, confidence: 1, basis: "estimate" }
+        : { kind: "activity", activity_type: "other", session_key: null, duration_min: 30, rpe: null, label: "", met: 4 };
+    setItems((prev) => {
+      setEditing(prev.length);
+      return [...prev, row];
+    });
   }
 
   function updateItem(index: number, next: DraftItem) {
@@ -388,8 +407,17 @@ export function LogScreen({
               ) : null}
             </div>
             {items.length > 0 ? (
-              <p className="mt-2 text-caption text-muted">Misheard something? Fix the words above and tap Read it again, or tap an item below.</p>
+              <p className="mt-2 text-caption text-muted">Misheard? Fix the text, tap Read it again.</p>
             ) : null}
+            <div className="mt-3 flex items-center gap-2 text-small">
+              <span className="text-muted">By hand</span>
+              <button type="button" onClick={() => addBlank("food")} className="min-h-11 rounded-full bg-card px-4 font-semibold">
+                Food
+              </button>
+              <button type="button" onClick={() => addBlank("activity")} className="min-h-11 rounded-full bg-card px-4 font-semibold">
+                Activity
+              </button>
+            </div>
           </form>
         ) : null}
 
@@ -473,7 +501,7 @@ export function LogScreen({
             <h2 id="items-h" className="text-[clamp(17px,5.13vw,19px)] font-bold">
               {items.length} {items.length === 1 ? "item" : "items"}
             </h2>
-            <span className="text-small text-muted">Tap any to change it</span>
+            <span className="text-small text-muted">Tap to edit</span>
           </div>
           <ul className="mx-4 mt-3 rounded-list bg-card px-[18px] py-1">
             {items.map((it, i) => (
@@ -500,10 +528,10 @@ export function LogScreen({
             </p>
           ) : null}
           <div className="mx-4 mt-4 flex justify-between text-small">
-            <span className="text-muted">After this log</span>
+            <span className="text-muted">Net after this</span>
             <span>
-              <span className="font-semibold">{nf.format(after)}</span>{" "}
-              <span className="text-muted">of {nf.format(budget)} kcal</span>
+              <span className="font-semibold">{signed(netAfter)}</span>{" "}
+              <span className="text-muted">target {signed(targetNet)}</span>
             </span>
           </div>
         </section>
@@ -671,14 +699,14 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
     return (
       <>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body font-medium capitalize">{it.activity_type}</div>
+          <div className="truncate text-body font-medium capitalize">{it.label ?? it.activity_type}</div>
           <div className="text-[clamp(13px,3.8vw,14px)] text-muted">
             {it.duration_min} min{it.note ? `, ${it.note}` : ""}
           </div>
         </div>
         <div className="text-right">
           <div className="num text-[clamp(19px,5.9vw,22px)] leading-none text-train">
-            -{fullBurn(activityKcal(it.activity_type, it.duration_min, weightKg, { speedKmh: it.speed_kmh }))}
+            -{fullBurn(activityKcal(it.activity_type, it.duration_min, weightKg, { speedKmh: it.speed_kmh, met: it.met }))}
           </div>
           <div className="text-caption text-muted">kcal burned</div>
         </div>
@@ -719,7 +747,7 @@ function EditSheet({
         unit: item.unit ?? "",
         grams: item.grams ? String(Math.round(item.grams)) : "",
       };
-    if (item.kind === "activity") return { minutes: String(item.duration_min) };
+    if (item.kind === "activity") return { minutes: String(item.duration_min), label: item.label ?? "" };
     return {
       weight: item.weight_kg === null ? "" : String(item.weight_kg),
       waist: item.waist_cm === null ? "" : String(item.waist_cm),
@@ -764,7 +792,15 @@ function EditSheet({
     } else if (item.kind === "activity") {
       const m = num("minutes");
       if (m === null || !Number.isFinite(m) || m < 1) return;
-      onSave({ ...item, duration_min: Math.max(1, Math.min(600, Math.round(m))) });
+      const label = (f.label ?? "").trim().slice(0, 40);
+      // A new name on an 'other' activity gets its intensity from the table (or a moderate default).
+      const renamed = item.activity_type === "other" && label !== (item.label ?? "");
+      onSave({
+        ...item,
+        duration_min: Math.max(1, Math.min(600, Math.round(m))),
+        ...(item.activity_type === "other" ? { label: label === "" ? "Activity" : label } : {}),
+        ...(renamed ? { met: metFor(label, null) } : {}),
+      });
     } else {
       onSave({
         ...item,
@@ -809,6 +845,7 @@ function EditSheet({
               </div>
             </>
           ) : null}
+          {item.kind === "activity" && item.activity_type === "other" ? field("label", "What did you do?", "text") : null}
           {item.kind === "activity" ? field("minutes", "Minutes") : null}
           {item.kind === "body" ? (
             <div className="grid grid-cols-3 gap-3">

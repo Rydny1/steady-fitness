@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { Check, Flame } from "lucide-react";
 import { toggleHabit } from "../actions";
 import { Toast } from "@/components/toast";
@@ -10,6 +10,57 @@ import { cn } from "@/lib/utils";
 
 type Habit = { id: string; name: string; checked: boolean };
 type Dot = { day: string; letter: string; pct: number; today: boolean; future: boolean; logged: boolean };
+
+type Ctx = { items: Habit[]; toggle: (id: string) => void; pct: number; done: number };
+const PromiseCtx = createContext<Ctx | null>(null);
+
+function usePromises(): Ctx {
+  const c = useContext(PromiseCtx);
+  if (!c) throw new Error("PromisesProvider is missing");
+  return c;
+}
+
+/** Holds today's promises so the streak circle and the list move together, instantly. */
+export function PromisesProvider({ habits, day, children }: { habits: Habit[]; day: string; children: React.ReactNode }) {
+  const [, startTransition] = useTransition();
+  const [items, setItem] = useOptimistic(habits, (state, id: string) =>
+    state.map((h) => (h.id === id ? { ...h, checked: !h.checked } : h)),
+  );
+  const done = items.filter((h) => h.checked).length;
+  const pct = items.length > 0 ? done / items.length : 0;
+  const [perfect, setPerfect] = useState(false);
+  const was = useRef(pct);
+
+  // A small celebration the moment the last promise is ticked (once a day).
+  useEffect(() => {
+    if (pct >= 1 && was.current < 1) {
+      try {
+        const key = `steady-win-promises-${day}`;
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "1");
+          setPerfect(true);
+        }
+      } catch {
+        setPerfect(true);
+      }
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(30);
+    }
+    was.current = pct;
+  }, [pct, day]);
+
+  const toggle = (id: string) =>
+    startTransition(async () => {
+      setItem(id);
+      await toggleHabit({ habitId: id, day });
+    });
+
+  return (
+    <PromiseCtx.Provider value={{ items, toggle, pct, done }}>
+      {perfect ? <Toast tone="hello" message={`All ${items.length} done.`} detail="Perfect day." onGone={() => setPerfect(false)} /> : null}
+      {children}
+    </PromiseCtx.Provider>
+  );
+}
 
 /** A circle that fills from the bottom with how much is done. The percentage sits small inside. */
 function FillCircle({ pct, size, label, tiny = false }: { pct: number; size: number; label?: string; tiny?: boolean }) {
@@ -32,7 +83,7 @@ function FillCircle({ pct, size, label, tiny = false }: { pct: number; size: num
           <path d={`M${size * 0.3} ${size * 0.52} l${size * 0.14} ${size * 0.14} l${size * 0.27} -${size * 0.3}`} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         ) : null
       ) : (
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize="13" fontWeight="700" fill={level >= 1 ? "#fff" : "var(--ink)"}>
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize="11" fontWeight="700" fill={level >= 1 ? "#fff" : "var(--ink)"}>
           {Math.round(level * 100)}%
         </text>
       )}
@@ -40,78 +91,73 @@ function FillCircle({ pct, size, label, tiny = false }: { pct: number; size: num
   );
 }
 
-export function Promises({
-  habits,
-  day,
+/** Streak, today's promise circle, the week, and the week's deficit goal. Sits under the quote. */
+export function StreakBlock({
   streak,
   week,
+  goal,
+  weekDeficit,
 }: {
-  habits: Habit[];
-  day: string;
   streak: number;
   week: Dot[];
+  goal: "lose" | "gain" | "maintain";
+  weekDeficit: { got: number; target: number };
 }) {
-  const [, startTransition] = useTransition();
-  const [items, setItem] = useOptimistic(habits, (state, id: string) =>
-    state.map((h) => (h.id === id ? { ...h, checked: !h.checked } : h)),
-  );
-  const done = items.filter((h) => h.checked).length;
-  const pct = items.length > 0 ? done / items.length : 0;
-  const [perfect, setPerfect] = useState(false);
-  const was = useRef(pct);
+  const { pct } = usePromises();
   const next = toMilestone(streak);
-
-  // A small celebration the moment the last promise is ticked (once a day).
-  useEffect(() => {
-    if (pct >= 1 && was.current < 1) {
-      try {
-        const key = `steady-win-promises-${day}`;
-        if (!localStorage.getItem(key)) {
-          localStorage.setItem(key, "1");
-          setPerfect(true);
-        }
-      } catch {
-        setPerfect(true);
-      }
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(30);
-    }
-    was.current = pct;
-  }, [pct, day]);
-
   const dots = week.map((w) => (w.today ? { ...w, pct } : w));
-
+  const wk = weekDeficit.target > 0 ? Math.min(1, weekDeficit.got / weekDeficit.target) : 0;
+  const nf = new Intl.NumberFormat("en-GB");
   return (
-    <section aria-labelledby="promises-h">
-      {perfect ? <Toast tone="hello" message={`All ${items.length} promises done.`} detail="Perfect day." onGone={() => setPerfect(false)} /> : null}
-      <div className="mx-4 mt-5 rounded-hero bg-card p-4">
-        <div className="flex items-center gap-4">
-          <FillCircle pct={pct} size={68} label={`Promises ${Math.round(pct * 100)} percent`} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <Flame size={22} strokeWidth={2} className={streak > 0 ? "text-amber" : "text-dash"} aria-hidden="true" />
-              <span className="num text-num leading-none">{streak}</span>
-              <span className="text-small text-muted">day streak</span>
-            </div>
-            <div className="mt-1 text-caption text-muted">
-              {next ? `${next.left} ${next.left === 1 ? "day" : "days"} to ${next.target}` : "Top of the streaks"}
-            </div>
+    <section aria-label="Streak" className="mx-4 mt-3 rounded-hero bg-card p-4">
+      <div className="flex items-center gap-4">
+        <FillCircle pct={pct} size={64} label={`Promises ${Math.round(pct * 100)} percent`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <Flame size={34} strokeWidth={1.8} className={cn("flame-glow", streak > 0 ? "fill-amber text-amber" : "text-dash")} aria-hidden="true" />
+            <span className="num text-[clamp(34px,10vw,40px)] leading-none">{streak}</span>
+            <span className="text-small text-muted">day streak</span>
+          </div>
+          <div className="mt-1 text-caption text-muted">
+            {next ? `${next.left} ${next.left === 1 ? "day" : "days"} to ${next.target}` : "Top of the streaks"}
           </div>
         </div>
-        <ul className="mt-4 flex justify-between" aria-label="This week">
-          {dots.map((w) => (
-            <li key={w.day} className="flex flex-col items-center gap-1">
-              {w.future ? (
-                <span className="block h-[30px] w-[30px] rounded-full border border-dashed border-dash" />
-              ) : (
-                <FillCircle pct={w.pct} size={30} tiny label={`${w.letter}: ${Math.round(w.pct * 100)} percent`} />
-              )}
-              <span className={cn("text-nav", w.today ? "font-bold text-ink" : "text-muted")}>{w.letter}</span>
-            </li>
-          ))}
-        </ul>
       </div>
+      <ul className="mt-4 flex justify-between" aria-label="This week">
+        {dots.map((w) => (
+          <li key={w.day} className="flex flex-col items-center gap-1">
+            {w.future ? (
+              <span className="block h-[30px] w-[30px] rounded-full border border-dashed border-dash" />
+            ) : (
+              <FillCircle pct={w.pct} size={30} tiny label={`${w.letter}: ${Math.round(w.pct * 100)} percent`} />
+            )}
+            <span className={cn("text-nav", w.today ? "font-bold text-ink" : "text-muted")}>{w.letter}</span>
+          </li>
+        ))}
+      </ul>
+      {weekDeficit.target > 0 && goal !== "maintain" ? (
+        <div className="mt-4">
+          <div className="flex items-baseline justify-between text-caption text-muted">
+            <span>{goal === "gain" ? "Week surplus" : "Week deficit"}</span>
+            <span>
+              <span className="num text-[clamp(15px,4.4vw,17px)] text-ink">{nf.format(weekDeficit.got)}</span> / {nf.format(weekDeficit.target)}
+            </span>
+          </div>
+          <div className="mt-1 h-2 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(wk * 100)} aria-label="Weekly goal">
+            <div className="h-full rounded-full bg-fuel transition-[width]" style={{ width: `${wk * 100}%` }} />
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
-      <div className="mx-4 mt-3 flex items-baseline justify-between">
+/** The five promises, as a list of checkboxes. */
+export function PromisesList() {
+  const { items, toggle, done } = usePromises();
+  return (
+    <section aria-labelledby="promises-h">
+      <div className="mx-4 mt-7 flex items-baseline justify-between">
         <h2 id="promises-h" className="text-section font-bold tracking-[-0.3px]">
           {copy.today.promises}
         </h2>
@@ -121,21 +167,8 @@ export function Promises({
       </div>
       <div className="mx-4 mt-3 rounded-list bg-card px-[18px] py-1">
         {items.map((h, i) => (
-          <label
-            key={h.id}
-            className={cn("flex min-h-[52px] items-center gap-[14px]", i < items.length - 1 && "border-b border-line")}
-          >
-            <input
-              type="checkbox"
-              checked={h.checked}
-              onChange={() =>
-                startTransition(async () => {
-                  setItem(h.id);
-                  await toggleHabit({ habitId: h.id, day });
-                })
-              }
-              className="m-0 h-6 w-6 accent-fuel"
-            />
+          <label key={h.id} className={cn("flex min-h-[52px] items-center gap-[14px]", i < items.length - 1 && "border-b border-line")}>
+            <input type="checkbox" checked={h.checked} onChange={() => toggle(h.id)} className="m-0 h-6 w-6 accent-fuel" />
             <span className={cn("text-body", h.checked && "text-muted line-through")}>{h.name}</span>
             {h.checked ? <Check size={16} strokeWidth={2.6} className="ml-auto text-fuel" aria-hidden="true" /> : null}
           </label>

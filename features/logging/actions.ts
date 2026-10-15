@@ -8,7 +8,9 @@ import { overLimit } from "@/lib/rate-limit";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
 import { activityKcal } from "@/features/nutrition/targets";
-import { resolveActivity } from "@/features/nutrition/activity";
+import { HIKE_MET, exerciseNote, resolveActivity, strengthMinutes } from "@/features/nutrition/activity";
+import { mergeGym } from "./gym";
+import { clampGuess, metFor } from "@/features/nutrition/mets";
 import { quickParse } from "./quick-parse";
 import { observe } from "@/features/insights/observer";
 import { finalizeFood, type SavedLookup } from "./accuracy";
@@ -62,14 +64,48 @@ function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | n
       saved,
     );
   }
+  if (item.kind === "activity" && item.activity_type === "gym" && (item.sets !== null || item.reps !== null) && !item.duration_min) {
+    // "4 sets of 8 bench press": minutes from the set scheme (see nutrition/activity.ts).
+    const ex = { name: item.name.trim().slice(0, 40) || "exercise", sets: item.sets ?? 3, reps: item.reps ?? 10, loadKg: item.load_kg, assumed: item.sets === null || item.reps === null };
+    return {
+      kind: "activity",
+      activity_type: "gym",
+      session_key: null,
+      duration_min: Math.min(600, strengthMinutes(ex.sets, ex.reps)),
+      rpe: null,
+      speed_kmh: null,
+      note: exerciseNote(ex),
+      strength: true,
+    };
+  }
+  if (item.kind === "activity" && (item.activity_type === "other" || item.activity_type === null)) {
+    // Any activity we have no special handling for: swimming, skipping rope, dancing, anything.
+    // Its intensity comes from the table, or the AI's estimate held to a believable range.
+    const label = item.name.trim().slice(0, 40) || "Activity";
+    const stated = resolveActivity({ type: "other", durationMin: item.duration_min, distanceKm: null, steps: null, paceMinPerKm: null });
+    const minutes = stated?.durationMin ?? clampGuess(item.assumed_duration_min);
+    return {
+      kind: "activity",
+      activity_type: "other",
+      session_key: null,
+      duration_min: Math.max(1, Math.min(600, minutes)),
+      rpe: null,
+      speed_kmh: null,
+      note: stated ? null : "time assumed",
+      met: metFor(label, item.met),
+      label,
+    };
+  }
   if (item.kind === "activity" && item.activity_type) {
     // Minutes come from a time, or from a distance, steps or pace (see nutrition/activity.ts).
+    const hike = /\bhik(?:e|ed|ing)\b/i.test(item.name);
     const r = resolveActivity({
       type: item.activity_type,
       durationMin: item.duration_min,
       distanceKm: item.distance_km,
       steps: item.steps,
       paceMinPerKm: item.pace_min_per_km,
+      hike,
     });
     if (!r) return null;
     return {
@@ -78,8 +114,10 @@ function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | n
       session_key: item.session_key,
       duration_min: Math.max(1, Math.min(600, r.durationMin)),
       rpe: null,
-      speed_kmh: r.speedKmh,
+      speed_kmh: hike ? null : r.speedKmh,
       note: r.note,
+      met: hike ? HIKE_MET : null,
+      label: hike ? "Hike" : null,
     };
   }
   if (item.kind === "body" && item.body) {
@@ -119,14 +157,14 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
       .insert({ day, raw_text: text, source, model: "rules" })
       .select("id")
       .single();
-    return { ok: true, logId: ruleLog?.id ?? null, items: quick.items, unclear: [] };
+    return { ok: true, logId: ruleLog?.id ?? null, items: mergeGym(quick.items), unclear: [] };
   }
   // Only the part the rules could not read goes to the AI.
   const aiText = quick.items.length > 0 ? quick.leftover.join(", ") : text;
 
   if (await overLimit(supabase, "parse")) {
     return quick.items.length > 0
-      ? { ok: true, logId: null, items: quick.items, unclear: quick.leftover }
+      ? { ok: true, logId: null, items: mergeGym(quick.items), unclear: quick.leftover }
       : { ok: false, reason: "limit" };
   }
 
@@ -141,7 +179,7 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
   const result = await parseLog(aiText, todayRiga());
   if (!result.ok) {
     // The AI is busy or out of quota. Keep whatever the rules read, and say what was left.
-    if (quick.items.length > 0) return { ok: true, logId: log.id, items: quick.items, unclear: quick.leftover };
+    if (quick.items.length > 0) return { ok: true, logId: log.id, items: mergeGym(quick.items), unclear: quick.leftover };
     return { ok: false, reason: result.reason === "limit" ? "ai_limit" : "failed", logId: log.id };
   }
   await supabase.from("logs").update({ model: result.model }).eq("id", log.id);
@@ -153,7 +191,7 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
     if (draft) items.push(draft);
     else if (it.name) unclear.push(it.name);
   }
-  return { ok: true, logId: log.id, items, unclear };
+  return { ok: true, logId: log.id, items: mergeGym(items), unclear };
 }
 
 const photoInput = z.object({
@@ -271,8 +309,9 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
         activity_type: a.activity_type,
         session_key: a.session_key,
         duration_min: a.duration_min,
+        label: a.label ?? null,
         // Frozen at save: it depends on the weight of that day.
-        kcal_burned: activityKcal(a.activity_type, a.duration_min, weight, { speedKmh: a.speed_kmh }),
+        kcal_burned: activityKcal(a.activity_type, a.duration_min, weight, { speedKmh: a.speed_kmh, met: a.met }),
         rpe: a.rpe,
         source,
       })),
@@ -296,6 +335,7 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
   if (foods.length > 0) await touchSavedFoods(supabase, foods);
 
   revalidatePath("/today");
+  revalidatePath("/day/[date]", "page");
   revalidatePath("/progress");
   revalidatePath("/train");
 
@@ -404,6 +444,7 @@ export async function deleteEntry(input: unknown): Promise<SaveOutcome> {
   const { error } = await supabase.from(table).delete().eq("id", parsed.data.id);
   if (error) return { ok: false, reason: "failed" };
   revalidatePath("/today");
+  revalidatePath("/day/[date]", "page");
   return { ok: true };
 }
 
@@ -456,5 +497,6 @@ export async function updateFoodEntry(input: unknown): Promise<SaveOutcome> {
     .eq("id", p.id);
   if (error) return { ok: false, reason: "failed" };
   revalidatePath("/today");
+  revalidatePath("/day/[date]", "page");
   return { ok: true };
 }

@@ -170,10 +170,11 @@ export type Database = {
           duration_min: number;
           kcal_burned: number;
           rpe: number | null;
+          label: string | null;
           source: SourceT;
           created_at: string;
         },
-        "id" | "user_id" | "log_id" | "session_key" | "rpe" | "created_at"
+        "id" | "user_id" | "log_id" | "session_key" | "rpe" | "label" | "created_at"
       >;
       saved_foods: Table<
         {

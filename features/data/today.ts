@@ -82,6 +82,8 @@ export type TodayData = {
   weekDots: { day: string; letter: string; pct: number; today: boolean; future: boolean; logged: boolean }[];
   loggedToday: boolean;
   proteinHit: boolean;
+  /** The week's deficit so far against the week's goal (surplus when gaining). Settled days only. */
+  weekDeficit: { got: number; target: number };
   /** The allowance split: what you can eat on a rest day, and what exercise added. */
   allowance: { base: number; exercise: number };
   /** One level change not yet seen: a full-screen card shows it once. */
@@ -148,7 +150,7 @@ export async function loadToday(
         .order("created_at"),
       supabase
         .from("activity_entries")
-        .select("id,activity_type,duration_min,kcal_burned,created_at")
+        .select("id,activity_type,duration_min,kcal_burned,label,created_at")
         .eq("day", today)
         .order("created_at"),
       Promise.resolve({ data: [] as { food_entry_id: string | null; storage_path: string }[] }),
@@ -320,6 +322,18 @@ export async function loadToday(
         logged: Boolean(f?.loggedOnDay),
       };
     }),
+    weekDeficit: (() => {
+      const sign = goal === "gain" ? 1 : -1;
+      let got = 0;
+      for (const day of weekDays(ws)) {
+        // Today only counts once the day has settled: the net is for the whole day's burn.
+        if (day > today || (day === today && rigaParts(now).hour < 21)) continue;
+        const f = days.find((x) => x.day === day);
+        if (!f || f.bmrKcal <= 0 || !f.loggedOnDay) continue;
+        got += sign * netKcal(f.eatenKcal, dayBurn(f.bmrKcal, f.burnedKcal));
+      }
+      return { got: Math.max(0, Math.round(got)), target: Math.abs(Math.round(energy.plannedNet)) * 7 };
+    })(),
     loggedToday: facts.loggedOnDay,
     proteinHit: facts.proteinTargetG > 0 && facts.proteinG >= facts.proteinTargetG,
     allowance: { base: Math.round(facts.budgetKcal), exercise: fullBurn(facts.burnedKcal) },
@@ -346,7 +360,7 @@ export async function loadToday(
     })),
     activities: (acts.data ?? []).map((a) => ({
       id: a.id,
-      name: ACTIVITY_NAMES[a.activity_type],
+      name: a.label ?? ACTIVITY_NAMES[a.activity_type],
       detail: `${formatTimeRiga(a.created_at)}, ${a.duration_min} min`,
       burned: fullBurn(a.kcal_burned),
     })),

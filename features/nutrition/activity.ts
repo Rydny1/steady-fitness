@@ -9,6 +9,8 @@ export type RawActivity = {
   distanceKm: number | null;
   steps: number | null;
   paceMinPerKm: number | null;
+  /** A hike: slow on foot over rough ground. Typical speed 4 km/h, and it burns like a MET of 6. */
+  hike?: boolean;
 };
 
 export type ResolvedActivity = {
@@ -21,6 +23,8 @@ export type ResolvedActivity = {
 
 /** Typical speeds when only a distance (or steps) is given. */
 const DEFAULT_KMH: Partial<Record<ActivityT, number>> = { run: 9, walk: 5, cycling: 18 };
+const HIKE_KMH = 4;
+export const HIKE_MET = 6;
 /** Believable speed range per activity. Outside it the figure is ignored. */
 const SPEED_RANGE: Partial<Record<ActivityT, [number, number]>> = {
   run: [5, 24],
@@ -69,7 +73,7 @@ export function resolveActivity(raw: RawActivity): ResolvedActivity | null {
   }
   // Distance (or steps) without a time: use the stated pace, or a typical one.
   if (km !== null) {
-    const v = kmh ?? DEFAULT_KMH[type] ?? null;
+    const v = kmh ?? (raw.hike ? HIKE_KMH : (DEFAULT_KMH[type] ?? null));
     if (v === null) return null;
     const minutes = Math.max(1, Math.round((km / v) * 60));
     const how = kmh !== null ? `at ${pace(v)}` : `at a typical ${pace(v)}`;
@@ -97,4 +101,22 @@ export function speedMet(type: ActivityT, kmh: number): number | null {
     return 12.0;
   }
   return null;
+}
+
+// ---- strength: sets and reps become minutes ----
+
+/** Seconds a rep takes, and the rest between sets. A set of 8 is about 24 s of work and a minute and a bit of rest. */
+const SEC_PER_REP = 3;
+const REST_SEC = 75;
+
+export type Exercise = { name: string; sets: number; reps: number; loadKg: number | null; assumed: boolean };
+
+/** Minutes for a set scheme. Never less than a minute. */
+export function strengthMinutes(sets: number, reps: number): number {
+  return Math.max(1, Math.round((sets * (reps * SEC_PER_REP + REST_SEC)) / 60));
+}
+
+/** "bench press 4x8 at 60 kg" */
+export function exerciseNote(e: Exercise): string {
+  return `${e.name} ${e.sets}x${e.reps}${e.loadKg ? ` at ${e.loadKg} kg` : ""}${e.assumed ? " (assumed)" : ""}`;
 }

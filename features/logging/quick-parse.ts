@@ -4,7 +4,7 @@
 // matters.
 import type { ActivityT } from "@/lib/supabase/types";
 import { matchFood } from "@/features/nutrition/food-match";
-import { resolveActivity } from "@/features/nutrition/activity";
+import { HIKE_MET, exerciseNote, resolveActivity, strengthMinutes } from "@/features/nutrition/activity";
 import { finalizeFood, type SavedLookup } from "./accuracy";
 import type { DraftItem } from "./schema";
 
@@ -92,6 +92,46 @@ function readFast(clause: string): DraftItem | null {
   return { kind: "food", name: "Fasting", quantity: null, unit: null, kcal: 0, protein_g: 0, confidence: 1, basis: "estimate", grams: null, per100: null };
 }
 
+const EX = String.raw`(bench press|bench|squats?|deadlifts?|pull-?ups?|chin-?ups?|push-?ups?|press-?ups?|bicep curls?|curls?|rows?|dips|lunges?|abs|crunch(?:es)?|sit-?ups?|planks?|shoulder press|overhead press|lat pull-?downs?|leg press|leg curls?|leg extensions?|flys?|burpees|calf raises?|hip thrusts?)`;
+
+/** "4 sets of 30 abs", "bench press 4x8 at 60 kg", or just "did bench press". */
+function readStrength(clause: string): DraftItem | null {
+  const load = clause.match(/(?:at|with|@)\s*(\d+(?:\.\d+)?)\s*(?:kg|kilos?)/);
+  const loadKg = load ? Number(load[1]) : null;
+  const c = load ? clause.replace(load[0], " ").trim() : clause;
+  let name = "";
+  let sets: number | null = null;
+  let reps: number | null = null;
+  let m = c.match(new RegExp(`${NUM}\\s*sets?\\s*(?:of\\s*)?${NUM}\\s*(?:reps?\\s*)?(?:of\\s+)?${EX}`));
+  if (m) {
+    sets = num(m[1] ?? "");
+    reps = num(m[2] ?? "");
+    name = m[3] ?? "";
+  } else if ((m = c.match(new RegExp(`${EX}\\s*(?:for\\s*)?${NUM}\\s*(?:sets?\\s*(?:of|x)|[x×])\\s*${NUM}`)))) {
+    name = m[1] ?? "";
+    sets = num(m[2] ?? "");
+    reps = num(m[3] ?? "");
+  } else if ((m = c.match(new RegExp(`${NUM}\\s*[x×]\\s*${NUM}\\s*${EX}`)))) {
+    sets = num(m[1] ?? "");
+    reps = num(m[2] ?? "");
+    name = m[3] ?? "";
+  } else if ((m = c.match(new RegExp(`\\b${EX}\\b`)))) {
+    name = m[1] ?? "";
+  } else return null;
+  const assumed = sets === null || reps === null || sets <= 0 || reps <= 0;
+  const ex = { name: name.trim(), sets: assumed ? 3 : (sets as number), reps: assumed ? 10 : (reps as number), loadKg, assumed };
+  return {
+    kind: "activity",
+    activity_type: "gym",
+    session_key: null,
+    duration_min: Math.min(600, strengthMinutes(ex.sets, ex.reps)),
+    rpe: null,
+    speed_kmh: null,
+    note: exerciseNote(ex),
+    strength: true,
+  };
+}
+
 function readActivity(clause: string): DraftItem | null {
   const st = steps(clause);
   let type: ActivityT | null = null;
@@ -101,6 +141,7 @@ function readActivity(clause: string): DraftItem | null {
       break;
     }
   }
+  const hike = /\bhik(?:e|ed|ing)\b/.test(clause);
   if (type === null && st !== null) type = "walk";
   if (type === null) return null;
   const r = resolveActivity({
@@ -109,6 +150,7 @@ function readActivity(clause: string): DraftItem | null {
     distanceKm: st === null ? distance(clause) : null,
     steps: st,
     paceMinPerKm: paceMin(clause),
+    hike,
   });
   if (!r) return null;
   return {
@@ -117,8 +159,9 @@ function readActivity(clause: string): DraftItem | null {
     session_key: type === "football" ? "football" : type === "run" ? "run" : null,
     duration_min: Math.max(1, Math.min(600, r.durationMin)),
     rpe: null,
-    speed_kmh: r.speedKmh,
+    speed_kmh: hike ? null : r.speedKmh,
     note: r.note,
+    met: hike ? HIKE_MET : null,
   };
 }
 
@@ -165,6 +208,11 @@ export function quickParse(text: string, saved: readonly SavedLookup[] = []): Qu
     const fast = readFast(clause);
     if (fast) {
       items.push(fast);
+      continue;
+    }
+    const lift = readStrength(clause);
+    if (lift) {
+      items.push(lift);
       continue;
     }
     const act = readActivity(clause);
