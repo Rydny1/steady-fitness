@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { copy } from "@/content/copy";
 import { InfoTip } from "@/components/info-tip";
-import type { CalorieBar } from "@/features/data/progress";
+import type { NetBar } from "@/features/data/progress";
 
 const W = 346;
 const H = 150;
@@ -124,36 +124,37 @@ export function WeightChart({
 const CW = 346;
 const CH = 120;
 
-/** Calorie bars. Over budget in train red, today faint until the day ends. */
-export function CalorieChart({ bars }: { bars: CalorieBar[] }) {
+/** Net calorie bars around a zero line. Green when it is the right direction for the goal. Dashed line is the daily target. */
+export function NetChart({
+  bars,
+  goal,
+  targetNet,
+}: {
+  bars: NetBar[];
+  goal: "lose" | "gain" | "maintain";
+  targetNet: number;
+}) {
   if (bars.length === 0) return null;
-  const max = Math.max(1, ...bars.flatMap((b) => [b.eaten, b.budget]));
+  const peak = Math.max(300, ...bars.map((b) => Math.abs(b.net)), Math.abs(targetNet));
+  const mid = CH / 2;
+  const scale = (CH / 2 - 8) / peak;
+  const y = (v: number) => mid - v * scale;
   const slot = CW / bars.length;
   const bw = Math.min(28, slot * 0.62);
-  const avgBudget = bars.reduce((s, b) => s + b.budget, 0) / bars.length;
-  const by = (v: number) => CH - (v / max) * (CH - 6);
+  const good = (v: number) => (goal === "lose" ? v < 0 : goal === "gain" ? v > 0 : Math.abs(v) <= 150);
   return (
-    <svg
-      viewBox={`0 0 ${CW} ${CH + 18}`}
-      className="mt-3 w-full"
-      role="img"
-      aria-label="Calories eaten per day against budget"
-    >
-      <line
-        x1="0"
-        x2={CW}
-        y1={by(avgBudget)}
-        y2={by(avgBudget)}
-        stroke="var(--muted)"
-        strokeDasharray="4 4"
-        strokeWidth="1"
-      />
+    <svg viewBox={`0 0 ${CW} ${CH + 18}`} className="mt-3 w-full" role="img" aria-label="Net calories per day">
+      <line x1="0" x2={CW} y1={mid} y2={mid} stroke="var(--edge)" strokeWidth="1" />
+      {targetNet !== 0 ? (
+        <line x1="0" x2={CW} y1={y(targetNet)} y2={y(targetNet)} stroke="var(--muted)" strokeDasharray="4 4" strokeWidth="1" />
+      ) : null}
       {bars.map((b, i) => {
         const x = i * slot + (slot - bw) / 2;
-        const h = Math.max(0, CH - by(b.eaten));
+        const top = Math.min(mid, y(b.net));
+        const h = Math.max(2, Math.abs(y(b.net) - mid));
         return (
           <g key={`${b.label}-${i}`}>
-            <rect x={x} y={CH - h} width={bw} height={h} rx={bw / 2} fill={b.over ? "var(--train)" : "var(--fuel)"} opacity={b.today ? 0.35 : 1} />
+            <rect x={x} y={top} width={bw} height={h} rx={Math.min(bw / 2, 6)} fill={good(b.net) ? "var(--fuel)" : "var(--train)"} opacity={b.today ? 0.35 : 1} />
             {bars.length <= 14 || i % 4 === 0 ? (
               <text x={x + bw / 2} y={CH + 14} textAnchor="middle" fontSize="12" fill="var(--muted)">
                 {b.label}

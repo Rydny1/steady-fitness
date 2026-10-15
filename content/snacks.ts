@@ -29,7 +29,7 @@ export function snackImage(slug: string): string | null {
 }
 
 const SNACK_IMAGES = new Set([
-  'quark', 'skyr', 'kefir', 'eggs', 'protein-drink', 'chicken-slices', 'edamame', 'fruit',
+  'quark', 'skyr', 'kefir', 'eggs', 'protein-drink', 'chicken-slices', 'edamame', 'fruit', 'tuna',
 ]);
 
 export function formatKcal(kcal: Snack['kcal']): string {

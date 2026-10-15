@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Award } from "lucide-react";
+import { Award, X } from "lucide-react";
 import { ackTrophies } from "../actions";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +31,14 @@ export function Celebration({ trophies }: { trophies: Trophy[] }) {
       className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/70 px-6"
     >
       <div className="relative w-full max-w-[360px] overflow-hidden rounded-hero bg-surface p-6 text-center">
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={close}
+          className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-card"
+        >
+          <X size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
         <div aria-hidden="true" className="confetti">
           {CONFETTI.map((i) => (
             <span key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 6) * 90}ms` }} />

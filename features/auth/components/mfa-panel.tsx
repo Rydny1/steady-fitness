@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -71,12 +72,12 @@ export function MfaPanel() {
       setCode("");
       return;
     }
-    router.replace("/today");
+    router.replace(mode.kind === "enroll" ? "/settings?mfa=on" : "/today");
     router.refresh();
   }
 
   if (mode.kind === "loading") {
-    return <div className="mt-8 h-40 rounded-hero bg-card" aria-hidden="true" />;
+    return <div className="h-40 rounded-hero bg-card" aria-hidden="true" />;
   }
   if (mode.kind === "failed") {
     return (
@@ -87,7 +88,13 @@ export function MfaPanel() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <h1 className="text-title font-bold tracking-[-0.8px]">
+        {mode.kind === "enroll" ? copy.mfa.setupTitle : copy.mfa.challengeTitle}
+      </h1>
+      <p className="-mt-2 text-body text-muted">
+        {mode.kind === "enroll" ? copy.mfa.setupSub : copy.mfa.challengeSub}
+      </p>
       {mode.kind === "enroll" ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -122,6 +129,11 @@ export function MfaPanel() {
       <Button type="submit" big disabled={busy || code.length !== 6} className="w-full">
         {copy.mfa.verify}
       </Button>
+      {mode.kind === "enroll" ? (
+        <Link href="/settings" className="flex h-12 items-center justify-center text-small font-semibold text-muted">
+          Not now
+        </Link>
+      ) : null}
     </form>
   );
 }

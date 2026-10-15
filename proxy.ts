@@ -69,16 +69,13 @@ export async function proxy(request: NextRequest) {
   } else {
     const aal = (claims as { aal?: string }).aal;
     if (aal === "aal1" && !path.startsWith("/auth/") && path !== "/mfa") {
-      // Signed in with a password. Require the authenticator code, or make
-      // the first-time user enrol one (SECURITY.md section 1).
+      // Signed in with a password. Two-step sign-in is optional: only people who turned it on
+      // are asked for the code (the database refuses a password-only session for them as well).
       const { data: lvl } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (lvl?.nextLevel === "aal2" && lvl.currentLevel !== "aal2") {
         return redirect("/mfa");
       }
-      if (lvl && lvl.nextLevel === "aal1" && path !== "/mfa") {
-        return redirect("/mfa");
-      }
-    } else if (aal === "aal2" && (path === "/login" || path === "/mfa")) {
+    } else if (aal === "aal2" && path === "/login") {
       return redirect("/today");
     }
     if (path === "/") return redirect("/today");

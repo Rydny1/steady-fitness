@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Award, Check } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { loadProgress, type ProgressData, type Range } from "@/features/data/progress";
 import { diffDays, formatDayShort, rigaParts, weekdayShort } from "@/lib/dates";
-import { CalorieChart, MiniRings, WeightChart } from "@/features/progress/components/charts";
+import {  MiniRings, WeightChart } from "@/features/progress/components/charts";
+import { TrophyGrid } from "@/features/progress/components/trophy-grid";
+import { CoachNote } from "@/components/coach-note";
+import { NetCard } from "@/features/progress/components/net-card";
 import { ChallengePicker } from "@/features/progress/components/challenge-picker";
 import { WeighIn } from "@/features/progress/components/weigh-in";
 import { ProgressPhotos, type ProgressPhoto } from "@/features/photos/components/progress-photos";
@@ -326,15 +328,13 @@ export default async function ProgressPage({
         </div>
       </section>
 
-      <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.calories}>
-        <div className="flex items-baseline justify-between">
-          <span className="text-[clamp(15px,4.62vw,17px)] font-bold">{copy.progress.calories}</span>
-          <span className="text-small text-muted">
-            {d.calories.onBudget} of {d.calories.total} on budget
-          </span>
-        </div>
-        <CalorieChart bars={d.calories.bars} />
-      </section>
+      <NetCard
+        bars={d.net.bars}
+        goal={d.net.goal}
+        targetNet={d.net.targetNet}
+        projection={d.net.projection}
+        insightKey={d.net.insightKey}
+      />
 
       <div className="mx-4 mt-3 grid grid-cols-2 gap-2">
         <BodyTile
@@ -387,22 +387,27 @@ export default async function ProgressPage({
 
       <h2 className="mx-4 mt-9 text-section font-bold tracking-[-0.3px]">{copy.progress.noticed}</h2>
       {d.weeklySummary ? (
-        <div className="mx-4 mt-3 rounded-inner bg-card p-4">
-          <div className="text-caption font-semibold text-muted">{copy.progress.weeklyReport}</div>
-          <p className="mt-1 text-body leading-[1.4]">{d.weeklySummary}</p>
-        </div>
+        <CoachNote eyebrow={copy.progress.weeklyReport} className="mx-4 mt-3">
+          {d.weeklySummary}
+        </CoachNote>
       ) : null}
       {d.notes.length === 0 ? (
         <p className="mx-4 mt-3 text-small text-muted">{copy.progress.patternsEmpty}</p>
       ) : (
-        <ul className="mx-4 mt-2">
-          {d.notes.map((n, i) => (
-            <li key={n.id} className={cn("py-[14px]", i < d.notes.length - 1 && "border-b border-line")}>
-              <div className="text-body leading-[1.4]">{n.text}</div>
-              <div className="mt-1 text-caption text-muted">{whenLabel(n.when)}</div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <CoachNote className="mx-4 mt-3">
+            {d.notes[0]?.text}
+            <span className="mt-1 block text-caption text-muted">{d.notes[0] ? whenLabel(d.notes[0].when) : null}</span>
+          </CoachNote>
+          <ul className="mx-4 mt-2">
+            {d.notes.slice(1).map((n, i, arr) => (
+              <li key={n.id} className={cn("py-[14px]", i < arr.length - 1 && "border-b border-line")}>
+                <div className="text-body leading-[1.4]">{n.text}</div>
+                <div className="mt-1 text-caption text-muted">{whenLabel(n.when)}</div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       <div className="mx-4 mt-8 flex items-baseline justify-between">
@@ -411,30 +416,7 @@ export default async function ProgressPage({
           {earned} of {trophies.length}
         </span>
       </div>
-      <ul className="mx-4 mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
-        {trophies.map((t) => {
-          const on = d.trophies[t.key] === true;
-          return (
-            <li key={t.key} className="flex flex-col items-center gap-2 text-center">
-              <span
-                className={cn(
-                  "flex h-14 w-14 items-center justify-center rounded-full",
-                  on ? "bg-ink" : "box-border border-[1.5px] border-dashed border-dash",
-                )}
-                title={on ? t.line : t.hint}
-              >
-                {on ? (
-                  <Award size={24} strokeWidth={1.8} className="text-amber" aria-hidden="true" />
-                ) : (
-                  <Check size={20} strokeWidth={1.8} className="text-dash" aria-hidden="true" />
-                )}
-              </span>
-              <span className={cn("text-caption leading-[1.25]", on ? "text-ink" : "text-muted")}>{t.name}</span>
-              <span className="sr-only">{on ? t.line : t.hint}</span>
-            </li>
-          );
-        })}
-      </ul>
+      <TrophyGrid items={trophies.map((t) => ({ key: t.key, name: t.name, hint: t.hint, line: t.line, on: d.trophies[t.key] === true }))} />
 
       <ProgressPhotos
         photos={photos}

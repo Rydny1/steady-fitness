@@ -23,8 +23,8 @@ export const tooltips = {
     text: "Estimated from your waist, neck and height. Not exact, but tracks the trend.",
   },
   adaptiveBudget: {
-    title: "Adaptive budget",
-    text: "Your calorie budget adjusted to your real body, based on what you ate and how your weight moved.",
+    title: "Adaptive limit",
+    text: "Your eating limit adjusted to your real body, based on what you ate and how your weight moved.",
   },
   vsLastWeek: {
     title: "You vs last week",
@@ -48,7 +48,19 @@ export const tooltips = {
   },
   energyBalance: {
     title: "Net calories",
-    text: "What you ate minus what you burned, an estimate. Below zero is a deficit, which is what drops weight. For a weight gain goal you want it above zero.",
+    text: "What you ate minus what you burned, an estimate. Below zero is a deficit, which is what drops weight. Gaining? You want it above zero. Burn includes exercise: log it and you can eat more.",
+  },
+  streak: {
+    title: "Day streak",
+    text: "Days in a row you logged something. Miss a day and it restarts.",
+  },
+  career: {
+    title: "Days in",
+    text: "How many days you have been on Steady. It counts toward your next level.",
+  },
+  trophies: {
+    title: "Trophies",
+    text: "Awards for real milestones. Tap one in Progress to see how to earn it.",
   },
   level: {
     title: "Level",

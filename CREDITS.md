@@ -60,8 +60,9 @@ Downloaded from `https://images.unsplash.com/photo-{id}`, converted to WebP, max
 | snacks/chicken-slices.webp | 1689774187968-0e6c29a1d82e | Thomas Park |
 | snacks/edamame.webp | 1557621956-ce58555aa0ce | Daniel Brubaker |
 | snacks/fruit.webp | 1766837188858-85ef44929bf2 | Evelien Van Den Brink (apples, bananas and a mango) |
+| snacks/tuna.webp | Pexels 12001951 (https://www.pexels.com/photo/canned-tuna-12001951/, Pexels License) | Towfiqu Barbhuiya (open can of tuna) |
 
-No photo found, skipped: snacks/tuna. Photographer names for the six new meal photos were read from each photo page.
+Photographer names for the six new meal photos were read from each photo page.
 
 ## Quotes (content/quotes/quotes.ts)
 

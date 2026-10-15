@@ -19,12 +19,6 @@ const pathField = z
   .max(200)
   .regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg$/);
 
-const mealSchema = z.object({
-  path: pathField,
-  takenOn,
-  foodEntryId: z.uuid().nullable(),
-});
-
 const progressSchema = z.object({
   path: pathField,
   takenOn,
@@ -32,25 +26,6 @@ const progressSchema = z.object({
 });
 
 /** The file is already in Storage (client upload, RLS checks the folder). This records it. */
-export async function recordMealPhoto(input: unknown): Promise<PhotoOutcome> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false, reason: "signed_out" };
-  const parsed = mealSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, reason: "invalid" };
-  if (!parsed.data.path.startsWith(`${auth.user.id}/`)) return { ok: false, reason: "invalid" };
-
-  const { error } = await supabase.from("photos").insert({
-    kind: "meal",
-    storage_path: parsed.data.path,
-    taken_on: parsed.data.takenOn,
-    food_entry_id: parsed.data.foodEntryId,
-  });
-  if (error) return { ok: false, reason: "failed" };
-  revalidatePath("/today");
-  return { ok: true };
-}
-
 export async function recordProgressPhoto(input: unknown): Promise<PhotoOutcome> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();

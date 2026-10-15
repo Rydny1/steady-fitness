@@ -17,6 +17,8 @@ export type AdaptiveInput = {
   bmrKcal: number;
   /** Share of real burn to eat. Below 1 loses, 1 holds, above 1 gains. Defaults to the loss share. */
   budgetFactor?: number;
+  /** Average full exercise burn per day in the window. The measured burn already contains it. */
+  avgExerciseKcal?: number;
 };
 
 export type AdaptiveResult =
@@ -57,7 +59,9 @@ export function adaptiveBudget(input: AdaptiveInput): AdaptiveResult {
   const realBurn = avgIn - (trendChange * ADAPTIVE.kcalPerKg) / n;
 
   const factor = input.budgetFactor ?? ADAPTIVE.budgetFactor;
-  const target = realBurn * factor;
+  // The limit is for a rest day: today's exercise is added on top, so take the average out here.
+  const restBurn = Math.max(0, realBurn - (input.avgExerciseKcal ?? 0));
+  const target = restBurn * factor;
   const delta = target - input.currentBudgetKcal;
   const clampedDelta = Math.max(-ADAPTIVE.maxWeeklyChange, Math.min(ADAPTIVE.maxWeeklyChange, delta));
   const capped = clampedDelta !== delta;

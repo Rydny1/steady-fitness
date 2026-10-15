@@ -19,6 +19,8 @@ import {
   winStreak,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { dayBurn, goalFor, netKcal, type Goal } from "@/features/nutrition/energy";
+import { projectNet, type NetProjection } from "@/features/nutrition/projection";
 import {
   bmi,
   bodyFatNavy,
@@ -35,13 +37,7 @@ type Db = SupabaseClient<Database>;
 
 export type Range = "week" | "month" | "3m" | "all";
 
-export type CalorieBar = {
-  label: string;
-  eaten: number;
-  budget: number;
-  over: boolean;
-  today: boolean;
-};
+export type NetBar = { label: string; net: number; today: boolean };
 
 export type ProgressData = {
   range: Range;
@@ -65,7 +61,7 @@ export type ProgressData = {
     weekKg: number | null;
     totalKg: number | null;
   };
-  calories: { bars: CalorieBar[]; onBudget: number; total: number };
+  net: { bars: NetBar[]; goal: Goal; targetNet: number; projection: NetProjection; insightKey: string };
   body: {
     waistCm: number | null;
     waistDelta: number | null;
@@ -246,43 +242,45 @@ export async function loadProgress(
   const change = first && latestAvg !== null ? Math.round((latestAvg - first.avgKg) * 10) / 10 : null;
   const projection = projectGoalDate({ entries, today, goalKg: Number(profile.goal_weight_kg) });
 
-  // Calories.
+  // Net calories: eaten minus everything burned (resting, daily activity, exercise).
   const calFacts = facts.filter((f) => f.day >= from && f.day <= today);
-  let bars: CalorieBar[];
+  const netOf = (f: DayFacts) => netKcal(f.eatenKcal, dayBurn(f.bmrKcal, f.burnedKcal));
+  // A day with only a snack logged is not a full day: its net would look like a huge deficit.
+  const countable = (f: DayFacts) => f.bmrKcal > 0 && f.eatenKcal >= f.bmrKcal * 0.4;
+  let bars: NetBar[];
   if (range === "week" || range === "month") {
-    bars = calFacts.map((f) => {
-      const budget = dayBudget(f.budgetKcal, f.burnedKcal);
-      return {
-        label: range === "week" ? LETTERS[(diffDays(f.day, ws) + 7) % 7] ?? "" : String(Number(f.day.slice(8))),
-        eaten: f.eatenKcal,
-        budget,
-        over: budget > 0 && f.eatenKcal > budget,
-        today: f.day === today,
-      };
-    });
+    bars = calFacts.filter(countable).map((f) => ({
+      label: range === "week" ? LETTERS[(diffDays(f.day, ws) + 7) % 7] ?? "" : String(Number(f.day.slice(8))),
+      net: netOf(f),
+      today: f.day === today,
+    }));
   } else {
     const weeks = new Map<string, DayFacts[]>();
-    for (const f of calFacts) {
+    for (const f of calFacts.filter(countable)) {
       const key = weekStart(f.day);
       const list = weeks.get(key);
       if (list) list.push(f);
       else weeks.set(key, [f]);
     }
-    bars = [...weeks.entries()].slice(-26).map(([w, list]) => {
-      const logged = list.filter((f) => f.eatenKcal > 0);
-      const avg = logged.length > 0 ? logged.reduce((s, f) => s + f.eatenKcal, 0) / logged.length : 0;
-      const budget = list.reduce((s, f) => s + dayBudget(f.budgetKcal, f.burnedKcal), 0) / list.length;
-      return {
-        label: String(Number(w.slice(8))),
-        eaten: Math.round(avg),
-        budget: Math.round(budget),
-        over: budget > 0 && avg > budget,
-        today: w === ws,
-      };
-    });
+    bars = [...weeks.entries()].slice(-26).map(([w, list]) => ({
+      label: String(Number(w.slice(8))),
+      net: Math.round(list.reduce((s, f) => s + netOf(f), 0) / list.length),
+      today: w === ws,
+    }));
   }
-  const finished = calFacts.filter((f) => f.day < today && f.eatenKcal > 0);
-  const onBudget = finished.filter((f) => f.eatenKcal <= dayBudget(f.budgetKcal, f.burnedKcal) * 1.05).length;
+  const finishedNet = calFacts.filter((f) => f.day < today && countable(f)).map(netOf);
+  const avgNet = finishedNet.length > 0 ? finishedNet.reduce((s, v) => s + v, 0) / finishedNet.length : null;
+  const goalKind = goalFor(latestAvg, Number(profile.goal_weight_kg));
+  const projectionNet = projectNet({
+    goal: goalKind,
+    avgNet,
+    loggedDays: finishedNet.length,
+    currentKg: latestAvg,
+    goalKg: Number(profile.goal_weight_kg),
+  });
+  const targetRow = facts.find((f) => f.bmrKcal > 0 && f.day === today) ?? facts.find((f) => f.bmrKcal > 0);
+  const targetNet = targetRow ? targetRow.budgetKcal - dayBurn(targetRow.bmrKcal, 0) : 0;
+  const insightKey = `${today}|${range}|${projectionNet.avgNet}|${projectionNet.loggedDays}|${latestAvg}`;
 
   // Body.
   const waists = measures.filter((m) => m.waist_cm !== null);
@@ -376,7 +374,7 @@ export async function loadProgress(
       weekKg,
       totalKg,
     },
-    calories: { bars, onBudget, total: finished.length },
+    net: { bars, goal: goalKind, targetNet, projection: projectionNet, insightKey },
     body: {
       waistCm: lastWaist ? Number(lastWaist.waist_cm) : null,
       waistDelta:

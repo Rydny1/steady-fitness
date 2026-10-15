@@ -78,6 +78,8 @@ export type TodayData = {
   celebrate: { key: string; name: string; line: string }[];
   /** The name on your profile: the latest trophy you have earned. */
   title: string | null;
+  /** The allowance split: what you can eat on a rest day, and what exercise added. */
+  allowance: { base: number; exercise: number };
   /** One level change not yet seen: a full-screen card shows it once. */
   levelEvent: { kind: "promoted" | "dropped"; division: DivisionT; from: DivisionT } | null;
   /** The Coach's latest true line today, from the Observer. */
@@ -145,7 +147,7 @@ export async function loadToday(
         .select("id,activity_type,duration_min,kcal_burned,created_at")
         .eq("day", today)
         .order("created_at"),
-      supabase.from("photos").select("food_entry_id,storage_path").eq("kind", "meal").eq("taken_on", today),
+      Promise.resolve({ data: [] as { food_entry_id: string | null; storage_path: string }[] }),
       supabase.from("day_checkins").select("*").eq("day", today).maybeSingle(),
       supabase
         .from("day_checkins")
@@ -265,7 +267,7 @@ export async function loadToday(
       : null;
   const energy: TodayData["energy"] = {
     goal,
-    todayNet: facts.eatenKcal > 0 && facts.bmrKcal > 0 ? netKcal(facts.eatenKcal, dayBurn(facts.bmrKcal, facts.burnedKcal)) : null,
+    todayNet: facts.bmrKcal > 0 && facts.eatenKcal >= facts.bmrKcal * 0.4 ? netKcal(facts.eatenKcal, dayBurn(facts.bmrKcal, facts.burnedKcal)) : null,
     yesterdayNet,
     plannedNet: facts.budgetKcal - dayBurn(facts.bmrKcal, 0),
     read: yesterdayNet === null ? null : readBalance(goal, yesterdayNet),
@@ -302,6 +304,7 @@ export async function loadToday(
     },
     streak: prev.streak + (facts.loggedOnDay && !facts.sick ? 1 : 0),
     careerDays: prev.careerDays,
+    allowance: { base: Math.round(facts.budgetKcal), exercise: fullBurn(facts.burnedKcal) },
     celebrate,
     title,
     trophiesEarned: Object.values(trophies).filter(Boolean).length,
