@@ -45,6 +45,13 @@ export const parsedItemSchema = z.object({
   distance_km: num.nullable(),
   steps: num.nullable(),
   pace_min_per_km: num.nullable(),
+  /** Strength: "4 sets of 8 bench press at 60 kg". Code turns these into minutes. */
+  sets: num.nullable(),
+  reps: num.nullable(),
+  load_kg: num.nullable(),
+  /** For an activity we have no table for: the AI's estimate of how hard it is (MET), and a typical duration if none was said. */
+  met: num.nullable(),
+  assumed_duration_min: num.nullable(),
   session_key: z.enum(sessionKeys).nullable(),
   body: z
     .object({
@@ -93,6 +100,12 @@ export const draftActivitySchema = z.object({
   speed_kmh: z.number().min(1).max(45).nullable().optional(),
   /** How the minutes were worked out, for display only. */
   note: z.string().max(100).nullable().optional(),
+  /** Minutes were worked out from sets and reps (merged into one gym entry on read). */
+  strength: z.boolean().optional(),
+  /** The person's own name for it, when it is not one of the standard types. */
+  label: z.string().max(40).nullable().optional(),
+  /** MET override for things like hiking. */
+  met: z.number().min(1).max(20).nullable().optional(),
 });
 
 export const draftBodySchema = z.object({

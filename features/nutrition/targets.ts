@@ -58,11 +58,11 @@ export function activityKcal(
   activity: ActivityT,
   minutes: number,
   weightKg: number,
-  options: { fastRun?: boolean; speedKmh?: number | null } = {},
+  options: { fastRun?: boolean; speedKmh?: number | null; met?: number | null } = {},
 ): number {
   if (minutes <= 0 || weightKg <= 0) return 0;
   const bySpeed = options.speedKmh ? speedMet(activity, options.speedKmh) : null;
-  const met = bySpeed ?? (activity === "run" && options.fastRun ? MET_FAST_RUN : MET[activity]);
+  const met = options.met ?? bySpeed ?? (activity === "run" && options.fastRun ? MET_FAST_RUN : MET[activity]);
   return Math.round(TARGETS.exerciseAddBackShare * met * weightKg * (minutes / 60));
 }
 

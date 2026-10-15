@@ -51,3 +51,6 @@ export const PROFILE_FALLBACK = {
   goalKg: 75,
   wakeTime: "06:30",
 } as const;
+
+/** Most promises a person can keep active. */
+export const MAX_PROMISES = 9;

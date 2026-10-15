@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ageOn, todayRiga } from "@/lib/dates";
+import { MAX_PROMISES } from "./defaults";
 import { computeTargets } from "@/features/nutrition/targets";
 
 export type SettingsOutcome =
@@ -105,20 +106,54 @@ export async function savePlan(input: unknown): Promise<SettingsOutcome> {
 
 const habitsSchema = z.object({
   habits: z
-    .array(z.object({ id: z.uuid(), name: z.string().trim().min(1).max(40) }))
-    .min(1)
-    .max(5),
+    .array(z.object({ id: z.uuid().nullable(), name: z.string().trim().min(1).max(40) }))
+    .max(MAX_PROMISES),
 });
 
+/**
+ * The person's promises, in order: existing ones keep their history, new ones are added, ones left
+ * out are archived (never deleted, so past days still add up). Zero is allowed.
+ */
 export async function saveHabits(input: unknown): Promise<SettingsOutcome> {
   const { supabase, user } = await userOrNull();
   if (!user) return { ok: false, reason: "signed_out" };
   const parsed = habitsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
 
-  for (const h of parsed.data.habits) {
-    const { error } = await supabase.from("habits").update({ name: h.name }).eq("id", h.id);
+  const { data: all, error: readError } = await supabase.from("habits").select("id,position,archived_at");
+  if (readError) return { ok: false, reason: "failed" };
+  const known = new Set((all ?? []).map((h) => h.id));
+  const keep = parsed.data.habits.filter((h): h is { id: string; name: string } => h.id !== null && known.has(h.id));
+  const keepIds = new Set(keep.map((h) => h.id));
+  const maxPos = Math.max(0, ...(all ?? []).map((h) => h.position));
+  let park = maxPos + 1;
+
+  // 1. Retire what was removed, parked out of the way.
+  for (const h of (all ?? []).filter((x) => x.archived_at === null && !keepIds.has(x.id))) {
+    const { error } = await supabase
+      .from("habits")
+      .update({ archived_at: new Date().toISOString(), position: park })
+      .eq("id", h.id);
+    park += 1;
     if (error) return { ok: false, reason: "failed" };
+  }
+  // 2. Move the kept ones out of 1..9 first, so reordering never collides.
+  for (const h of keep) {
+    const { error } = await supabase.from("habits").update({ position: park }).eq("id", h.id);
+    park += 1;
+    if (error) return { ok: false, reason: "failed" };
+  }
+  // 3. Final names and positions, then the new ones.
+  let pos = 1;
+  for (const h of parsed.data.habits) {
+    if (h.id !== null && keepIds.has(h.id)) {
+      const { error } = await supabase.from("habits").update({ name: h.name, position: pos }).eq("id", h.id);
+      if (error) return { ok: false, reason: "failed" };
+    } else {
+      const { error } = await supabase.from("habits").insert({ name: h.name, position: pos });
+      if (error) return { ok: false, reason: "failed" };
+    }
+    pos += 1;
   }
   revalidatePath("/today");
   revalidatePath("/settings");

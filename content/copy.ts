@@ -98,8 +98,8 @@ export const copy = {
     estimate: "Estimate from photo",
     voiceUnsupported: "Voice isn't available in this browser. Type it instead.",
     parseFailed:
-      "Couldn't read that. Try again.",
-    aiLimit: "AI is busy. Add it by hand.",
+      "Couldn't read that. Try again, or add by hand.",
+    aiLimit: "AI is busy. Short lines still work, or add by hand.",
     offline: "Offline. Sends when you're back.",
     queued: (n: number) => `${n} waiting to send`,
     saved: "Saved.",

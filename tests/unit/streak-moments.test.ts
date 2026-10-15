@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deficitFact, fatKg, nextMilestone, streakCopy, toMilestone } from "@/features/game/streak-moments";
+import { fatKg, moveLine, nextMilestone, streakCopy, toMilestone } from "@/features/game/streak-moments";
 import { quickParse } from "@/features/logging/quick-parse";
 
 describe("streak moments", () => {
@@ -13,10 +13,11 @@ describe("streak moments", () => {
     expect(streakCopy(8).milestone).toBe(false);
     expect(streakCopy(1).title).toBe("Day one");
   });
-  it("turns a deficit into body fat with real arithmetic", () => {
+  it("says whether you are down or up today, in kg", () => {
     expect(fatKg(1500)).toBe(0.19);
-    expect(deficitFact(1500)).toContain("0.19 kg");
-    expect(deficitFact(0)).toBeNull();
+    expect(moveLine(-2500)).toBe("Down ~0.32 kg today.");
+    expect(moveLine(400)).toBe("Up ~0.05 kg today.");
+    expect(moveLine(0)).toBeNull();
   });
   it("logs a fasting day as a zero-calorie entry", () => {
     const r = quickParse("I fasted today");

@@ -342,3 +342,7 @@ button:active:not(:disabled) {
     }
   }
 }
+
+.flame-glow {
+  filter: drop-shadow(0 0 6px rgba(242, 179, 0, 0.55));
+}

@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { Award, Dumbbell } from "lucide-react";
+import { Award, ChevronLeft, Dumbbell } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
 import { deficitStatus } from "@/features/nutrition/energy";
-import { deficitFact } from "@/features/game/streak-moments";
-import { formatDayLong, greeting } from "@/lib/dates";
+import { moveLine } from "@/features/game/streak-moments";
+import { addDays, formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { FormCard } from "@/features/today/components/form-card";
-import { Promises } from "@/features/today/components/promises";
+import { PromisesList, PromisesProvider, StreakBlock } from "@/features/today/components/promises";
 import { LogList } from "@/features/today/components/log-list";
 import { CheckinCard } from "@/features/today/components/checkin-sheet";
 import { Moments } from "@/features/today/components/moments";
@@ -28,7 +28,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   const net = d.energy.todayNet ?? 0;
   const status = deficitStatus(net, d.energy.plannedNet, d.energy.goal, d.facts.eatenKcal, d.budgetKcal, d.hour);
-  const fact = d.energy.goal === "lose" ? deficitFact(-net) : null;
+  const fact = moveLine(net);
   const footerParts = [status.text, fact].filter(Boolean);
 
   return (
@@ -50,7 +50,12 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       />
       {!d.levelEvent && d.celebrate.length > 0 ? <Celebration trophies={d.celebrate} /> : null}
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
-        <span className="text-small text-muted">{formatDayLong(today)}</span>
+        <span className="flex items-center gap-1 text-small text-muted">
+          <Link href={`/day/${addDays(today, -1)}`} prefetch={false} aria-label="Yesterday" className="-ml-3 flex h-11 w-11 items-center justify-center">
+            <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
+          </Link>
+          {formatDayLong(today)}
+        </span>
         <Link
           href="/settings"
           aria-label="Profile"
@@ -63,8 +68,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         {greeting(d.hour, profile.display_name)}
       </h1>
       {d.title ? (
-        <span className="neon-chip mx-4 mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-semibold">
-          <Award size={14} strokeWidth={2} aria-hidden="true" />
+        <span className="mx-4 mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-caption font-semibold text-white">
+          <Award size={14} strokeWidth={2} className="text-amber" aria-hidden="true" />
           {d.title}
         </span>
       ) : null}
@@ -77,8 +82,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         footer={footerParts.join(" ")}
       />
       {d.observer ? <CoachNote className="mx-4 mt-4">{d.observer}</CoachNote> : null}
-
-      <Promises habits={d.habits} day={today} streak={d.streak} week={d.weekDots} />
 
       <section
         className="mx-4 mt-5 rounded-hero bg-ink px-4 pb-6 pt-7 text-white"
@@ -93,6 +96,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <span className="h-1 w-7 rounded-full bg-amber" />
         </div>
       </section>
+
+      <PromisesProvider habits={d.habits} day={today}>
+        <StreakBlock streak={d.streak} week={d.weekDots} goal={d.energy.goal} weekDeficit={d.weekDeficit} />
 
       <FormCard d={d} />
       {d.adaptiveNote ? <AdaptiveNote text={d.adaptiveNote} /> : null}
@@ -122,6 +128,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         sickUsed={d.sickUsedThisMonth}
         show={d.hour >= 18}
       />
+      <PromisesList />
+      </PromisesProvider>
       <LogList foods={d.foods} activities={d.activities} photoUrls={{}} />
     </main>
   );
