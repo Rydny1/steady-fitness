@@ -53,7 +53,7 @@ export function QuickBuys({ items, day }: { items: QuickBuy[]; day: string }) {
 
   return (
     <>
-      <ul className="mx-6 mt-[14px] grid grid-cols-2 gap-x-3 gap-y-[18px]">
+      <ul className="mx-4 mt-[14px] grid grid-cols-2 gap-x-3 gap-y-[18px]">
         {items.map((q) => (
           <li key={q.slug}>
             <button
@@ -68,13 +68,13 @@ export function QuickBuys({ items, day }: { items: QuickBuy[]; day: string }) {
                   <Image src={q.image} alt="" fill sizes="(max-width: 520px) 45vw, 230px" className="object-cover" />
                 ) : null}
               </span>
-              <span className="mt-2 block text-[16px] font-semibold">{q.name}</span>
-              <span className="block text-[14px] text-muted">{q.detail}</span>
+              <span className="mt-2 block text-[clamp(13px,4.10vw,15px)] font-semibold">{q.name}</span>
+              <span className="block text-[clamp(12px,3.59vw,13px)] text-muted">{q.detail}</span>
             </button>
           </li>
         ))}
       </ul>
-      <p className="mx-6 mt-3 min-h-5 text-small text-muted" role="status" aria-live="polite">
+      <p className="mx-4 mt-3 min-h-5 text-small text-muted" role="status" aria-live="polite">
         {note}
       </p>
     </>

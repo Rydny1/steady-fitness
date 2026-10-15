@@ -5,6 +5,7 @@ import { addDays } from "@/lib/dates";
 import { adaptiveBudget, adaptiveLine, type AdaptiveDay } from "@/features/nutrition/adaptive-budget";
 import { trendAt } from "@/features/body/metrics";
 import { loadDayFacts } from "@/features/data/day-facts";
+import { budgetFactorFor, goalFor } from "@/features/nutrition/energy";
 
 type Db = SupabaseClient<Database>;
 
@@ -26,7 +27,7 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
 
   const from = addDays(today, -WINDOW_DAYS);
   const to = addDays(today, -1);
-  const [facts, weights, target] = await Promise.all([
+  const [facts, weights, target, profile] = await Promise.all([
     loadDayFacts(admin, userId, from, to),
     admin
       .from("measurements")
@@ -40,6 +41,7 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
       .order("effective_from", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    admin.from("profiles").select("goal_weight_kg").eq("user_id", userId).maybeSingle(),
   ]);
   if (!target.data) return null;
 
@@ -55,6 +57,7 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
     trendEndKg: end,
     currentBudgetKcal: target.data.budget_kcal,
     bmrKcal: target.data.bmr_kcal,
+    budgetFactor: budgetFactorFor(goalFor(end, Number(profile.data?.goal_weight_kg ?? end))),
   });
   const line = adaptiveLine(result);
   if (result.status !== "ok" || !line) return null;

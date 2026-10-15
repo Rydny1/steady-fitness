@@ -14,6 +14,7 @@ import {
   type WeekComparison,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { dayBurn, goalFor, netKcal, readBalance, type BalanceRead, type Goal } from "@/features/nutrition/energy";
 import { chapters, coachForm, matchLines, type FormName } from "@/content/copy";
 import { comebackQuotes, quotes } from "@/content/lines";
 import { SESSION_NAMES } from "@/features/settings/defaults";
@@ -67,6 +68,8 @@ export type TodayData = {
   sickUsedThisMonth: number;
   /** The last progress photo is 14 or more days old, or there is none. */
   photoDue: boolean;
+  /** Net energy against the goal: yesterday, and what eating the budget would give. */
+  energy: { goal: Goal; yesterdayNet: number | null; plannedNet: number; read: BalanceRead | null };
   /** One level change not yet seen: a full-screen card shows it once. */
   levelEvent: { kind: "promoted" | "dropped"; division: DivisionT; from: DivisionT } | null;
   /** The Coach's latest true line today, from the Observer. */
@@ -118,7 +121,7 @@ export async function loadToday(
   const lastStart = addDays(ws, -7);
   const monthStart = `${today.slice(0, 7)}-01`;
 
-  const [days, ledger, habits, checks, foods, acts, photos, checkin, sickMonth, results, trophies, lastPhoto, flagRows, observerRow] =
+  const [days, ledger, habits, checks, foods, acts, photos, checkin, sickMonth, results, trophies, lastPhoto, flagRows, observerRow, weightRow] =
     await Promise.all([
       loadDayFacts(supabase, profile.user_id, lastStart, today),
       latestLedger(supabase, profile.user_id),
@@ -156,6 +159,13 @@ export async function loadToday(
         .select("text")
         .eq("day", today)
         .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("measurements")
+        .select("weight_kg")
+        .not("weight_kg", "is", null)
+        .order("measured_on", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
@@ -231,6 +241,20 @@ export async function loadToday(
     | undefined;
   const adaptive = adFlag && adFlag.seen === false && adFlag.text ? adFlag.text : null;
 
+  // Net energy against the goal. Yesterday is the last full day.
+  const goal = goalFor(weightRow.data ? Number(weightRow.data.weight_kg) : null, Number(profile.goal_weight_kg));
+  const yFacts = days.find((x) => x.day === addDays(today, -1));
+  const yesterdayNet =
+    yFacts && yFacts.loggedOnDay && yFacts.bmrKcal > 0
+      ? netKcal(yFacts.eatenKcal, dayBurn(yFacts.bmrKcal, yFacts.burnedKcal))
+      : null;
+  const energy: TodayData["energy"] = {
+    goal,
+    yesterdayNet,
+    plannedNet: facts.budgetKcal - dayBurn(facts.bmrKcal, 0),
+    read: yesterdayNet === null ? null : readBalance(goal, yesterdayNet),
+  };
+
   const checked = new Set((checks.data ?? []).map((c) => c.habit_id));
   const photoByFood = new Map(
     (photos.data ?? []).map((p) => [p.food_entry_id ?? "", p.storage_path] as const),
@@ -288,6 +312,7 @@ export async function loadToday(
     checkin: checkin.data ?? null,
     sickUsedThisMonth: sickMonth.count ?? 0,
     photoDue: !lastPhoto.data || diffDays(today, lastPhoto.data.taken_on) >= 14,
+    energy,
     levelEvent: levelEvent,
     observer: observerRow.data?.text ?? null,
     adaptiveNote: adaptive,

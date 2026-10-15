@@ -41,7 +41,7 @@ export type SavedFood = {
   protein_g: number;
 };
 
-type Mode = "voice" | "photo" | "type";
+type Mode = "text" | "photo";
 type Source = "voice" | "text" | "photo" | "saved" | "barcode";
 
 const nf = new Intl.NumberFormat("en-GB");
@@ -60,8 +60,7 @@ export function LogScreen({
   saved: SavedFood[];
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("voice");
-  const [transcript, setTranscript] = useState("");
+  const [mode, setMode] = useState<Mode>("text");
   const [interim, setInterim] = useState("");
   const [typed, setTyped] = useState("");
   const [listening, setListening] = useState(false);
@@ -77,8 +76,14 @@ export function LogScreen({
   const [product, setProduct] = useState<BarcodeProduct | null>(null);
   const [grams, setGrams] = useState("100");
   const recognition = useRef<Recognition | null>(null);
-  const transcriptRef = useRef("");
+  const typedRef = useRef("");
+  const baseRef = useRef("");
+  const usedVoice = useRef(false);
   const voiceOk = useMemo(() => speechSupported(), []);
+
+  useEffect(() => {
+    typedRef.current = typed;
+  }, [typed]);
 
   useEffect(() => {
     return () => recognition.current?.stop();
@@ -106,24 +111,25 @@ export function LogScreen({
     const r = createRecognition();
     if (!r) {
       setMessage(copy.log.voiceUnsupported);
-      setMode("type");
       return;
     }
     reset();
-    setTranscript("");
     setInterim("");
-    transcriptRef.current = "";
+    // Voice adds to whatever is already in the box, so you can fix a word by typing and keep talking.
+    baseRef.current = typedRef.current.trim();
+    usedVoice.current = true;
     r.onresult = (e) => {
       const { final, interim: partial } = collectTranscript(e);
-      transcriptRef.current = final;
-      setTranscript(final);
+      const next = (baseRef.current ? baseRef.current + " " : "") + final;
+      typedRef.current = next;
+      setTyped(next);
       setInterim(partial);
     };
     r.onerror = () => setListening(false);
     r.onend = () => {
       setListening(false);
       setInterim("");
-      const text = transcriptRef.current.trim();
+      const text = typedRef.current.trim();
       if (text) void runParse(text, "voice");
     };
     recognition.current = r;
@@ -284,7 +290,7 @@ export function LogScreen({
   return (
     <main className="flex min-h-dvh flex-col">
       <h1 className="sr-only">{copy.log.title}</h1>
-      <div className="flex items-center justify-between px-4 pt-[52px]">
+      <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <Link
           href="/today"
           aria-label="Close"
@@ -295,9 +301,9 @@ export function LogScreen({
         <div
           role="tablist"
           aria-label="Log mode"
-          className="grid w-[240px] grid-cols-3 rounded-full bg-card p-1"
+          className="grid w-[180px] grid-cols-2 rounded-full bg-card p-1"
         >
-          {(["voice", "photo", "type"] as const).map((m) => (
+          {(["text", "photo"] as const).map((m) => (
             <button
               key={m}
               type="button"
@@ -309,36 +315,22 @@ export function LogScreen({
                 mode === m ? "bg-ink font-semibold text-white" : "font-medium text-muted",
               )}
             >
-              {copy.log[m]}
+              {m === "text" ? "Text" : copy.log.photo}
             </button>
           ))}
         </div>
         <span className="w-11" />
       </div>
 
-      <div className="px-6 pt-8">
-        {mode === "voice" ? (
-          <p className="min-h-[80px] text-[25px] font-medium leading-[1.3] tracking-[-0.3px]" aria-live="polite">
-            {transcript || interim ? (
-              <>
-                {transcript}
-                {interim ? <span className="text-faint"> {interim}</span> : null}
-              </>
-            ) : (
-              <span className="text-muted">
-                {listening ? copy.log.listening : voiceOk ? copy.log.tapToSpeak : copy.log.voiceUnsupported}
-              </span>
-            )}
-          </p>
-        ) : null}
-
-        {mode === "type" ? (
+      <div className="px-4 pt-8">
+        {mode === "text" ? (
           <form
             onSubmit={(e) => {
               e.preventDefault();
               const t = typed.trim();
               if (t) {
                 reset();
+                usedVoice.current = false;
                 void runParse(t, "text");
               }
             }}
@@ -346,18 +338,59 @@ export function LogScreen({
             <label className="sr-only" htmlFor="typed">
               {copy.log.type}
             </label>
-            <textarea
-              id="typed"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              rows={4}
-              maxLength={4000}
-              placeholder={copy.log.typePlaceholder}
-              className="w-full rounded-list border-0 bg-card p-4 text-body"
-            />
-            <Button type="submit" className="mt-3" disabled={busy !== null || typed.trim() === ""}>
-              {copy.log.parse}
-            </Button>
+            <div className="relative rounded-list bg-card">
+              <textarea
+                id="typed"
+                value={typed}
+                onChange={(e) => {
+                  setTyped(e.target.value);
+                  usedVoice.current = false;
+                }}
+                rows={5}
+                maxLength={4000}
+                placeholder={listening ? copy.log.listening : voiceOk ? copy.log.typePlaceholder : copy.log.voiceUnsupported}
+                className="block w-full resize-none rounded-list border-0 bg-transparent p-4 pr-16 text-[clamp(17px,4.6vw,20px)] leading-[1.35]"
+              />
+              {interim ? (
+                <p className="px-4 pb-3 text-small text-faint" aria-live="polite">
+                  {interim}
+                </p>
+              ) : null}
+              {voiceOk ? (
+                <button
+                  type="button"
+                  aria-label={listening ? "Stop listening" : "Speak"}
+                  aria-pressed={listening}
+                  onClick={toggleListening}
+                  className={cn(
+                    "absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full",
+                    listening ? "bg-train text-white" : "bg-bg text-ink",
+                  )}
+                >
+                  <Mic size={20} strokeWidth={1.9} aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Button type="submit" disabled={busy !== null || typed.trim() === ""}>
+                {items.length > 0 ? "Read it again" : copy.log.parse}
+              </Button>
+              {typed.trim() !== "" ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setTyped("");
+                    typedRef.current = "";
+                    reset();
+                  }}
+                >
+                  Clear
+                </Button>
+              ) : null}
+            </div>
+            {items.length > 0 ? (
+              <p className="mt-2 text-caption text-muted">Misheard something? Fix the words above and tap Read it again, or tap an item below.</p>
+            ) : null}
           </form>
         ) : null}
 
@@ -416,7 +449,7 @@ export function LogScreen({
                       value={grams}
                       onChange={(e) => setGrams(e.target.value)}
                       inputMode="decimal"
-                      className="num w-16 border-0 bg-transparent text-[22px]"
+                      className="num w-16 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
                     />
                   </label>
                   <Button onClick={addScanned}>Add</Button>
@@ -440,8 +473,8 @@ export function LogScreen({
 
       {items.length > 0 ? (
         <section aria-labelledby="items-h">
-          <div className="mx-6 mt-7 flex items-baseline justify-between">
-            <h2 id="items-h" className="text-[20px] font-bold">
+          <div className="mx-4 mt-7 flex items-baseline justify-between">
+            <h2 id="items-h" className="text-[clamp(17px,5.13vw,19px)] font-bold">
               {items.length} {items.length === 1 ? "item" : "items"}
             </h2>
             <span className="text-small text-muted">Tap any to change it</span>
@@ -466,11 +499,11 @@ export function LogScreen({
             ))}
           </ul>
           {unclear.length > 0 ? (
-            <p className="mx-6 mt-3 text-caption text-muted">
+            <p className="mx-4 mt-3 text-caption text-muted">
               {copy.log.unclear}: {unclear.join(", ")}
             </p>
           ) : null}
-          <div className="mx-6 mt-4 flex justify-between text-small">
+          <div className="mx-4 mt-4 flex justify-between text-small">
             <span className="text-muted">After this log</span>
             <span>
               <span className="font-semibold">{nf.format(after)}</span>{" "}
@@ -480,7 +513,7 @@ export function LogScreen({
         </section>
       ) : mode !== "photo" && saved.length > 0 ? (
         <section className="mt-8" aria-labelledby="saved-h">
-          <h2 id="saved-h" className="mx-6 text-small font-semibold text-muted">
+          <h2 id="saved-h" className="mx-4 text-small font-semibold text-muted">
             {copy.log.savedFoods}
           </h2>
           <div className="mx-4 mt-3 flex flex-wrap gap-2">
@@ -506,7 +539,7 @@ export function LogScreen({
           aria-label={listening ? "Stop" : "Speak"}
           aria-pressed={listening}
           onClick={() => {
-            setMode("voice");
+            setMode("text");
             toggleListening();
           }}
           className={cn(
@@ -559,13 +592,14 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium">{it.name}</div>
-          <div className={cn("text-[14px]", low ? "text-warn" : "text-muted")}>
-            {it.quantity ? `${it.quantity}${it.unit ? ` ${it.unit}` : ""}` : "1 portion"}
+          <div className={cn("text-[clamp(12px,3.59vw,13px)]", low ? "text-warn" : "text-muted")}>
+            {it.grams ? `${Math.round(it.grams)} g` : it.quantity ? `${it.quantity}${it.unit ? ` ${it.unit}` : ""}` : "1 portion"}
+            {it.basis === "database" ? ", from food table" : it.basis === "saved" ? ", your saved food" : it.basis === "estimate" ? ", AI estimate" : ""}
             {low ? `. ${copy.log.check}` : ""}
           </div>
         </div>
         <div className="text-right">
-          <div className="num text-[22px] leading-none">{nf.format(it.kcal)}</div>
+          <div className="num text-[clamp(18px,5.64vw,21px)] leading-none">{nf.format(it.kcal)}</div>
           <div className="text-caption text-muted">{Math.round(it.protein_g)} g protein</div>
         </div>
       </>
@@ -576,10 +610,10 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium capitalize">{it.activity_type}</div>
-          <div className="text-[14px] text-muted">{it.duration_min} min</div>
+          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{it.duration_min} min</div>
         </div>
         <div className="text-right">
-          <div className="num text-[22px] leading-none text-train">
+          <div className="num text-[clamp(18px,5.64vw,21px)] leading-none text-train">
             +{activityKcal(it.activity_type, it.duration_min, weightKg)}
           </div>
           <div className="text-caption text-muted">kcal burned</div>
@@ -595,7 +629,7 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
   return (
     <div className="min-w-0 flex-1">
       <div className="text-body font-medium">Body</div>
-      <div className="text-[14px] text-muted">{bits.join(", ")}</div>
+      <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{bits.join(", ")}</div>
     </div>
   );
 }
@@ -619,6 +653,7 @@ function EditSheet({
         protein: String(item.protein_g),
         quantity: item.quantity === null ? "" : String(item.quantity),
         unit: item.unit ?? "",
+        grams: item.grams ? String(Math.round(item.grams)) : "",
       };
     if (item.kind === "activity") return { minutes: String(item.duration_min) };
     return {
@@ -631,6 +666,19 @@ function EditSheet({
     const v = (f[k] ?? "").trim().replace(",", ".");
     return v === "" ? null : Number(v);
   };
+
+  // With a table match, changing grams recomputes the numbers.
+  function setGrams(v: string) {
+    const g = Number(v.trim().replace(",", "."));
+    if (item.kind === "food" && item.per100 && Number.isFinite(g) && g >= 0) {
+      setF({
+        ...f,
+        grams: v,
+        kcal: String(Math.round((item.per100.kcal * g) / 100)),
+        protein: String(Math.round(((item.per100.protein * g) / 100) * 10) / 10),
+      });
+    } else setF({ ...f, grams: v });
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -646,6 +694,7 @@ function EditSheet({
         protein_g: Math.max(0, Math.min(300, protein ?? 0)),
         quantity: qty && qty > 0 ? qty : null,
         unit: (f.unit ?? "").trim() === "" ? null : (f.unit ?? "").trim().slice(0, 16),
+        grams: num("grams"),
         confidence: 1,
       });
     } else if (item.kind === "activity") {
@@ -664,7 +713,7 @@ function EditSheet({
 
   const field = (k: string, label: string, mode: "text" | "decimal" = "decimal") => (
     <label className="flex flex-col gap-2">
-      <span className="text-[14px] font-semibold">{label}</span>
+      <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">{label}</span>
       <input
         value={f[k] ?? ""}
         onChange={(e) => setF({ ...f, [k]: e.target.value })}
@@ -684,8 +733,15 @@ function EditSheet({
               <div className="grid grid-cols-2 gap-3">
                 {field("kcal", "kcal")}
                 {field("protein", "Protein, g")}
-                {field("quantity", "Amount")}
-                {field("unit", "Unit", "text")}
+                <label className="col-span-2 flex flex-col gap-2">
+                  <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Grams eaten</span>
+                  <input
+                    value={f.grams ?? ""}
+                    onChange={(e) => setGrams(e.target.value)}
+                    inputMode="decimal"
+                    className="h-[54px] rounded-ctl border-0 bg-card px-4 text-body"
+                  />
+                </label>
               </div>
             </>
           ) : null}

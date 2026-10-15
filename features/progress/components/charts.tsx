@@ -69,7 +69,7 @@ export function WeightChart({
     <>
       <div className="flex items-baseline justify-between">
         <div>
-          <span className="num text-[44px] leading-none">
+          <span className="num text-[clamp(37px,11.28vw,42px)] leading-none">
             {(active?.avgKg ?? latestAvg ?? 0).toFixed(1)}
           </span>
           <span className="text-body text-muted"> kg</span>
@@ -77,7 +77,7 @@ export function WeightChart({
         </div>
         {changeLabel ? <span className="text-small font-semibold text-fuel">{changeLabel}</span> : null}
       </div>
-      <div className="mt-[2px] flex items-center text-[14px] text-muted">
+      <div className="mt-[2px] flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
         {copy.progress.sevenDay}. Drag the line to see any day. {rangeLabel}
         <InfoTip tip="sevenDay" className="-my-3" />
       </div>

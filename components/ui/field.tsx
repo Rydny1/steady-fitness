@@ -11,7 +11,7 @@ export function Field({ label, hint, error, className, id, name, ...rest }: Prop
   const inputId = id ?? name;
   return (
     <label htmlFor={inputId} className="flex flex-col gap-2">
-      <span className="text-[14px] font-semibold">{label}</span>
+      <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">{label}</span>
       <input
         id={inputId}
         name={name}

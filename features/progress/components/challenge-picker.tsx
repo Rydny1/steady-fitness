@@ -15,10 +15,10 @@ export function ChallengePicker({ weekStart, offers }: { weekStart: string; offe
   return (
     <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-labelledby="pick-h">
       <div className="flex items-center justify-between">
-        <h3 id="pick-h" className="text-[14px] text-muted">
+        <h3 id="pick-h" className="text-[clamp(12px,3.59vw,13px)] text-muted">
           {copy.progress.pickChallenge}
         </h3>
-        <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[14px] font-semibold">
+        <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[clamp(12px,3.59vw,13px)] font-semibold">
           <span className="h-2 w-2 rounded-full bg-amber" />
           {copy.progress.reward}
         </span>
@@ -45,8 +45,8 @@ export function ChallengePicker({ weekStart, offers }: { weekStart: string; offe
                   chosen === o.key && "ring-2 ring-ink",
                 )}
               >
-                <span className="block text-[18px] font-bold tracking-[-0.2px]">{card.name}</span>
-                <span className="mt-[2px] block text-[15px] text-ink-2">{card.goal}</span>
+                <span className="block text-[clamp(15px,4.62vw,17px)] font-bold tracking-[-0.2px]">{card.name}</span>
+                <span className="mt-[2px] block text-[clamp(13px,3.85vw,14px)] text-ink-2">{card.goal}</span>
                 <span className="mt-2 block text-caption text-muted">{o.why}</span>
               </button>
             </li>

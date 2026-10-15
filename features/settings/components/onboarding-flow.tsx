@@ -167,13 +167,13 @@ export function OnboardingFlow() {
         <p className="mt-2 text-body text-muted">{copy.onboarding.budgetSub}</p>
         <div className="mt-8 grid grid-cols-2 gap-2">
           <div className="rounded-tile bg-card p-5">
-            <div className="num text-[44px] leading-none text-fuel">
+            <div className="num text-[clamp(37px,11.28vw,42px)] leading-none text-fuel">
               {targets.budgetKcal.toLocaleString("en-GB")}
             </div>
             <div className="mt-1 text-caption text-muted">kcal a day, plus training</div>
           </div>
           <div className="rounded-tile bg-card p-5">
-            <div className="num text-[44px] leading-none text-protein">{targets.proteinG}</div>
+            <div className="num text-[clamp(37px,11.28vw,42px)] leading-none text-protein">{targets.proteinG}</div>
             <div className="mt-1 text-caption text-muted">g protein a day</div>
           </div>
         </div>
@@ -258,7 +258,7 @@ export function OnboardingFlow() {
               inputMode={step.type === "number" ? "decimal" : undefined}
               className={cn(
                 "h-20 w-full border-0 bg-transparent",
-                step.type === "number" ? "num text-[44px]" : "text-sub font-semibold",
+                step.type === "number" ? "num text-[clamp(37px,11.28vw,42px)]" : "text-sub font-semibold",
               )}
             />
             {step.unit ? <span className="text-body text-muted">{step.unit}</span> : null}
@@ -284,7 +284,7 @@ export function OnboardingFlow() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col justify-center px-6 py-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col justify-center px-4 py-10">
       {children}
     </main>
   );

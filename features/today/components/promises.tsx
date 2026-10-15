@@ -16,7 +16,7 @@ export function Promises({ habits, day }: { habits: Habit[]; day: string }) {
 
   return (
     <section aria-labelledby="promises-h">
-      <div className="mx-6 mt-7 flex items-baseline justify-between">
+      <div className="mx-4 mt-7 flex items-baseline justify-between">
         <h2 id="promises-h" className="text-section font-bold tracking-[-0.3px]">
           {copy.today.promises}
         </h2>

@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   turbopack: { root: dirname(fileURLToPath(import.meta.url)) },
   poweredByHeader: false,
   reactStrictMode: true,
+  // Keep visited pages in the client router cache so tab switches are instant.
+  experimental: { staleTimes: { dynamic: 30, static: 180 } },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

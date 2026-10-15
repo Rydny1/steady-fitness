@@ -57,7 +57,7 @@ export function LogPortion({
   }
 
   return (
-    <div className="mx-6 mt-5">
+    <div className="mx-4 mt-5">
       <Button big onClick={log} disabled={pending} className="w-full">
         Log 1 portion
       </Button>

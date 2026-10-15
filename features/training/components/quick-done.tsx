@@ -55,14 +55,14 @@ export function QuickDone({
   }
 
   return (
-    <div className="mx-6 mt-[18px] flex items-center gap-2">
+    <div className="mx-4 mt-[18px] flex items-center gap-2">
       <label className="flex h-[54px] items-center gap-2 rounded-ctl bg-card px-4">
         <span className="sr-only">Minutes</span>
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
           inputMode="numeric"
-          className="num w-14 border-0 bg-transparent text-[24px]"
+          className="num w-14 border-0 bg-transparent text-[clamp(20px,6.15vw,23px)]"
         />
         <span className="text-small text-muted">min</span>
       </label>

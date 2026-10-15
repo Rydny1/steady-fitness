@@ -183,7 +183,7 @@ export function SessionScreen({
 
   return (
     <main className="flex min-h-dvh flex-col">
-      <div className="flex items-center gap-3 px-4 pt-[52px]">
+      <div className="flex items-center gap-3 px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <Link
           href="/train"
           aria-label="Pause session"
@@ -193,11 +193,11 @@ export function SessionScreen({
         </Link>
         <div className="flex-1">
           <h1 className="text-body font-semibold">{title}</h1>
-          <div className="text-[14px] text-muted">
+          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">
             Exercise {index + 1} of {list.length}
           </div>
         </div>
-        <span className="num text-[26px]" aria-label="Session time">
+        <span className="num text-[clamp(22px,6.67vw,25px)]" aria-label="Session time">
           {fmt(elapsed)}
         </span>
       </div>
@@ -225,12 +225,12 @@ export function SessionScreen({
       </div>
 
       <ExerciseImage slug={ex.slug} name={ex.name} className="mx-4 mt-[18px] h-[170px] rounded-list" />
-      <div className="mx-6 mt-4">
-        <div className="text-[26px] font-bold tracking-[-0.4px]">{ex.name}</div>
+      <div className="mx-4 mt-4">
+        <div className="text-[clamp(22px,6.67vw,25px)] font-bold tracking-[-0.4px]">{ex.name}</div>
         <div className="mt-[2px] text-small text-muted">
           {ex.sets} x {timed ? `${ex.seconds} s` : `${ex.repMin}${ex.repMax && ex.repMax !== ex.repMin ? `-${ex.repMax}` : ""}`}, rest {ex.rest} s. {ex.works}
         </div>
-        <div className="mt-[10px] text-[16px] leading-[1.4]">
+        <div className="mt-[10px] text-[clamp(13px,4.10vw,15px)] leading-[1.4]">
           <span className="font-semibold">{copy.train.tip}:</span> {ex.tip}
         </div>
         {ex.swaps.length > 0 ? (
@@ -249,13 +249,13 @@ export function SessionScreen({
           <div
             key={i}
             className={cn(
-              "grid min-h-[56px] grid-cols-[44px_1fr_1fr_48px] items-center gap-2 text-[16px]",
+              "grid min-h-[56px] grid-cols-[44px_1fr_1fr_48px] items-center gap-2 text-[clamp(13px,4.10vw,15px)]",
               i < sets.length - 1 && "border-b border-line",
             )}
           >
             <span className={cn(s.done ? "text-muted" : "font-semibold")}>Set {i + 1}</span>
             {timed ? (
-              <span className="num col-span-2 text-[22px]">{ex.seconds} s hold</span>
+              <span className="num col-span-2 text-[clamp(18px,5.64vw,21px)]">{ex.seconds} s hold</span>
             ) : (
               <>
                 <label className="flex h-11 items-center gap-1 rounded-[12px] bg-bg px-[10px]">
@@ -265,9 +265,9 @@ export function SessionScreen({
                     disabled={s.done}
                     inputMode="decimal"
                     aria-label={`Set ${i + 1} weight in kg`}
-                    className="num w-10 flex-1 border-0 bg-transparent text-[22px]"
+                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
                   />
-                  <span className="text-[14px] text-muted">kg</span>
+                  <span className="text-[clamp(12px,3.59vw,13px)] text-muted">kg</span>
                 </label>
                 <label className="flex h-11 items-center gap-1 rounded-[12px] bg-bg px-[10px]">
                   <input
@@ -277,9 +277,9 @@ export function SessionScreen({
                     inputMode="numeric"
                     placeholder={String(ex.repMin ?? "")}
                     aria-label={`Set ${i + 1} reps`}
-                    className="num w-10 flex-1 border-0 bg-transparent text-[22px]"
+                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
                   />
-                  <span className="text-[14px] text-muted">reps</span>
+                  <span className="text-[clamp(12px,3.59vw,13px)] text-muted">reps</span>
                 </label>
               </>
             )}
@@ -299,16 +299,16 @@ export function SessionScreen({
           </div>
         ))}
       </div>
-      <div className="mx-6 mt-[10px] text-[14px] text-muted">
+      <div className="mx-4 mt-[10px] text-[clamp(12px,3.59vw,13px)] text-muted">
         {ex.lastLabel ? `${copy.train.lastTime} ${ex.lastLabel}` : "No history for this exercise yet"}
       </div>
       {best ? (
-        <p role="status" className="mx-6 mt-2 text-small font-semibold text-fuel-ink">
+        <p role="status" className="mx-4 mt-2 text-small font-semibold text-fuel-ink">
           {best}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="mx-6 mt-2 text-small text-danger">
+        <p role="alert" className="mx-4 mt-2 text-small text-danger">
           {error}
         </p>
       ) : null}
@@ -317,7 +317,7 @@ export function SessionScreen({
         <div className="mx-4 mt-[18px] rounded-list bg-ink px-[18px] py-4 text-white" role="timer" aria-label="Rest timer">
           <div className="flex items-baseline justify-between">
             <span className="text-small text-muted-dark">{copy.train.restTimer}</span>
-            <span className="num text-[32px] leading-none">{fmt(restLeft)}</span>
+            <span className="num text-[clamp(27px,8.21vw,30px)] leading-none">{fmt(restLeft)}</span>
           </div>
           <div className="mt-[10px] h-2 overflow-hidden rounded-full bg-ink-line">
             <div
@@ -334,14 +334,14 @@ export function SessionScreen({
           {nextUp ? (
             <button type="button" onClick={() => setIndex(index + 1)} className="min-h-11 text-left">
               <div className="text-caption text-muted">{copy.train.next}</div>
-              <div className="truncate text-[16px] font-semibold">{nextUp.name}</div>
+              <div className="truncate text-[clamp(13px,4.10vw,15px)] font-semibold">{nextUp.name}</div>
             </button>
           ) : null}
         </div>
         <button
           type="button"
           onClick={() => setFinishing(true)}
-          className="h-[54px] rounded-full bg-card px-[22px] text-[16px] font-semibold"
+          className="h-[54px] rounded-full bg-card px-[22px] text-[clamp(13px,4.10vw,15px)] font-semibold"
         >
           {copy.train.finish}
         </button>
@@ -376,7 +376,7 @@ export function SessionScreen({
                 aria-pressed={rpe === n}
                 onClick={() => setRpe(n)}
                 className={cn(
-                  "num h-11 rounded-full text-[20px]",
+                  "num h-11 rounded-full text-[clamp(17px,5.13vw,19px)]",
                   rpe === n ? "bg-ink text-white" : "bg-card text-ink",
                 )}
               >

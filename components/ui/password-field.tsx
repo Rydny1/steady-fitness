@@ -17,7 +17,7 @@ export function PasswordField({ label, error, className, id, name, ...rest }: Pr
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={inputId} className="text-[14px] font-semibold">
+      <label htmlFor={inputId} className="text-[clamp(12px,3.59vw,13px)] font-semibold">
         {label}
       </label>
       <div className="relative">

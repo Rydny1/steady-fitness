@@ -22,24 +22,24 @@ export function LogList({
 
   return (
     <section aria-labelledby="log-h">
-      <div className="mx-6 mt-7 flex items-baseline justify-between">
+      <div className="mx-4 mt-7 flex items-baseline justify-between">
         <h2 id="log-h" className="text-section font-bold tracking-[-0.3px]">
           {copy.today.todayLog}
         </h2>
         <span className="text-small text-muted">{copy.today.logs(count)}</span>
       </div>
       {count === 0 ? (
-        <p className="mx-6 mt-3 text-small text-muted">{copy.today.emptyLog}</p>
+        <p className="mx-4 mt-3 text-small text-muted">{copy.today.emptyLog}</p>
       ) : (
-        <ul className="mx-6 mt-2 flex flex-col" aria-busy={pending}>
+        <ul className="mx-4 mt-2 flex flex-col" aria-busy={pending}>
           {foods.map((f) => (
             <li key={f.id} className="flex items-center gap-[14px] border-b border-line py-[10px]">
               <Thumb src={f.photoPath ? photoUrls[f.photoPath] : undefined} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-body">{f.name}</div>
-                <div className="truncate text-[14px] text-muted">{f.detail}</div>
+                <div className="truncate text-[clamp(12px,3.59vw,13px)] text-muted">{f.detail}</div>
               </div>
-              <div className="num text-[22px]">{nf.format(f.kcal)}</div>
+              <div className="num text-[clamp(18px,5.64vw,21px)]">{nf.format(f.kcal)}</div>
               <Remove
                 label={`${copy.log.remove} ${f.name}`}
                 onClick={() =>
@@ -57,9 +57,9 @@ export function LogList({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-body">{a.name}</div>
-                <div className="truncate text-[14px] text-muted">{a.detail}</div>
+                <div className="truncate text-[clamp(12px,3.59vw,13px)] text-muted">{a.detail}</div>
               </div>
-              <div className="num text-[22px] text-train">+{nf.format(a.burned)}</div>
+              <div className="num text-[clamp(18px,5.64vw,21px)] text-train">+{nf.format(a.burned)}</div>
               <Remove
                 label={`${copy.log.remove} ${a.name}`}
                 onClick={() =>

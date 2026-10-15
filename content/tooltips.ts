@@ -46,6 +46,10 @@ export const tooltips = {
     title: "Season record",
     text: "Every week against the week before, since you started. Green is a win, grey a draw, red a loss.",
   },
+  energyBalance: {
+    title: "Net calories",
+    text: "What you ate minus what you burned, an estimate. Below zero is a deficit, which is what drops weight. For a weight gain goal you want it above zero.",
+  },
   level: {
     title: "Level",
     text: "Your long-term rank. You move up with enough days on the clock and a high enough Callus.",

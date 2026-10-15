@@ -56,7 +56,7 @@ export function ExerciseCards({
                   {numbered ? `${i + 1}. ` : ""}
                   {e.name}
                 </span>
-                <span className="block truncate text-[14px] text-muted">
+                <span className="block truncate text-[clamp(12px,3.59vw,13px)] text-muted">
                   {e.prescription}
                   {e.lastLabel ? `. ${copy.train.lastTime} ${e.lastLabel}` : ""}
                 </span>
@@ -93,7 +93,7 @@ function Block({ label, text }: { label: string; text: string }) {
   return (
     <div>
       <div className="text-caption font-semibold text-muted">{label}</div>
-      <div className="mt-[2px] text-[16px] leading-[1.4]">{text}</div>
+      <div className="mt-[2px] text-[clamp(13px,4.10vw,15px)] leading-[1.4]">{text}</div>
     </div>
   );
 }

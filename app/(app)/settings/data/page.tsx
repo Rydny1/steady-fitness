@@ -7,7 +7,7 @@ export const metadata = { title: "Your data" };
 export default function DataPage() {
   return (
     <main>
-      <div className="px-4 pt-[52px]">
+      <div className="px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <Link
           href="/settings"
           aria-label="Back to Profile"
@@ -16,8 +16,8 @@ export default function DataPage() {
           <ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
-      <h1 className="mx-6 mt-5 text-title font-bold tracking-[-0.8px]">{copy.settings.yourData}</h1>
-      <p className="mx-6 mt-2 text-body text-muted">
+      <h1 className="mx-4 mt-5 text-title font-bold tracking-[-0.8px]">{copy.settings.yourData}</h1>
+      <p className="mx-4 mt-2 text-body text-muted">
         One JSON file with every log and number, and a zip with every photo. Both are yours.
       </p>
       <div className="mx-4 mt-6 flex flex-col gap-3">

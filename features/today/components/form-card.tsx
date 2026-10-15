@@ -6,16 +6,16 @@ import { InfoTip } from "@/components/info-tip";
 export function FormCard({ d }: { d: TodayData }) {
   const { comparison } = d.match;
   return (
-    <section className="mx-4 mt-4 rounded-hero bg-card p-6" aria-label="Form">
-      <div className="flex items-end justify-between">
-        <div>
+    <section className="mx-4 mt-3 rounded-hero bg-card p-4 min-[380px]:p-5" aria-label="Form">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center text-small text-muted">
             {copy.today.youAre}
             <InfoTip tip="form" className="-my-3 -ml-1" />
           </div>
-          <div className="num text-form tracking-[0.2px]">{d.form.name}</div>
+          <div className="num text-form">{d.form.name}</div>
         </div>
-        <div className="text-right">
+        <div className="flex-none text-right">
           <div className="flex items-center justify-end text-small text-muted">
             {copy.today.callus}
             <InfoTip tip="callus" className="-my-3 -mr-3" />
@@ -24,19 +24,16 @@ export function FormCard({ d }: { d: TodayData }) {
         </div>
       </div>
       <div
-        className="mt-[18px] h-[10px] overflow-hidden rounded-full bg-line"
+        className="mt-4 h-[10px] overflow-hidden rounded-full bg-sunken"
         role="progressbar"
         aria-label={copy.today.callus}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={d.form.callus}
       >
-        <div
-          className="bar-fill h-[10px] rounded-full bg-amber"
-          style={{ width: `${d.form.callus}%` }}
-        />
+        <div className="bar-fill h-[10px] rounded-full bg-amber" style={{ width: `${d.form.callus}%` }} />
       </div>
-      <div className="mt-[10px] flex justify-between text-[14px] text-muted">
+      <div className="mt-2 flex flex-wrap justify-between gap-x-3 text-caption text-muted">
         <span>{copy.today.chapterLine(d.chapter.n, d.chapter.name)}</span>
         <span>
           {d.chapter.toNext
@@ -44,28 +41,27 @@ export function FormCard({ d }: { d: TodayData }) {
             : copy.today.atTop}
         </span>
       </div>
-      <p className="mt-[18px] text-[18px] font-medium leading-[1.35]">{d.form.coachLine}</p>
-      {d.observer ? <p className="mt-2 text-small text-ink-2">{d.observer}</p> : null}
+      <p className="mt-4 text-body font-medium leading-[1.35]">{d.form.coachLine}</p>
 
-      <div className="mt-[18px] flex items-center rounded-inner bg-ink pl-4 text-white">
-      <Link
-        href="/progress#challenges"
-        className="flex min-h-11 flex-1 items-center justify-between py-[14px] pr-1"
-      >
-        <span className="text-small text-muted-dark">{copy.today.vsLastWeek}</span>
-        {comparison.noGhost ? (
-          <span className="text-small text-muted-dark">{copy.today.noGhost}</span>
-        ) : (
-          <span className="num text-[24px] leading-none">
-            {comparison.scoreYou} <span className="text-ink-faint">-</span>{" "}
-            <span className="text-muted-dark">{comparison.scoreGhost}</span>
-          </span>
-        )}
-      </Link>
+      <div className="mt-4 flex items-center rounded-inner bg-ink pl-4 text-white">
+        <Link
+          href="/progress#challenges"
+          className="flex min-h-11 flex-1 flex-col justify-center py-2.5 pr-1"
+        >
+          <span className="text-small text-muted-dark">{copy.today.vsLastWeek}</span>
+          {comparison.noGhost ? (
+            <span className="text-caption text-muted-dark">{copy.today.noGhost}</span>
+          ) : (
+            <span className="num text-[clamp(20px,6.15vw,23px)] leading-none">
+              {comparison.scoreYou} <span className="text-ink-faint">-</span>{" "}
+              <span className="text-muted-dark">{comparison.scoreGhost}</span>
+            </span>
+          )}
+        </Link>
         <InfoTip tip="vsLastWeek" light />
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-3 gap-2">
         <Tile value={String(d.streak)} label={copy.today.streak} />
         <Tile value={String(d.careerDays)} label={copy.today.career} />
         <Tile
@@ -80,12 +76,12 @@ export function FormCard({ d }: { d: TodayData }) {
 
 function Tile({ value, suffix, label }: { value: string; suffix?: string; label: string }) {
   return (
-    <div className="rounded-inner bg-bg px-[14px] py-3">
-      <div className="num text-[26px] leading-none">
+    <div className="rounded-inner bg-bg px-3 py-2.5">
+      <div className="num text-num leading-none">
         {value}
-        {suffix ? <span className="text-[17px] text-muted">{suffix}</span> : null}
+        {suffix ? <span className="text-small text-muted">{suffix}</span> : null}
       </div>
-      <div className="mt-[2px] text-caption text-muted">{label}</div>
+      <div className="mt-0.5 text-caption leading-tight text-muted">{label}</div>
     </div>
   );
 }

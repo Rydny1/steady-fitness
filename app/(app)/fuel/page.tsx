@@ -92,8 +92,8 @@ export default async function FuelPage() {
           className="object-cover"
         />
       </div>
-      <h1 className="px-6 pt-6 text-title font-bold tracking-[-0.8px]">{copy.fuel.title}</h1>
-      <p className="mx-6 mt-[6px] text-body text-muted">{batchPlan.summary.split(". Rotate")[0]}.</p>
+      <h1 className="px-4 pt-6 text-title font-bold tracking-[-0.8px]">{copy.fuel.title}</h1>
+      <p className="mx-4 mt-[6px] text-body text-muted">{batchPlan.summary.split(". Rotate")[0]}.</p>
 
       <FuelPicks
         weekStart={ws}
@@ -107,11 +107,11 @@ export default async function FuelPage() {
           image: mealImage(m.slug),
         }))}
       />
-      <p className="mx-6 mt-3 text-caption text-muted">{copy.fuel.pickTwo}. {copy.fuel.pickThursday}. {copy.fuel.fridge}</p>
+      <p className="mx-4 mt-3 text-caption text-muted">{copy.fuel.pickTwo}. {copy.fuel.pickThursday}. {copy.fuel.fridge}</p>
 
       <ShoppingList weekStart={ws} groups={groups} checked={checkedValue?.checked ?? []} />
 
-      <div className="mx-6 mt-8 flex items-baseline justify-between">
+      <div className="mx-4 mt-8 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.quickBuys}</h2>
         <span className="text-small text-muted">Rimi, Maxima, Lidl</span>
       </div>
@@ -119,16 +119,16 @@ export default async function FuelPage() {
 
       <MyRecipes recipes={mine.data ?? []} day={today} />
 
-      <div className="mx-6 mt-8 flex items-center justify-between">
+      <div className="mx-4 mt-8 flex items-center justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.plates}</h2>
         <Link href="/log" className="flex min-h-11 items-center text-small font-semibold">
           Add photo
         </Link>
       </div>
       {(photos.data ?? []).length === 0 ? (
-        <p className="mx-6 mt-3 text-small text-muted">{copy.progress.mealPhotosEmpty}</p>
+        <p className="mx-4 mt-3 text-small text-muted">{copy.progress.mealPhotosEmpty}</p>
       ) : (
-        <ul className="mx-6 mt-[10px] grid grid-cols-3 gap-[6px]">
+        <ul className="mx-4 mt-[10px] grid grid-cols-3 gap-[6px]">
           {(photos.data ?? []).map((p) => (
             <li key={p.id} className="aspect-square overflow-hidden rounded-[14px] bg-line">
               {urls[p.storage_path] ? (
