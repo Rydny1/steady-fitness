@@ -26,6 +26,32 @@ export function dayBurn(bmrKcal: number, exerciseAddBackKcal: number): number {
   return Math.round(bmrKcal * TARGETS.activityFactor + exerciseAddBackKcal / TARGETS.exerciseAddBackShare);
 }
 
+/** What an exercise really burned. The database stores only the add-back share of it. */
+export function fullBurn(addBackKcal: number): number {
+  return Math.round(addBackKcal / TARGETS.exerciseAddBackShare);
+}
+
+export type BudgetStatus = { tone: "good" | "low" | "over"; text: string };
+
+/**
+ * The budget is a ceiling, not a target: you aim to stay under it.
+ * Under: say how much more fits. Over: say by how much. Far under late in the day: say it is too little.
+ */
+export function budgetStatus(eatenKcal: number, budgetKcal: number, hour: number): BudgetStatus {
+  const eaten = Math.round(eatenKcal);
+  const left = Math.round(budgetKcal - eatenKcal);
+  const n = (v: number) => v.toLocaleString("en-GB");
+  if (left < 0) return { tone: "over", text: `Over by ${n(-left)} kcal. Keep the rest of today light.` };
+  if (hour >= 18 && eaten < budgetKcal * 0.6) {
+    return {
+      tone: "low",
+      text: `Too little so far: ${n(eaten)} of ${n(Math.round(budgetKcal))} kcal. Eating this low costs muscle and energy. Have a proper meal with protein.`,
+    };
+  }
+  if (left <= 0) return { tone: "good", text: "Right on budget. Nothing more today." };
+  return { tone: "good", text: `Good. You can eat ${n(left)} kcal more, no more than that.` };
+}
+
 /** Net calories: negative is a deficit. */
 export function netKcal(eatenKcal: number, burnKcal: number): number {
   return Math.round(eatenKcal - burnKcal);

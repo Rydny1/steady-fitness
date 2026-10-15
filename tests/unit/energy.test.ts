@@ -54,3 +54,23 @@ describe("energy balance", () => {
     expect(lose.budgetKcal).toBeGreaterThanOrEqual(lose.bmrKcal);
   });
 });
+
+import { budgetStatus, fullBurn } from "@/features/nutrition/energy";
+
+describe("budget is a ceiling", () => {
+  it("says how much more fits when under", () => {
+    const s = budgetStatus(1200, 1500, 14);
+    expect(s.tone).toBe("good");
+    expect(s.text).toContain("300 kcal more");
+  });
+  it("flags going over", () => {
+    expect(budgetStatus(1700, 1500, 14).tone).toBe("over");
+  });
+  it("flags eating far too little late in the day, not in the morning", () => {
+    expect(budgetStatus(500, 1500, 20).tone).toBe("low");
+    expect(budgetStatus(500, 1500, 9).tone).toBe("good");
+  });
+  it("shows the full exercise burn, double the stored add-back", () => {
+    expect(fullBurn(329)).toBe(658);
+  });
+});

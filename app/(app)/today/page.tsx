@@ -3,6 +3,7 @@ import { Award, Dumbbell } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
+import { budgetStatus } from "@/features/nutrition/energy";
 import { formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { FormCard } from "@/features/today/components/form-card";
@@ -27,7 +28,7 @@ export default async function TodayPage() {
   const photoUrls = await signedUrls(supabase, "meal-photos", photoPaths);
 
   const footerParts = [
-    d.leftKcal >= 0 ? copy.today.left(d.leftKcal.toLocaleString("en-GB")) : copy.today.over((-d.leftKcal).toLocaleString("en-GB")),
+    budgetStatus(d.facts.eatenKcal, d.budgetKcal, d.hour).text,
     d.sessionKey && !d.facts.sessionDone ? copy.today.sessionToDo(d.sessionName) : null,
   ].filter(Boolean);
 
@@ -66,6 +67,7 @@ export default async function TodayPage() {
       />
       <EnergyLine
         goal={d.energy.goal}
+        todayNet={d.energy.todayNet}
         yesterdayNet={d.energy.yesterdayNet}
         plannedNet={d.energy.plannedNet}
         read={d.energy.read}

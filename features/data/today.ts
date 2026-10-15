@@ -14,7 +14,7 @@ import {
   type WeekComparison,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
-import { dayBurn, goalFor, netKcal, readBalance, type BalanceRead, type Goal } from "@/features/nutrition/energy";
+import { dayBurn, fullBurn, goalFor, netKcal, readBalance, type BalanceRead, type Goal } from "@/features/nutrition/energy";
 import { chapters, coachForm, matchLines, trophies as trophyCopy, type FormName } from "@/content/copy";
 import { comebackQuotes, quotes } from "@/content/lines";
 import { SESSION_NAMES } from "@/features/settings/defaults";
@@ -73,7 +73,7 @@ export type TodayData = {
   /** The last progress photo is 14 or more days old, or there is none. */
   photoDue: boolean;
   /** Net energy against the goal: yesterday, and what eating the budget would give. */
-  energy: { goal: Goal; yesterdayNet: number | null; plannedNet: number; read: BalanceRead | null };
+  energy: { goal: Goal; todayNet: number | null; yesterdayNet: number | null; plannedNet: number; read: BalanceRead | null };
   /** Trophies earned since the last visit: a celebration popup shows them once. */
   celebrate: { key: string; name: string; line: string }[];
   /** The name on your profile: the latest trophy you have earned. */
@@ -265,6 +265,7 @@ export async function loadToday(
       : null;
   const energy: TodayData["energy"] = {
     goal,
+    todayNet: facts.eatenKcal > 0 && facts.bmrKcal > 0 ? netKcal(facts.eatenKcal, dayBurn(facts.bmrKcal, facts.burnedKcal)) : null,
     yesterdayNet,
     plannedNet: facts.budgetKcal - dayBurn(facts.bmrKcal, 0),
     read: yesterdayNet === null ? null : readBalance(goal, yesterdayNet),
@@ -326,7 +327,7 @@ export async function loadToday(
       id: a.id,
       name: ACTIVITY_NAMES[a.activity_type],
       detail: `${formatTimeRiga(a.created_at)}, ${a.duration_min} min`,
-      burned: a.kcal_burned,
+      burned: fullBurn(a.kcal_burned),
     })),
     logCount: (foods.data?.length ?? 0) + (acts.data?.length ?? 0),
     checkin: checkin.data ?? null,

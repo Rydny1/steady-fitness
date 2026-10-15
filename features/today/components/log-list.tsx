@@ -69,7 +69,7 @@ export function LogList({
                 <div className="truncate text-body">{a.name}</div>
                 <div className="truncate text-[clamp(13px,3.8vw,14px)] text-muted">{a.detail}</div>
               </div>
-              <div className="num text-[clamp(19px,5.9vw,22px)] text-train">+{nf.format(a.burned)}</div>
+              <div className="num text-[clamp(19px,5.9vw,22px)] text-train">-{nf.format(a.burned)}</div>
               <Remove
                 label={`${copy.log.remove} ${a.name}`}
                 onClick={() =>
