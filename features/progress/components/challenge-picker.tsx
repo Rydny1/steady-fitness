@@ -23,7 +23,6 @@ export function ChallengePicker({ weekStart, offers }: { weekStart: string; offe
           {copy.progress.reward}
         </span>
       </div>
-      <p className="mt-2 text-caption text-muted">Finish one for +6 Callus. Callus lifts your form and level.</p>
       <ul className="mt-3 flex flex-col gap-2">
         {offers.map((o) => {
           const card = challengeCards[o.key];
@@ -48,7 +47,6 @@ export function ChallengePicker({ weekStart, offers }: { weekStart: string; offe
               >
                 <span className="block text-[clamp(15px,4.62vw,17px)] font-bold tracking-[-0.2px]">{card.name}</span>
                 <span className="mt-[2px] block text-[clamp(13px,3.85vw,14px)] text-ink-2">{card.goal}</span>
-                <span className="mt-2 block text-caption text-muted">{o.why}</span>
               </button>
             </li>
           );

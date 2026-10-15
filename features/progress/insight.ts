@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { todayRiga } from "@/lib/dates";
 import { netInsight } from "@/lib/ai/gemini";
-import { monthNeed, paceSentence, type NetProjection } from "@/features/nutrition/projection";
+import { paceSentence, type NetProjection } from "@/features/nutrition/projection";
 
 const num = z.number().finite().nullable();
 const input = z.object({
@@ -45,7 +45,7 @@ export async function getNetInsight(raw: unknown): Promise<{ text: string; ai: b
   if (!parsed.success || !auth.user) return { text: "", ai: false };
   const p = parsed.data;
   const projection: NetProjection = { ...p, avgNet: p.avgNet };
-  const plain = [paceSentence(projection), monthNeed(projection)].filter(Boolean).join(" ");
+  const plain = paceSentence(projection);
   if (p.avgNet === null) return { text: plain, ai: false };
 
   const { data: rows } = await supabase.from("user_flags").select("key,value").in("key", ["net_insight", "net_insight_count"]);

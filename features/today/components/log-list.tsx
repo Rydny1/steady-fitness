@@ -168,7 +168,7 @@ function EditFood({ item, onClose }: { item: FoodItem; onClose: () => void }) {
             {field("kcal", kcal, setKcal, "decimal")}
             {field("Protein, g", protein, setProtein, "decimal")}
           </div>
-          <p className="text-small text-muted">Change the grams and the calories follow. Change kcal to set your own.</p>
+          <p className="text-small text-muted">Grams change the calories. Edit kcal to override.</p>
           {failed ? <p role="alert" className="text-small text-danger">Couldn&apos;t save. Try again.</p> : null}
         </div>
         <div className="mt-6 flex gap-2">

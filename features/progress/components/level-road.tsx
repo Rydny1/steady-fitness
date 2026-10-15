@@ -1,4 +1,7 @@
-import { Check, Lock } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Check, ChevronDown, Lock } from "lucide-react";
 import { DIVISIONS } from "@/features/game/config";
 import { chapters } from "@/content/copy";
 import { InfoTip } from "@/components/info-tip";
@@ -8,6 +11,9 @@ import { cn } from "@/lib/utils";
 /** The whole road, level by level: where you have been, where you are, what is next and what it takes. */
 export function LevelRoad({ division, careerDays, callus }: { division: DivisionT; careerDays: number; callus: number }) {
   const at = DIVISIONS.findIndex((d) => d.division === division);
+  const [all, setAll] = useState(false);
+  // Collapsed: where you are and what is next. Tap for the whole road.
+  const shown = all ? DIVISIONS.map((rule, i) => ({ rule, i })) : DIVISIONS.map((rule, i) => ({ rule, i })).filter(({ i }) => i === at || i === at + 1 || (at === DIVISIONS.length - 1 && i === at));
   return (
     <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label="Level road">
       <h3 className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
@@ -15,7 +21,7 @@ export function LevelRoad({ division, careerDays, callus }: { division: Division
         <InfoTip tip="level" className="-my-3 -ml-1" />
       </h3>
       <ol className="mt-4">
-        {DIVISIONS.map((rule, i) => {
+        {shown.map(({ rule, i }) => {
           const c = chapters[rule.division];
           const done = i < at;
           const now = i === at;
@@ -35,7 +41,7 @@ export function LevelRoad({ division, careerDays, callus }: { division: Division
                 >
                   {done ? <Check size={14} strokeWidth={3} aria-hidden="true" /> : now ? c.n : <Lock size={12} strokeWidth={2.2} aria-hidden="true" />}
                 </span>
-                {i < DIVISIONS.length - 1 ? <span className={cn("w-[2px] flex-1", done ? "bg-fuel" : "bg-line")} style={{ minHeight: now || next ? 64 : 36 }} /> : null}
+                {all && i < DIVISIONS.length - 1 ? <span className={cn("w-[2px] flex-1", done ? "bg-fuel" : "bg-line")} style={{ minHeight: now || next ? 64 : 36 }} /> : null}
               </span>
               <div className="min-w-0 flex-1 pb-4">
                 <div className="flex items-baseline justify-between gap-2">
@@ -55,6 +61,15 @@ export function LevelRoad({ division, careerDays, callus }: { division: Division
           );
         })}
       </ol>
+      <button
+        type="button"
+        onClick={() => setAll(!all)}
+        aria-expanded={all}
+        className="mt-1 flex min-h-11 w-full items-center justify-center gap-1 text-small font-semibold text-muted"
+      >
+        {all ? "Show less" : `All ${DIVISIONS.length} levels`}
+        <ChevronDown size={16} strokeWidth={2} aria-hidden="true" className={cn("transition-transform", all && "rotate-180")} />
+      </button>
     </section>
   );
 }

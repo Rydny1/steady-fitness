@@ -59,7 +59,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <Link
           href="/settings"
           aria-label="Profile"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-card text-body font-semibold"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-[19px] font-bold text-amber ring-2 ring-amber/60"
         >
           {capitalize(profile.display_name.slice(0, 1))}
         </Link>

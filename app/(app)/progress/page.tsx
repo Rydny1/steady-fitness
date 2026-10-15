@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { ArrowRight, Check, TriangleAlert } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { loadProgress, type ProgressData, type Range } from "@/features/data/progress";
 import { diffDays, formatDayShort, rigaParts, weekdayShort } from "@/lib/dates";
 import {  MiniRings, WeightChart } from "@/features/progress/components/charts";
-import { FORM_BANDS } from "@/features/game/config";
 import { WinOnce } from "@/components/win-once";
 import { LevelRoad } from "@/features/progress/components/level-road";
 import { TrophyGrid } from "@/features/progress/components/trophy-grid";
 import { CoachNote } from "@/components/coach-note";
+import { NotesFeed } from "@/features/progress/components/notes-feed";
 import { NetCard } from "@/features/progress/components/net-card";
 import { ChallengePicker } from "@/features/progress/components/challenge-picker";
 import { WeighIn } from "@/features/progress/components/weigh-in";
@@ -60,12 +61,14 @@ export default async function ProgressPage({
   const { supabase, profile, today } = await requireProfile();
   const d = await loadProgress(supabase, profile, today, range);
 
+  // Newest 36 only: the page stays light however many photos pile up.
+  const recentPhotos = d.photos.slice(0, 36);
   const photoUrls = await signedUrls(
     supabase,
     "progress-photos",
-    d.photos.map((p) => p.storage_path),
+    recentPhotos.map((p) => p.storage_path),
   );
-  const photos: ProgressPhoto[] = d.photos
+  const photos: ProgressPhoto[] = recentPhotos
     .filter((p) => p.pose)
     .map((p) => ({
       id: p.id,
@@ -75,7 +78,6 @@ export default async function ProgressPage({
     }));
 
   const text = matchText(d.matchLine, d);
-  const nextBand = FORM_BANDS.find((b) => b.from > d.callus) ?? null;
   const cmp = d.comparison;
   const earned = Object.values(d.trophies).filter(Boolean).length;
   const weightChange =
@@ -185,10 +187,6 @@ export default async function ProgressPage({
             {challengeCards[d.picked.key]?.name}
           </div>
           <div className="mt-1 text-[clamp(13px,4.10vw,15px)] text-ink-2">{challengeCards[d.picked.key]?.goal}</div>
-          <div className="mt-2 text-caption text-muted">
-            +6 Callus lifts your form and level.{" "}
-            {nextBand ? `${nextBand.name} starts at ${nextBand.from}. You're at ${d.callus}.` : "You're at the top."}
-          </div>
           <div
             className="mt-4 grid gap-[6px]"
             style={{ gridTemplateColumns: `repeat(${Math.min(d.picked.progress.goal, 7)}, minmax(0, 1fr))` }}
@@ -212,7 +210,6 @@ export default async function ProgressPage({
                   ? "Out of reach this week"
                   : `${d.picked.progress.current} of ${d.picked.progress.goal}`}
             </span>
-            <span className="text-right">{challengeCards[d.picked.key]?.why}</span>
           </div>
         </section>
       ) : (
@@ -375,6 +372,24 @@ export default async function ProgressPage({
       ) : null}
 
       <h2 className="mx-4 mt-9 text-section font-bold tracking-[-0.3px]">{copy.progress.noticed}</h2>
+      {d.coachRead.length > 0 ? (
+        <CoachNote eyebrow="Last 14 days" className="mx-4 mt-3">
+          <ul className="flex flex-col gap-1.5">
+            {d.coachRead.map((l) => (
+              <li key={l.text} className="flex items-start gap-2">
+                {l.kind === "good" ? (
+                  <Check size={16} strokeWidth={2.6} className="mt-[3px] flex-none text-fuel" aria-hidden="true" />
+                ) : l.kind === "work" ? (
+                  <TriangleAlert size={16} strokeWidth={2.2} className="mt-[3px] flex-none text-warn" aria-hidden="true" />
+                ) : (
+                  <ArrowRight size={16} strokeWidth={2.4} className="mt-[3px] flex-none text-ink" aria-hidden="true" />
+                )}
+                <span className="text-body leading-[1.35]">{l.text}</span>
+              </li>
+            ))}
+          </ul>
+        </CoachNote>
+      ) : null}
       {d.weeklySummary ? (
         <CoachNote eyebrow={copy.progress.weeklyReport} className="mx-4 mt-3">
           {d.weeklySummary}
@@ -388,14 +403,7 @@ export default async function ProgressPage({
             {d.notes[0]?.text}
             <span className="mt-1 block text-caption text-muted">{d.notes[0] ? whenLabel(d.notes[0].when) : null}</span>
           </CoachNote>
-          <ul className="mx-4 mt-2">
-            {d.notes.slice(1).map((n, i, arr) => (
-              <li key={n.id} className={cn("py-[14px]", i < arr.length - 1 && "border-b border-line")}>
-                <div className="text-body leading-[1.4]">{n.text}</div>
-                <div className="mt-1 text-caption text-muted">{whenLabel(n.when)}</div>
-              </li>
-            ))}
-          </ul>
+          <NotesFeed notes={d.notes.slice(1).map((n) => ({ id: n.id, text: n.text, when: whenLabel(n.when) }))} />
         </>
       )}
 

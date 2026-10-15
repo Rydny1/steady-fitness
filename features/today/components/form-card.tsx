@@ -1,11 +1,9 @@
-import Link from "next/link";
 import type { TodayData } from "@/features/data/today";
 import { copy } from "@/content/copy";
 import { InfoTip } from "@/components/info-tip";
 import type { TipKey } from "@/content/tooltips";
 
 export function FormCard({ d }: { d: TodayData }) {
-  const { comparison } = d.match;
   return (
     <section className="mx-4 mt-3 rounded-hero bg-card p-4 min-[380px]:p-5" aria-label="Form">
       <div className="flex items-end justify-between gap-3">
@@ -43,24 +41,6 @@ export function FormCard({ d }: { d: TodayData }) {
         </span>
       </div>
       <p className="mt-4 text-body font-medium leading-[1.35]">{d.form.coachLine}</p>
-
-      <div className="mt-4 flex items-center rounded-inner bg-ink pl-4 text-white">
-        <Link
-          href="/progress#challenges"
-          className="flex min-h-11 flex-1 flex-col justify-center py-2.5 pr-1"
-        >
-          <span className="text-small text-muted-dark">{copy.today.vsLastWeek}</span>
-          {comparison.noGhost ? (
-            <span className="text-caption text-muted-dark">{copy.today.noGhost}</span>
-          ) : (
-            <span className="num text-[clamp(20px,6.15vw,23px)] leading-none">
-              {comparison.scoreYou} <span className="text-ink-faint">-</span>{" "}
-              <span className="text-muted-dark">{comparison.scoreGhost}</span>
-            </span>
-          )}
-        </Link>
-        <InfoTip tip="vsLastWeek" light />
-      </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Tile value={String(d.streak)} label={copy.today.streak} tip="streak" />

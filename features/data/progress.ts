@@ -19,6 +19,7 @@ import {
   winStreak,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { coachRead, type CoachLine } from "@/features/insights/coach-read";
 import { dayBurn, goalFor, netKcal, type Goal } from "@/features/nutrition/energy";
 import { projectNet, type NetProjection } from "@/features/nutrition/projection";
 import {
@@ -79,6 +80,8 @@ export type ProgressData = {
   photos: Row<"photos">[];
   answerBack: { active: boolean } | null;
   /** Callus now, for the "what does this get me" line on challenges. */
+  /** The Coach's read on the last two weeks. Empty until there is enough data. */
+  coachRead: CoachLine[];
   callus: number;
   careerDays: number;
   division: DivisionT;
@@ -154,7 +157,7 @@ export async function loadProgress(
         .from("observer_notes")
         .select("id,text,created_at")
         .order("created_at", { ascending: false })
-        .limit(12),
+        .limit(30),
       supabase.from("photos").select("*").eq("kind", "progress").order("taken_on", { ascending: false }),
       supabase
         .from("workout_sets")
@@ -284,6 +287,23 @@ export async function loadProgress(
   });
   const targetRow = facts.find((f) => f.bmrKcal > 0 && f.day === today) ?? facts.find((f) => f.bmrKcal > 0);
   const targetNet = targetRow ? targetRow.budgetKcal - dayBurn(targetRow.bmrKcal, 0) : 0;
+  // The Coach's read: the last 14 finished days.
+  const recent = facts.filter((f) => f.day >= addDays(today, -14) && f.day < today);
+  const recentNets = recent.filter(countable).map(netOf);
+  const planned = recent.filter((f) => f.plannedKey && f.plannedKey !== "rest" && f.plannedKey !== "stretch");
+  const sleeps = recent.map((f) => f.sleepHours).filter((v): v is number => v !== null);
+  const coach = coachRead({
+    days: recent.length,
+    daysLogged: recent.filter((f) => f.anyEntry).length,
+    avgSleep: sleeps.length >= 3 ? sleeps.reduce((a, b) => a + b, 0) / sleeps.length : null,
+    proteinDays: recent.filter((f) => ringsFor(f, true).protein.closed).length,
+    sessionsPlanned: planned.length,
+    sessionsDone: planned.filter((f) => f.sessionDone).length,
+    avgNet: recentNets.length > 0 ? recentNets.reduce((a, b) => a + b, 0) / recentNets.length : null,
+    targetNet,
+    goal: goalKind,
+    streak: ledger.streak,
+  });
   const insightKey = `${today}|${range}|${projectionNet.avgNet}|${projectionNet.loggedDays}|${latestAvg}`;
 
   // Body.
@@ -378,6 +398,7 @@ export async function loadProgress(
       weekKg,
       totalKg,
     },
+    coachRead: coach,
     callus: ledger.callus,
     careerDays: ledger.careerDays,
     division: ledger.division,
