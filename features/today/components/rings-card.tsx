@@ -65,13 +65,13 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
   )} percent, train ${Math.round(rings.train.progress * 100)} percent`;
   return (
     <>
-      <div className="raised relative mx-4 mt-4 flex items-center gap-4 rounded-hero bg-card p-4 min-[380px]:gap-5 min-[380px]:p-5">
+      <div className="raised relative mx-4 mt-4 flex items-center gap-4 rounded-hero bg-card p-4">
         <InfoTip tip="rings" className="absolute right-2 top-2" />
         <svg
           viewBox="0 0 180 180"
           role="img"
           aria-label={label}
-          className="h-auto w-[clamp(124px,38vw,168px)] flex-none"
+          className="h-auto w-[clamp(108px,32vw,140px)] flex-none"
         >
           <g transform="rotate(-90 90 90)" fill="none" strokeWidth="17" strokeLinecap="round">
             <Ring r={R[0]} color="var(--fuel)" progress={deficitProgress} />

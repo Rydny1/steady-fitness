@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { InfoTip } from "@/components/info-tip";
 import { signed } from "@/features/nutrition/energy";
-import { monthNeed, paceSentence, type NetProjection } from "@/features/nutrition/projection";
+import { paceSentence, type NetProjection } from "@/features/nutrition/projection";
 import { getNetInsight } from "../insight";
 import { NetChart } from "./charts";
 import type { NetBar } from "@/features/data/progress";
@@ -24,7 +24,7 @@ export function NetCard({
   projection: NetProjection;
   insightKey: string;
 }) {
-  const plain = [paceSentence(projection), monthNeed(projection)].filter(Boolean).join(" ");
+  const plain = paceSentence(projection);
   const [text, setText] = useState(plain);
   const [ai, setAi] = useState(false);
 
@@ -47,7 +47,6 @@ export function NetCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [insightKey]);
 
-  const word = goal === "lose" ? "deficit" : goal === "gain" ? "surplus" : "balance";
   return (
     <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label="Net calories">
       <div className="flex items-center justify-between">
@@ -62,13 +61,6 @@ export function NetCard({
         ) : null}
       </div>
       <NetChart bars={bars} goal={goal} targetNet={targetNet} />
-      <div className="mt-1 flex justify-between text-caption text-muted">
-        <span>Dashed line: your {word} target</span>
-        <span className="num">{signed(targetNet)}</span>
-      </div>
-      <p className="mt-1 text-caption text-muted">
-        Each bar is one day: eaten minus burned. Below the line, weight goes down.
-      </p>
       <p className={"mt-3 text-body leading-[1.4] " + (ai ? "neon-text" : "text-ink")} aria-live="polite">
         {text}
       </p>

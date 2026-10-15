@@ -7,6 +7,7 @@ import { compressImage } from "../compress";
 import { uploadPhoto } from "../upload";
 import { deletePhoto, recordProgressPhoto } from "../actions";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { PhotoPicker } from "@/components/photo-picker";
 import { copy } from "@/content/copy";
 import { capitalize, cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export function ProgressPhotos({
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [compare, setCompare] = useState(false);
+  const [history, setHistory] = useState(false);
 
   const latest = POSES.map((p) => photos.find((x) => x.pose === p) ?? null);
 
@@ -124,20 +126,30 @@ export function ProgressPhotos({
 
       {photos.length > 3 ? (
         <>
-          <h3 className="mx-4 mt-6 text-small font-semibold text-muted">All photos, newest first</h3>
-          <ul className="mx-4 mt-2 grid grid-cols-3 gap-2">
-            {photos.map((p) => (
-              <li key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-inner bg-line">
-                {p.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.url} alt={`${label(p.pose)} on ${p.takenOn}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-                ) : null}
-                <span className="absolute bottom-2 left-2 rounded-full bg-bg px-2 py-[2px] text-[12px] text-ink">
-                  {label(p.pose)}, {p.takenOn.slice(8)}/{p.takenOn.slice(5, 7)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <button
+            type="button"
+            onClick={() => setHistory(!history)}
+            aria-expanded={history}
+            className="mx-4 mt-2 flex min-h-11 w-[calc(100%-32px)] items-center justify-between text-small font-semibold text-muted"
+          >
+            <span>History ({photos.length})</span>
+            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" className={cn("transition-transform", history && "rotate-180")} />
+          </button>
+          {history ? (
+            <ul className="mt-1 flex snap-x gap-2 overflow-x-auto px-4 pb-2" aria-label="All photos, newest first">
+              {photos.map((p) => (
+                <li key={p.id} className="relative h-[104px] w-[78px] flex-none snap-start overflow-hidden rounded-inner bg-line">
+                  {p.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.url} alt={`${label(p.pose)} on ${p.takenOn}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                  ) : null}
+                  <span className="absolute bottom-1 left-1 rounded-full bg-bg px-1.5 py-[1px] text-[11px] text-ink">
+                    {label(p.pose).slice(0, 1)} {p.takenOn.slice(8)}/{p.takenOn.slice(5, 7)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </>
       ) : null}
 

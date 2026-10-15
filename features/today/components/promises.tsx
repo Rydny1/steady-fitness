@@ -78,15 +78,9 @@ function FillCircle({ pct, size, label, tiny = false }: { pct: number; size: num
       <g clipPath={`url(#${id})`}>
         <circle cx={size / 2} cy={size / 2} r={r} fill={level >= 1 ? "var(--fuel)" : "var(--fuel-soft)"} stroke="var(--fuel)" strokeWidth="1.5" />
       </g>
-      {tiny ? (
-        level >= 1 ? (
-          <path d={`M${size * 0.3} ${size * 0.52} l${size * 0.14} ${size * 0.14} l${size * 0.27} -${size * 0.3}`} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        ) : null
-      ) : (
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize="11" fontWeight="700" fill={level >= 1 ? "#fff" : "var(--ink)"}>
-          {Math.round(level * 100)}%
-        </text>
-      )}
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontSize={tiny ? 9 : 11} fontWeight="700" fill={level >= 1 ? "#fff" : level === 0 ? "var(--muted)" : "var(--ink)"}>
+        {Math.round(level * 100)}%
+      </text>
     </svg>
   );
 }
@@ -134,11 +128,7 @@ export function StreakBlock({
       <ul className="mt-4 flex justify-between" aria-label="This week">
         {dots.map((w) => (
           <li key={w.day} className="flex flex-col items-center gap-1">
-            {w.future ? (
-              <span className="block h-[30px] w-[30px] rounded-full border border-dashed border-dash" />
-            ) : (
-              <FillCircle pct={w.pct} size={30} tiny label={`${w.letter}: ${Math.round(w.pct * 100)} percent`} />
-            )}
+            <FillCircle pct={w.future ? 0 : w.pct} size={36} tiny label={`${w.letter}: ${Math.round((w.future ? 0 : w.pct) * 100)} percent`} />
             <span className={cn("text-nav", w.today ? "font-bold text-ink" : "text-muted")}>{w.letter}</span>
           </li>
         ))}

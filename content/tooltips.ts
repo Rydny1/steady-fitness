@@ -40,7 +40,7 @@ export const tooltips = {
   },
   weeklyChallenge: {
     title: "Weekly challenge",
-    text: "One extra goal a week. Finish it, earn 6 Callus.",
+    text: "One extra goal a week. Finish it for +6 Callus. Callus sets your form (Finding 35, In form 65, Peak 90) and your level.",
   },
   seasonRecord: {
     title: "Season record",
@@ -48,7 +48,7 @@ export const tooltips = {
   },
   energyBalance: {
     title: "Net calories",
-    text: "Eaten minus burned. Below zero is a deficit: that drops weight. Gaining? Aim above zero. Exercise raises what you can eat.",
+    text: "Eaten minus burned. Each bar is one day; below the line is a deficit and weight goes down. The dashed line is your target. Gaining? Aim above the line. Exercise raises what you can eat.",
   },
   streak: {
     title: "Day streak",
