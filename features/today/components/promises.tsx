@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { Check, Flame } from "lucide-react";
-import { toggleHabit } from "../actions";
+import { createContext, useContext, useEffect, useId, useOptimistic, useRef, useState, useTransition } from "react";
+import { Check, Flame, Snowflake } from "lucide-react";
+import { freezeStreak, toggleHabit } from "../actions";
 import { Toast } from "@/components/toast";
 import { copy } from "@/content/copy";
 import { toMilestone } from "@/features/game/streak-moments";
@@ -66,7 +66,7 @@ export function PromisesProvider({ habits, day, children }: { habits: Habit[]; d
 function FillCircle({ pct, size, label, tiny = false }: { pct: number; size: number; label?: string; tiny?: boolean }) {
   const r = size / 2 - 2;
   const level = Math.max(0, Math.min(1, pct));
-  const id = `fill-${size}-${Math.round(level * 100)}${tiny ? "t" : ""}`;
+  const id = `fill-${useId()}`;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
       <defs>
@@ -97,12 +97,20 @@ export function StreakBlock({
   week,
   goal,
   weekDeficit,
+  freeze,
+  loggedToday,
 }: {
   streak: number;
   week: Dot[];
   goal: "lose" | "gain" | "maintain";
   weekDeficit: { got: number; target: number };
+  freeze: { frozenToday: boolean; left: number; cost: number; canAfford: boolean };
+  loggedToday: boolean;
 }) {
+  const [ask, setAsk] = useState(false);
+  const [frozen, setFrozen] = useState(freeze.frozenToday);
+  const [freezeMsg, setFreezeMsg] = useState<string | null>(null);
+  const [freezing, startFreeze] = useTransition();
   const { pct } = usePromises();
   const next = toMilestone(streak);
   const dots = week.map((w) => (w.today ? { ...w, pct } : w));
@@ -135,6 +143,58 @@ export function StreakBlock({
           </li>
         ))}
       </ul>
+      {streak > 0 && !loggedToday ? (
+        <div className="mt-4 rounded-ctl bg-sunken px-3 py-2.5 text-small">
+          {frozen ? (
+            <span className="flex items-center gap-2 font-medium text-ink">
+              <Snowflake size={16} strokeWidth={2} className="text-protein" aria-hidden="true" />
+              Streak frozen today. Safe.
+            </span>
+          ) : ask ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-ink-2">Freeze costs {freeze.cost} Callus if you don&apos;t log.</span>
+              <span className="flex gap-1">
+                <button type="button" className="min-h-11 rounded-full px-3 font-semibold text-muted" onClick={() => setAsk(false)}>
+                  No
+                </button>
+                <button
+                  type="button"
+                  disabled={freezing}
+                  className="min-h-11 rounded-full bg-ink px-4 font-semibold text-white"
+                  onClick={() =>
+                    startFreeze(async () => {
+                      const r = await freezeStreak();
+                      if (r.ok) {
+                        setFrozen(true);
+                        setAsk(false);
+                      } else {
+                        setAsk(false);
+                        setFreezeMsg(r.reason === "none_left" ? "No freezes left this month." : r.reason === "low_callus" ? "Not enough Callus." : "Couldn't freeze. Try again.");
+                      }
+                    })
+                  }
+                >
+                  Freeze
+                </button>
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={freeze.left <= 0 || !freeze.canAfford}
+              onClick={() => setAsk(true)}
+              className="flex min-h-11 w-full items-center justify-between disabled:opacity-50"
+            >
+              <span className="flex items-center gap-2 font-semibold text-ink">
+                <Snowflake size={16} strokeWidth={2} className="text-protein" aria-hidden="true" />
+                Freeze today
+              </span>
+              <span className="text-caption text-muted">{freeze.left} left this month</span>
+            </button>
+          )}
+          {freezeMsg ? <p role="alert" className="mt-1 text-caption text-danger">{freezeMsg}</p> : null}
+        </div>
+      ) : null}
       {weekDeficit.target > 0 && goal !== "maintain" ? (
         <div className="mt-4">
           <div className="flex items-baseline justify-between text-caption text-muted">

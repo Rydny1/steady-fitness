@@ -98,7 +98,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       </section>
 
       <PromisesProvider habits={d.habits} day={today}>
-        <StreakBlock streak={d.streak} week={d.weekDots} goal={d.energy.goal} weekDeficit={d.weekDeficit} />
+        <StreakBlock streak={d.streak} week={d.weekDots} goal={d.energy.goal} weekDeficit={d.weekDeficit} freeze={d.freeze} loggedToday={d.loggedToday} />
 
       <FormCard d={d} />
       {d.adaptiveNote ? <AdaptiveNote text={d.adaptiveNote} /> : null}

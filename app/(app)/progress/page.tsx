@@ -5,6 +5,7 @@ import { diffDays, formatDayShort, rigaParts, weekdayShort } from "@/lib/dates";
 import {  MiniRings, WeightChart } from "@/features/progress/components/charts";
 import { FORM_BANDS } from "@/features/game/config";
 import { WinOnce } from "@/components/win-once";
+import { LevelRoad } from "@/features/progress/components/level-road";
 import { TrophyGrid } from "@/features/progress/components/trophy-grid";
 import { CoachNote } from "@/components/coach-note";
 import { NetCard } from "@/features/progress/components/net-card";
@@ -12,7 +13,7 @@ import { ChallengePicker } from "@/features/progress/components/challenge-picker
 import { WeighIn } from "@/features/progress/components/weigh-in";
 import { ProgressPhotos, type ProgressPhoto } from "@/features/photos/components/progress-photos";
 import { signedUrls } from "@/features/photos/signed-urls";
-import { chapters, challengeCards, copy, matchLines, roundNames, trophies } from "@/content/copy";
+import { challengeCards, copy, matchLines, roundNames, trophies } from "@/content/copy";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
 import type { TipKey } from "@/content/tooltips";
@@ -256,29 +257,7 @@ export default async function ProgressPage({
         )}
       </section>
 
-      <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.levels}>
-        <h3 className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
-          {copy.progress.levels}
-          <InfoTip tip="level" className="-my-3 -ml-1" />
-        </h3>
-        <ol className="mt-3">
-          {d.levels.map((l, i) => (
-            <li key={`${l.level}-${l.day}`} className="flex items-start gap-3">
-              <span className="flex flex-col items-center">
-                <span className={cn("mt-[6px] h-[10px] w-[10px] rounded-full", i === d.levels.length - 1 ? "bg-amber" : "bg-ink")} />
-                {i < d.levels.length - 1 ? <span className="h-8 w-[2px] bg-line" /> : null}
-              </span>
-              <span className="flex-1 pb-3">
-                <span className="block text-body font-semibold">{chapters[l.level].name}</span>
-                <span className="block text-caption text-muted">
-                  {formatDayShort(l.day)}
-                  {i === d.levels.length - 1 ? `. ${copy.progress.levelNow}` : ""}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <LevelRoad division={d.division} careerDays={d.careerDays} callus={d.callus} />
 
       <div
         role="tablist"
@@ -426,7 +405,7 @@ export default async function ProgressPage({
           {earned} of {trophies.length}
         </span>
       </div>
-      <TrophyGrid items={trophies.map((t) => ({ key: t.key, name: t.name, hint: t.hint, line: t.line, on: d.trophies[t.key] === true }))} />
+      <TrophyGrid items={trophies.map((t) => ({ key: t.key, group: t.group, name: t.name, hint: t.hint, line: t.line, on: d.trophies[t.key] === true }))} />
 
       <ProgressPhotos
         photos={photos}

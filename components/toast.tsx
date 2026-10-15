@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 
 // A small pop-up that slides in from the top, says one thing, and leaves by itself.
@@ -18,13 +18,18 @@ export function Toast({
   onGone?: () => void;
 }) {
   const [open, setOpen] = useState(true);
+  // A fresh onGone on every render must not restart the timer.
+  const gone = useRef(onGone);
+  useEffect(() => {
+    gone.current = onGone;
+  });
   useEffect(() => {
     const t = setTimeout(() => {
       setOpen(false);
-      onGone?.();
+      gone.current?.();
     }, ms);
     return () => clearTimeout(t);
-  }, [ms, onGone]);
+  }, [ms]);
   if (!open) return null;
   const Icon = tone === "hello" ? Sparkles : Check;
   return (

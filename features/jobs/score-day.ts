@@ -34,6 +34,13 @@ type FlagRow = { user_id: string; key: string; value: Json; updated_at?: string 
  */
 export type ScoreEvent = { kind: "promoted" | "dropped"; division: DivisionT } | null;
 
+/** A streak freeze set for this day (see features/today/freeze). */
+async function isFrozen(admin: Db, userId: string, day: string): Promise<boolean> {
+  const { data } = await admin.from("user_flags").select("value").eq("user_id", userId).eq("key", "streak_freezes").maybeSingle();
+  const days = (data?.value as { days?: string[] } | null)?.days ?? [];
+  return days.includes(day);
+}
+
 export async function scoreUserDay(admin: Db, userId: string, day: string): Promise<ScoreEvent> {
   // Flags are written only after the ledger row is safe, so a failed night can be retried cleanly.
   const deferred: FlagRow[] = [];
@@ -130,6 +137,8 @@ export async function scoreUserDay(admin: Db, userId: string, day: string): Prom
     proteinG: f.proteinG,
     proteinTargetG: f.proteinTargetG,
     habitsDone: f.habitsDone,
+    habitsTotal: f.habitsTotal,
+    frozen: await isFrozen(admin, userId, day),
     sick: f.sick,
     weeklyPoints: weeklyPts,
     prev: {

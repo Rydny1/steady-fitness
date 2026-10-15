@@ -33,13 +33,13 @@ export const HABITS_REQUIRED = 5;
 /** Form bands from Callus (GAME.md). Each entry is the lowest Callus of the band. */
 export const FORM_BANDS = [
   { key: "off_form", name: "Off form", from: 0 },
-  { key: "finding_form", name: "Finding form", from: 30 },
-  { key: "in_form", name: "In form", from: 60 },
-  { key: "peak_form", name: "Peak form", from: 85 },
+  { key: "finding_form", name: "Finding form", from: 35 },
+  { key: "in_form", name: "In form", from: 65 },
+  { key: "peak_form", name: "Peak form", from: 90 },
 ] as const;
 
 /** Callus under this counts as an off-form day for the drop rule. */
-export const OFF_FORM_BELOW = 30;
+export const OFF_FORM_BELOW = 35;
 /** Off-form days running that drop one division. */
 export const DROP_AFTER_OFF_FORM_DAYS = 3;
 
@@ -48,14 +48,20 @@ export type DivisionRule = { division: DivisionT; days: number; bar: number };
 /** Ordered lowest to highest (PRODUCT.md > Divisions). */
 export const DIVISIONS: readonly DivisionRule[] = [
   { division: "starting_line", days: 0, bar: 0 },
-  { division: "showing_up", days: 7, bar: 60 },
-  { division: "building", days: 21, bar: 60 },
-  { division: "consistent", days: 45, bar: 60 },
-  { division: "strong", days: 75, bar: 60 },
-  { division: "disciplined", days: 120, bar: 65 },
-  { division: "proven", days: 180, bar: 70 },
+  { division: "showing_up", days: 10, bar: 50 },
+  { division: "building", days: 30, bar: 55 },
+  { division: "consistent", days: 60, bar: 60 },
+  { division: "strong", days: 100, bar: 65 },
+  { division: "disciplined", days: 150, bar: 70 },
+  { division: "proven", days: 220, bar: 75 },
   { division: "one_year", days: 365, bar: 80 },
 ];
+
+/** Above 50, each point is harder to earn: gains shrink to this floor as Callus nears 100. */
+export const GAIN_FLOOR = 0.5;
+
+/** Streak freeze: spend Callus to keep a streak through a day you cannot log. */
+export const FREEZE = { cost: 8, perMonth: 2 } as const;
 
 /** Streak milestones (PRODUCT.md > Streak). */
 export const STREAK_MILESTONES: readonly number[] = [7, 14, 30, 50, 100, 200, 365];

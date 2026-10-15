@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
+import { canFreeze } from "@/features/game/freeze";
+import { latestLedger } from "@/features/data/ledger";
 
 export type SimpleOutcome = { ok: true } | { ok: false; reason: "signed_out" | "invalid" | "failed" | "limit" };
 
@@ -133,6 +135,30 @@ export async function ackTrophies(input: unknown): Promise<SimpleOutcome> {
   const { error } = await supabase
     .from("user_flags")
     .upsert({ user_id: auth.user.id, key: "trophies_seen", value: { keys } }, { onConflict: "user_id,key" });
+  if (error) return { ok: false, reason: "failed" };
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export type FreezeOutcome = { ok: true } | { ok: false; reason: "signed_out" | "already" | "none_left" | "low_callus" | "failed" };
+
+/** Set a streak freeze for today. It costs Callus only if nothing is logged by the end of the day. */
+export async function freezeStreak(): Promise<FreezeOutcome> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, reason: "signed_out" };
+  const today = todayRiga();
+  const [{ data: row }, ledger] = await Promise.all([
+    supabase.from("user_flags").select("value").eq("key", "streak_freezes").maybeSingle(),
+    latestLedger(supabase, auth.user.id),
+  ]);
+  const days = ((row?.value as { days?: string[] } | null)?.days ?? []).filter((d) => typeof d === "string");
+  const check = canFreeze(days, today, ledger.callus);
+  if (!check.ok) return check;
+  const keep = days.filter((d) => d > addDays(today, -60));
+  const { error } = await supabase
+    .from("user_flags")
+    .upsert({ user_id: auth.user.id, key: "streak_freezes", value: { days: [...keep, today] } }, { onConflict: "user_id,key" });
   if (error) return { ok: false, reason: "failed" };
   revalidatePath("/today");
   return { ok: true };

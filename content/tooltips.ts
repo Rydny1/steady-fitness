@@ -8,7 +8,7 @@ export const tooltips = {
   },
   form: {
     title: "Form",
-    text: "Off form 0 to 29: bad. Finding form 30 to 59: medium. In form 60 to 84: good. Peak form 85 to 100: best.",
+    text: "Off form 0 to 34: bad. Finding form 35 to 64: medium. In form 65 to 89: good. Peak form 90 to 100: best.",
   },
   rings: {
     title: "Rings",

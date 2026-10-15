@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,12 @@ export function PhotoPicker({
   const [open, setOpen] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
   const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFile(e.target.files?.[0]);
     e.target.value = "";

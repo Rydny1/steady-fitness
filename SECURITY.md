@@ -13,7 +13,7 @@ Steady is designed against all six.
 
 ## 1. Login
 - [ ] Supabase Auth, email + password, min length 12
-- [ ] After creating Rydny's account: **turn off new sign-ups** in Supabase Auth settings. Nobody else can create an account
+- [x] Superseded: sign-ups are open and guarded (see DECISIONS.md). Old line: turn off new sign-ups in Supabase Auth settings. Nobody else can create an account
 - [ ] TOTP two-factor (authenticator app) enabled and required for the account (Supabase MFA, free)
 - [ ] Sessions in httpOnly cookies via `@supabase/ssr` (starter default). Middleware refreshes them
 - [ ] Server code checks the user with `supabase.auth.getUser()`, never trusts `getSession()` alone

@@ -80,7 +80,7 @@ mic (Web Speech API, on the phone)
   -> server action parseLog(text)
        auth check -> zod(text, max 4000) -> rate limit (60/day)
        -> insert logs row (raw text kept)
-       -> lib/ai/gemini.ts (structured output, 15 s timeout, 1 retry)
+       -> lib/ai/gemini.ts (structured output, 8 s per model, next model on failure, 45 s total)
        -> zod validate Gemini JSON (reject anything off-schema)
        -> return draft items (not saved)
   -> confirm sheet (user edits)
@@ -128,7 +128,7 @@ Generate types after every migration: `supabase gen types typescript --local > l
 - `voiceFact` and `weeklyReport` output must pass `features/insights/grounding.ts` (every number and date in the output exists in the input facts) or the template line is used.
 - Model from `GEMINI_MODEL` (set to the current Flash model, check aistudio.google.com at setup).
 - `responseMimeType: 'application/json'` + `responseSchema`. Then zod parse again. Never trust it.
-- Timeout 15 s, 1 retry on 429/5xx with backoff. On failure: keep the raw log, show manual entry.
+- 8 s per model, then the next model in the chain (8 models, lite first), 45 s in total. Plain phrases are read first by rules (features/logging/quick-parse.ts) and never reach the AI. On failure: keep the raw log, keep whatever the rules read, offer manual entry.
 - User text is data. The prompt says extraction only. Output is rendered as plain text, never HTML, never executed.
 
 ## Change-friendly by design

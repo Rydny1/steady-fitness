@@ -26,6 +26,8 @@ export type DayFacts = {
   budgetKcal: number; // base budget, before add-back
   proteinTargetG: number;
   habitsDone: number;
+  /** Active promises right now. */
+  habitsTotal: number;
   sick: boolean;
   sleepHours: number | null;
   firstSessionStartHour: number | null;
@@ -62,7 +64,7 @@ export async function loadDayFacts(
   from: string,
   to: string,
 ): Promise<DayFacts[]> {
-  const [targets, plan, food, acts, sessions, logs, checks, checkins, weights] = await Promise.all([
+  const [targets, plan, food, acts, sessions, logs, checks, checkins, weights, habitCount] = await Promise.all([
     supabase
       .from("targets")
       .select("effective_from,bmr_kcal,budget_kcal,protein_g")
@@ -125,7 +127,9 @@ export async function loadDayFacts(
       .not("weight_kg", "is", null)
       .gte("measured_on", from)
       .lte("measured_on", to),
+    supabase.from("habits").select("id", { count: "exact", head: true }).eq("user_id", userId).is("archived_at", null),
   ]);
+  const habitsTotal = habitCount.count ?? 5;
 
   const planMap: PlanMap = new Map(
     (plan.data ?? []).map((p) => [p.weekday, p.session_key] as const),
@@ -176,6 +180,7 @@ export async function loadDayFacts(
       budgetKcal: t?.budget_kcal ?? 0,
       proteinTargetG: t?.protein_g ?? 0,
       habitsDone: checkCount.get(day) ?? 0,
+      habitsTotal,
       sick: ck?.sick ?? false,
       sleepHours: ck?.sleep_hours ?? null,
       firstSessionStartHour: starts.length > 0 ? Math.min(...starts) : null,

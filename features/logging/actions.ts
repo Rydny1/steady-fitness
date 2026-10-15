@@ -311,7 +311,7 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
         duration_min: a.duration_min,
         label: a.label ?? null,
         // Frozen at save: it depends on the weight of that day.
-        kcal_burned: activityKcal(a.activity_type, a.duration_min, weight, { speedKmh: a.speed_kmh, met: a.met }),
+        kcal_burned: Math.min(3000, activityKcal(a.activity_type, a.duration_min, weight, { speedKmh: a.speed_kmh, met: a.met })),
         rpe: a.rpe,
         source,
       })),

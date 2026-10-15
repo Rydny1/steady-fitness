@@ -90,7 +90,7 @@ export async function loadTrophyInput(supabase: Db, userId: string): Promise<Tro
   const [logs, ledger, results, sessions, flags, trend, measures, sets, photos] =
     await Promise.all([
       supabase.from("logs").select("id", { count: "exact", head: true }).eq("user_id", userId),
-      supabase.from("daily_scores").select("streak,breakdown").eq("user_id", userId),
+      supabase.from("daily_scores").select("streak,career_days,breakdown").eq("user_id", userId),
       weekResults(supabase, userId),
       supabase.from("workout_sessions").select("id,day,session_key,started_at").eq("user_id", userId),
       supabase.from("user_flags").select("key").eq("user_id", userId),
@@ -154,6 +154,7 @@ export async function loadTrophyInput(supabase: Db, userId: string): Promise<Tro
   return {
     logCount: logs.count ?? 0,
     bestStreak,
+    careerDays: Math.max(0, ...(ledger.data ?? []).map((r) => r.career_days)),
     weekResults: results,
     gymStartsBefore08: early,
     answerBacksDone: flagKeys.filter((k) => k.startsWith("answer_back_done:")).length,
