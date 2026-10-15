@@ -8,11 +8,13 @@ const GOAL_WORD: Record<Goal, string> = { lose: "deficit", gain: "surplus", main
 /** One calm line: what yesterday's net energy was, and whether that is good for your goal. */
 export function EnergyLine({
   goal,
+  todayNet,
   yesterdayNet,
   plannedNet,
   read,
 }: {
   goal: Goal;
+  todayNet: number | null;
   yesterdayNet: number | null;
   plannedNet: number;
   read: BalanceRead | null;
@@ -30,7 +32,16 @@ export function EnergyLine({
         <Icon size={12} strokeWidth={2.6} aria-hidden="true" />
       </span>
       <p className="min-w-0 flex-1 text-small text-ink-2">
-        {yesterdayNet === null ? (
+        {todayNet !== null ? (
+          <>
+            Net today{" "}
+            <span className="num text-[clamp(16px,4.6vw,18px)]">{signed(todayNet)} kcal</span>
+            {", "}
+            {todayNet < 0 ? "a deficit" : todayNet > 0 ? "a surplus" : "balanced"}
+            {goal === "lose" ? (todayNet < 0 ? ", good for losing." : ", losing needs a deficit.") : goal === "gain" ? (todayNet > 0 ? ", good for gaining." : ", gaining needs a surplus.") : "."}
+            {yesterdayNet !== null ? <span className="text-muted"> Yesterday {signed(yesterdayNet)}.</span> : null}
+          </>
+        ) : yesterdayNet === null ? (
           <>
             Eat your budget and you run about{" "}
             <span className="font-semibold">{Math.abs(Math.round(plannedNet / 10) * 10)} kcal</span>{" "}

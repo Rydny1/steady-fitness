@@ -19,6 +19,7 @@ import {
   speechSupported,
   type Recognition,
 } from "../speech";
+import { fullBurn } from "@/features/nutrition/energy";
 import { activityKcal } from "@/features/nutrition/targets";
 import { compressImage, type Compressed } from "@/features/photos/compress";
 import { uploadPhoto } from "@/features/photos/upload";
@@ -614,7 +615,7 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
         </div>
         <div className="text-right">
           <div className="num text-[clamp(19px,5.9vw,22px)] leading-none text-train">
-            +{activityKcal(it.activity_type, it.duration_min, weightKg)}
+            -{fullBurn(activityKcal(it.activity_type, it.duration_min, weightKg))}
           </div>
           <div className="text-caption text-muted">kcal burned</div>
         </div>

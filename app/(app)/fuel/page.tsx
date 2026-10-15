@@ -125,7 +125,7 @@ export default async function FuelPage() {
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.quickBuys}</h2>
         <span className="text-small text-muted">Rimi, Maxima, Lidl</span>
       </div>
-      <QuickBuys items={quick} day={today} />
+      <QuickBuys items={quick} />
 
       <MyRecipes recipes={mine.data ?? []} day={today} />
 
