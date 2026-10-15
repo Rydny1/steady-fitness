@@ -24,7 +24,7 @@ const targetsSchema = z.object({
   goalKg: z.number().min(35).max(250),
 });
 
-/** A new targets row from today, so history stays. Budget never goes below the BMR on record. */
+/** A new targets row from today, so history stays. The person picks the deficit; the limit is never set under 1,000. */
 export async function saveTargets(input: unknown): Promise<SettingsOutcome> {
   const { supabase, user } = await userOrNull();
   if (!user) return { ok: false, reason: "signed_out" };
@@ -39,7 +39,6 @@ export async function saveTargets(input: unknown): Promise<SettingsOutcome> {
     .limit(1)
     .maybeSingle();
   if (!current) return { ok: false, reason: "failed" };
-  if (v.budgetKcal < current.bmr_kcal) return { ok: false, reason: "invalid" };
 
   const [t, p] = await Promise.all([
     supabase.from("targets").upsert(

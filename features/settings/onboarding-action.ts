@@ -25,6 +25,7 @@ const schema = z.object({
   sex: z.enum(["male", "female"]).nullable(),
   weightKg: z.number().min(35).max(300).nullable(),
   goalKg: z.number().min(35).max(250).nullable(),
+  weeks: z.number().min(2).max(104).nullable(),
   waistCm: z.number().min(40).max(200).nullable(),
   neckCm: z.number().min(20).max(70).nullable(),
   wakeTime: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
@@ -87,6 +88,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<Onboar
           heightCm: v.heightCm,
           ageYears: ageOn(v.birthDate, today),
           goalWeightKg: v.goalKg ?? v.weightKg,
+          weeks: v.weeks,
         })
       : GENERIC_TARGETS;
 

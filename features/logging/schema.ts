@@ -41,6 +41,10 @@ export const parsedItemSchema = z.object({
   protein_g: num.nullable(),
   activity_type: z.enum(activityTypes).nullable(),
   duration_min: num.nullable(),
+  /** Said as a distance, steps or a pace instead of a time. Code turns these into minutes. */
+  distance_km: num.nullable(),
+  steps: num.nullable(),
+  pace_min_per_km: num.nullable(),
   session_key: z.enum(sessionKeys).nullable(),
   body: z
     .object({
@@ -85,6 +89,10 @@ export const draftActivitySchema = z.object({
   session_key: z.enum(sessionKeys).nullable(),
   duration_min: z.number().int().min(1).max(600),
   rpe: z.number().int().min(1).max(10).nullable(),
+  /** Known speed in km/h, when a distance or pace was given. Makes the burn more exact. */
+  speed_kmh: z.number().min(1).max(45).nullable().optional(),
+  /** How the minutes were worked out, for display only. */
+  note: z.string().max(100).nullable().optional(),
 });
 
 export const draftBodySchema = z.object({

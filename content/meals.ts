@@ -31,7 +31,7 @@ export type Meal = {
 
 export const batchPlan = {
   summary:
-    'Sunday: cook 2 recipes = 8 portions = lunch and dinner Mon to Thu. Thursday night: 1 recipe for Fri and Sat. Rotate so no recipe repeats two weeks running.',
+    'Sunday: cook 2 for Mon to Thu. Thursday: cook 1 for Fri and Sat. Rotate. Fridge 3 days.',
   fridge: 'Fridge max 3 days. Freeze anything for day 4.',
   perPortion: 'Each batch recipe makes 4 portions. Per portion approx. 360 to 390 kcal, 32 to 42 g protein.',
 } as const;

@@ -1,7 +1,8 @@
 // Targets: BMR, budget, protein, exercise add-back, safety lines (PRODUCT.md > Targets).
 import type { ActivityT, SexT } from "@/lib/supabase/types";
 import { MET, MET_FAST_RUN, SAFETY, TARGETS, type SafetyKey } from "./config";
-import { budgetFactorFor, goalFor } from "./energy";
+import { limitForNet, suggestNet } from "./plan";
+import { speedMet } from "./activity";
 
 export type TargetsInput = {
   sex: SexT;
@@ -9,6 +10,10 @@ export type TargetsInput = {
   heightCm: number;
   ageYears: number;
   goalWeightKg: number;
+  /** Weeks the person gives themselves to reach the goal. Optional. */
+  weeks?: number | null;
+  /** The daily net they chose (negative is a deficit). Wins over weeks. */
+  netKcal?: number | null;
 };
 
 export type Targets = {
@@ -28,11 +33,10 @@ export function bmr(input: Pick<TargetsInput, "sex" | "weightKg" | "heightCm" | 
 export function computeTargets(input: TargetsInput): Targets {
   const rawBmr = bmr(input);
   const base = rawBmr * TARGETS.activityFactor;
-  // The goal sets the budget: under base burn to lose, at it to hold, over it to gain.
-  // Only a loss goal is held at or above resting burn.
-  const goal = goalFor(input.weightKg, input.goalWeightKg);
-  const scaled = base * budgetFactorFor(goal);
-  const budget = goal === "lose" ? Math.max(scaled, rawBmr) : scaled;
+  // The plan sets the limit: base burn plus the deficit or surplus the person chose, or the
+  // one suggested from their goal and timeframe (see plan.ts).
+  const net = input.netKcal ?? suggestNet(input.weightKg, input.goalWeightKg, input.weeks ?? null);
+  const budget = limitForNet(base, net);
   const protein = Math.max(
     TARGETS.proteinPerGoalKg * input.goalWeightKg,
     TARGETS.proteinMinPerCurrentKg * input.weightKg,
@@ -54,10 +58,11 @@ export function activityKcal(
   activity: ActivityT,
   minutes: number,
   weightKg: number,
-  options: { fastRun?: boolean } = {},
+  options: { fastRun?: boolean; speedKmh?: number | null } = {},
 ): number {
   if (minutes <= 0 || weightKg <= 0) return 0;
-  const met = activity === "run" && options.fastRun ? MET_FAST_RUN : MET[activity];
+  const bySpeed = options.speedKmh ? speedMet(activity, options.speedKmh) : null;
+  const met = bySpeed ?? (activity === "run" && options.fastRun ? MET_FAST_RUN : MET[activity]);
   return Math.round(TARGETS.exerciseAddBackShare * met * weightKg * (minutes / 60));
 }
 

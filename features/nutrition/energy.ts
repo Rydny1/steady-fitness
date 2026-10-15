@@ -26,6 +26,34 @@ export function dayBurn(bmrKcal: number, exerciseAddBackKcal: number): number {
   return Math.round(bmrKcal * TARGETS.activityFactor + exerciseAddBackKcal / TARGETS.exerciseAddBackShare);
 }
 
+export type DeficitStatus = { tone: "good" | "low" | "over"; text: string };
+
+/**
+ * The day against YOUR target. `net` is eaten minus the whole day's burn (negative is a deficit);
+ * `target` is the net you chose. Reads short: what you can still eat, or how far over you are.
+ */
+export function deficitStatus(
+  net: number,
+  target: number,
+  goal: Goal,
+  eatenKcal: number,
+  limitKcal: number,
+  hour: number,
+): DeficitStatus {
+  const n = (v: number) => Math.round(Math.abs(v)).toLocaleString("en-GB");
+  if (hour >= 18 && eatenKcal < limitKcal * 0.6 && goal !== "gain") {
+    return { tone: "low", text: "Too little eaten. Have a proper meal." };
+  }
+  if (goal === "gain") {
+    const short = target - net;
+    return short > 0 ? { tone: "good", text: `Eat ${n(short)} more.` } : { tone: "good", text: "Target hit." };
+  }
+  // Lose or maintain: you may eat until the deficit falls to the target.
+  const room = Math.round(target - net); // positive: you can still eat this much
+  if (room < 0) return { tone: "over", text: `${n(room)} over target.` };
+  return room > 20 ? { tone: "good", text: `Eat up to ${n(room)} more.` } : { tone: "good", text: "On target." };
+}
+
 /** What an exercise really burned. The database stores only the add-back share of it. */
 export function fullBurn(addBackKcal: number): number {
   return Math.round(addBackKcal / TARGETS.exerciseAddBackShare);

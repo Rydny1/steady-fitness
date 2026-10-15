@@ -3,7 +3,7 @@ import { Award, Dumbbell } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
-import { budgetStatus } from "@/features/nutrition/energy";
+import { deficitStatus } from "@/features/nutrition/energy";
 import { formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { FormCard } from "@/features/today/components/form-card";
@@ -14,7 +14,6 @@ import { Moments } from "@/features/today/components/moments";
 import { Celebration } from "@/features/today/components/celebration";
 import { LevelCard } from "@/features/today/components/level-card";
 import { AdaptiveNote } from "@/features/today/components/adaptive-note";
-import { EnergyLine } from "@/features/today/components/energy-line";
 import { CoachNote } from "@/components/coach-note";
 import { copy } from "@/content/copy";
 
@@ -26,19 +25,16 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const d = await loadToday(supabase, profile, today, new Date());
 
 
-  const footerParts = [
-    budgetStatus(d.facts.eatenKcal, d.budgetKcal, d.hour).text,
-    d.allowance.exercise > 0
-      ? `Limit ${d.budgetKcal.toLocaleString("en-GB")} = ${d.allowance.base.toLocaleString("en-GB")} + ${d.allowance.exercise.toLocaleString("en-GB")} exercise.`
-      : null,
-  ].filter(Boolean);
+  const net = d.energy.todayNet ?? 0;
+  const status = deficitStatus(net, d.energy.plannedNet, d.energy.goal, d.facts.eatenKcal, d.budgetKcal, d.hour);
+  const footerParts = [status.text];
 
   return (
     <main>
       {d.levelEvent ? (
         <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
       ) : null}
-      <Moments name={capitalize(profile.display_name)} streak={d.streak} saved={sp.saved === "1"} status={budgetStatus(d.facts.eatenKcal, d.budgetKcal, d.hour).text} />
+      <Moments name={capitalize(profile.display_name)} streak={d.streak} saved={sp.saved === "1"} status={status.text} />
       {!d.levelEvent && d.celebrate.length > 0 ? <Celebration trophies={d.celebrate} /> : null}
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
@@ -62,18 +58,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
       <RingsCard
         rings={d.rings}
-        fuel={{ eaten: d.facts.eatenKcal, budget: d.budgetKcal }}
+        fuel={{ net, target: d.energy.plannedNet, goal: d.energy.goal }}
         protein={{ eaten: d.facts.proteinG, target: d.facts.proteinTargetG }}
         train={{ done: d.trainDone, planned: d.trainPlanned }}
         footer={footerParts.join(" ")}
-      />
-      <EnergyLine
-        goal={d.energy.goal}
-        targetNet={d.energy.plannedNet}
-        todayNet={d.energy.todayNet}
-        yesterdayNet={d.energy.yesterdayNet}
-        plannedNet={d.energy.plannedNet}
-        read={d.energy.read}
       />
       {d.observer ? <CoachNote className="mx-4 mt-4">{d.observer}</CoachNote> : null}
 

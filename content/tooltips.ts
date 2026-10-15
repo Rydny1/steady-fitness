@@ -4,67 +4,67 @@
 export const tooltips = {
   callus: {
     title: "Callus",
-    text: "Your consistency score from 0 to 100. Goes up when you log and train, down when you skip.",
+    text: "Consistency, 0 to 100. Up when you log and train. Down when you skip.",
   },
   form: {
     title: "Form",
-    text: "How consistent you've been lately. Based on your Callus score.",
+    text: "Off form 0 to 29: bad. Finding form 30 to 59: medium. In form 60 to 84: good. Peak form 85 to 100: best.",
   },
   rings: {
     title: "Rings",
-    text: "Three daily goals. Green = calories, blue = protein, red = training.",
+    text: "Green: your deficit. Blue: protein. Red: training.",
   },
   waistToHeight: {
     title: "Waist to height",
-    text: "Your waist divided by your height. Under 0.50 is the healthy target.",
+    text: "Waist divided by height. Under 0.50 is healthy.",
   },
   bodyFat: {
     title: "Body fat estimate",
-    text: "Estimated from your waist, neck and height. Not exact, but tracks the trend.",
+    text: "Estimated from waist, neck and height. Tracks the trend.",
   },
   adaptiveBudget: {
     title: "Adaptive limit",
-    text: "Your eating limit adjusted to your real body, based on what you ate and how your weight moved.",
+    text: "Learns your real burn from what you ate and how your weight moved. Keeps your deficit.",
   },
   vsLastWeek: {
     title: "You vs last week",
-    text: "You're racing your own numbers from last week. Match or beat them to win.",
+    text: "Your own numbers from last week. Match them to win a round.",
   },
   bmi: {
     title: "BMI",
-    text: "Weight divided by height squared. A rough number that ignores muscle.",
+    text: "Weight over height squared. Ignores muscle.",
   },
   sevenDay: {
     title: "7-day average",
-    text: "The average of your last 7 weigh-ins. Daily weight is noise, this smooths it out.",
+    text: "Average of your last 7 weigh-ins. Smooths daily noise.",
   },
   weeklyChallenge: {
     title: "Weekly challenge",
-    text: "One extra goal for the week. Pick one, finish it, earn 6 Callus.",
+    text: "One extra goal a week. Finish it, earn 6 Callus.",
   },
   seasonRecord: {
     title: "Season record",
-    text: "Every week against the week before, since you started. Green is a win, grey a draw, red a loss.",
+    text: "Each week against the one before. Green win, grey draw, red loss.",
   },
   energyBalance: {
     title: "Net calories",
-    text: "What you ate minus what you burned, an estimate. Below zero is a deficit, which is what drops weight. Gaining? You want it above zero. Burn includes exercise: log it and you can eat more.",
+    text: "Eaten minus burned. Below zero is a deficit: that drops weight. Gaining? Aim above zero. Exercise raises what you can eat.",
   },
   streak: {
     title: "Day streak",
-    text: "Days in a row you logged something. Miss a day and it restarts.",
+    text: "Days in a row you logged. Miss one and it restarts.",
   },
   career: {
     title: "Days in",
-    text: "How many days you have been on Steady. It counts toward your next level.",
+    text: "Days since you started. Counts toward your next level.",
   },
   trophies: {
     title: "Trophies",
-    text: "Awards for real milestones. Tap one in Progress to see how to earn it.",
+    text: "Awards for milestones. Tap one in Progress to see how.",
   },
   level: {
     title: "Level",
-    text: "Your long-term rank. You move up with enough days on the clock and a high enough Callus.",
+    text: "Your long-term rank. Needs enough days and a high Callus.",
   },
 } as const;
 

@@ -267,7 +267,7 @@ export async function loadToday(
       : null;
   const energy: TodayData["energy"] = {
     goal,
-    todayNet: facts.bmrKcal > 0 && facts.eatenKcal >= facts.bmrKcal * 0.4 ? netKcal(facts.eatenKcal, dayBurn(facts.bmrKcal, facts.burnedKcal)) : null,
+    todayNet: facts.bmrKcal > 0 ? netKcal(facts.eatenKcal, dayBurn(facts.bmrKcal, facts.burnedKcal)) : null,
     yesterdayNet,
     plannedNet: facts.budgetKcal - dayBurn(facts.bmrKcal, 0),
     read: yesterdayNet === null ? null : readBalance(goal, yesterdayNet),

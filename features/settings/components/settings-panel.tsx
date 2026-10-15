@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "@/components/info-tip";
+import { goalFor } from "@/features/nutrition/energy";
+import { baseBurn, limitForNet, netForLimit, readPlan, suggestNet, weeksFor } from "@/features/nutrition/plan";
 import type { TipKey } from "@/content/tooltips";
 import type { NotifyKindT, SessionKeyT } from "@/lib/supabase/types";
 
@@ -28,6 +30,8 @@ export type PanelProps = {
   bmrKcal: number;
   proteinG: number;
   goalKg: number;
+  /** Latest logged weight, if any. */
+  currentKg: number | null;
   plan: { weekday: number; sessionKey: SessionKeyT }[];
   habits: { id: string; name: string }[];
   prefs: { kind: NotifyKindT; atTime: string; enabled: boolean }[];
@@ -357,35 +361,89 @@ function TargetsSheet({
   onClose: () => void;
   onSave: (v: { budgetKcal: number; proteinG: number; goalKg: number; adaptive: boolean }) => void;
 }) {
+  const base = baseBurn(p.bmrKcal);
+  const current = p.currentKg ?? p.goalKg;
+  const num = (s: string) => Number(s.replace(",", "."));
+  const initialNet = netForLimit(base, p.budgetKcal);
   const [adaptive, setAdaptive] = useState(p.adaptiveOn);
-  const [budget, setBudget] = useState(String(p.budgetKcal));
   const [protein, setProtein] = useState(String(p.proteinG));
   const [goal, setGoal] = useState(String(p.goalKg));
+  // The deficit (or surplus) is shown as a plain positive number.
+  const [net, setNet] = useState(String(Math.abs(initialNet)));
+  const [weeks, setWeeks] = useState(() => {
+    const w = weeksFor(current, p.goalKg, initialNet);
+    return w === null ? "" : String(w);
+  });
+
+  const goalNum = Number.isFinite(num(goal)) && num(goal) > 0 ? num(goal) : p.goalKg;
+  const kind = goalFor(current, goalNum);
+  const sign = kind === "gain" ? 1 : -1;
+  const netNum = Number.isFinite(num(net)) ? Math.max(0, Math.round(num(net))) : 0;
+  const read = readPlan(kind, sign * netNum, p.bmrKcal, base);
+  const limit = limitForNet(base, sign * netNum);
+  const word = kind === "gain" ? "Daily surplus" : "Daily deficit";
+
+  function onWeeks(v: string) {
+    setWeeks(v);
+    const w = num(v);
+    if (Number.isFinite(w) && w > 0) setNet(String(Math.abs(suggestNet(current, goalNum, w))));
+  }
+  function onNet(v: string) {
+    setNet(v);
+    const n = num(v);
+    const w = Number.isFinite(n) ? weeksFor(current, goalNum, sign * n) : null;
+    setWeeks(w === null ? "" : String(w));
+  }
+  function onGoal(v: string) {
+    setGoal(v);
+    const g = num(v);
+    if (Number.isFinite(g) && g > 0) {
+      const w = weeksFor(current, g, (goalFor(current, g) === "gain" ? 1 : -1) * netNum);
+      setWeeks(w === null ? "" : String(w));
+    }
+  }
+
   return (
     <SheetFrame title={copy.settings.targets} onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           onSave({
-            budgetKcal: Math.round(Number(budget.replace(",", "."))),
-            proteinG: Math.round(Number(protein.replace(",", "."))),
-            goalKg: Number(goal.replace(",", ".")),
+            budgetKcal: limit,
+            proteinG: Math.round(num(protein)),
+            goalKg: goalNum,
             adaptive,
           });
         }}
         className="flex flex-col gap-4"
       >
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Eat up to, kcal (rest day, not below {p.bmrKcal})</span>
-          <input value={budget} onChange={(e) => setBudget(e.target.value)} inputMode="numeric" className={inputCls} />
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Goal weight, kg</span>
+          <input value={goal} onChange={(e) => onGoal(e.target.value)} inputMode="decimal" className={inputCls} />
         </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Reach it in, weeks</span>
+          <input value={weeks} onChange={(e) => onWeeks(e.target.value)} inputMode="numeric" placeholder="Pick a pace" className={inputCls} />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">{word}, kcal</span>
+          <input value={net} onChange={(e) => onNet(e.target.value)} inputMode="numeric" className={inputCls} />
+        </label>
+        <p
+          className={cn(
+            "-mt-1 text-small font-medium",
+            read.tone === "good" ? "text-fuel-ink" : read.tone === "careful" ? "text-warn" : "text-train",
+          )}
+          aria-live="polite"
+        >
+          {read.text}
+        </p>
+        <p className="-mt-2 text-caption text-muted">
+          Your burn is about {base.toLocaleString("en-GB")} a day. Eat up to {limit.toLocaleString("en-GB")} on a rest day.
+        </p>
         <label className="flex flex-col gap-2">
           <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Protein, g</span>
           <input value={protein} onChange={(e) => setProtein(e.target.value)} inputMode="numeric" className={inputCls} />
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Goal weight, kg</span>
-          <input value={goal} onChange={(e) => setGoal(e.target.value)} inputMode="decimal" className={inputCls} />
         </label>
         <label className="flex min-h-11 items-center gap-3">
           <input
@@ -395,10 +453,8 @@ function TargetsSheet({
             className="m-0 h-6 w-6 accent-fuel"
           />
           <span>
-            <span className="block text-body">Adjust my limit every Monday</span>
-            <span className="block text-caption text-muted">
-              Off keeps the numbers above exactly as you set them.
-            </span>
+            <span className="block text-body">Fine-tune my burn weekly</span>
+            <span className="block text-caption text-muted">Keeps your deficit. Learns your real burn.</span>
           </span>
         </label>
         <ErrorLine error={error} />
