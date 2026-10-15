@@ -7,6 +7,7 @@ import { compressImage } from "../compress";
 import { uploadPhoto } from "../upload";
 import { deletePhoto, recordProgressPhoto } from "../actions";
 import { Button } from "@/components/ui/button";
+import { PhotoPicker } from "@/components/photo-picker";
 import { copy } from "@/content/copy";
 import { capitalize, cn } from "@/lib/utils";
 
@@ -113,17 +114,7 @@ export function ProgressPhotos({
             </button>
           ))}
         </div>
-        <label className="inline-flex h-11 cursor-pointer items-center rounded-full bg-card px-4 text-small font-semibold">
-          {busy ? "Saving" : copy.progress.addPhoto}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            disabled={busy}
-            onChange={(e) => void onFile(e.target.files?.[0])}
-          />
-        </label>
+        <PhotoPicker label={busy ? "Saving" : copy.progress.addPhoto} disabled={busy} onFile={(f) => void onFile(f)} />
       </div>
       {error ? (
         <p role="alert" className="mx-4 mt-2 text-small text-danger">

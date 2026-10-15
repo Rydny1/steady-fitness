@@ -42,7 +42,7 @@ export function deficitStatus(
 ): DeficitStatus {
   const n = (v: number) => Math.round(Math.abs(v)).toLocaleString("en-GB");
   if (hour >= 18 && eatenKcal < limitKcal * 0.6 && goal !== "gain") {
-    return { tone: "low", text: "Too little eaten. Have a proper meal." };
+    return { tone: "low", text: "Very little eaten. Fine if you planned it." };
   }
   if (goal === "gain") {
     const short = target - net;

@@ -78,6 +78,8 @@ export type ProgressData = {
   trophies: Record<string, boolean>;
   photos: Row<"photos">[];
   answerBack: { active: boolean } | null;
+  /** Callus now, for the "what does this get me" line on challenges. */
+  callus: number;
 };
 
 const LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -245,8 +247,8 @@ export async function loadProgress(
   // Net calories: eaten minus everything burned (resting, daily activity, exercise).
   const calFacts = facts.filter((f) => f.day >= from && f.day <= today);
   const netOf = (f: DayFacts) => netKcal(f.eatenKcal, dayBurn(f.bmrKcal, f.burnedKcal));
-  // A day with only a snack logged is not a full day: its net would look like a huge deficit.
-  const countable = (f: DayFacts) => f.bmrKcal > 0 && f.eatenKcal >= f.bmrKcal * 0.4;
+  // Any logged day counts, a fasting day included: a 2,500 deficit is a real deficit.
+  const countable = (f: DayFacts) => f.bmrKcal > 0 && f.loggedOnDay;
   let bars: NetBar[];
   if (range === "week" || range === "month") {
     bars = calFacts.filter(countable).map((f) => ({
@@ -374,6 +376,7 @@ export async function loadProgress(
       weekKg,
       totalKg,
     },
+    callus: ledger.callus,
     net: { bars, goal: goalKind, targetNet, projection: projectionNet, insightKey },
     body: {
       waistCm: lastWaist ? Number(lastWaist.waist_cm) : null,

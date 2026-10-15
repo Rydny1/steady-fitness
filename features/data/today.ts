@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, DivisionT, Row, SessionKeyT } from "@/lib/supabase/types";
-import { addDays, diffDays, formatTimeRiga, rigaParts, weekStart } from "@/lib/dates";
+import { addDays, weekDays, diffDays, formatTimeRiga, rigaParts, weekStart } from "@/lib/dates";
 import {
   compareWeeks,
   daysToNextDivision,
@@ -78,6 +78,10 @@ export type TodayData = {
   celebrate: { key: string; name: string; line: string }[];
   /** The name on your profile: the latest trophy you have earned. */
   title: string | null;
+  /** The week as circles: how much of the promises each day got done. */
+  weekDots: { day: string; letter: string; pct: number; today: boolean; future: boolean; logged: boolean }[];
+  loggedToday: boolean;
+  proteinHit: boolean;
   /** The allowance split: what you can eat on a rest day, and what exercise added. */
   allowance: { base: number; exercise: number };
   /** One level change not yet seen: a full-screen card shows it once. */
@@ -304,6 +308,20 @@ export async function loadToday(
     },
     streak: prev.streak + (facts.loggedOnDay && !facts.sick ? 1 : 0),
     careerDays: prev.careerDays,
+    weekDots: weekDays(ws).map((day, i) => {
+      const f = days.find((x) => x.day === day);
+      const total = (habits.data ?? []).length;
+      return {
+        day,
+        letter: "MTWTFSS"[i] ?? "",
+        pct: total > 0 && f ? Math.min(1, f.habitsDone / total) : 0,
+        today: day === today,
+        future: day > today,
+        logged: Boolean(f?.loggedOnDay),
+      };
+    }),
+    loggedToday: facts.loggedOnDay,
+    proteinHit: facts.proteinTargetG > 0 && facts.proteinG >= facts.proteinTargetG,
     allowance: { base: Math.round(facts.budgetKcal), exercise: fullBurn(facts.burnedKcal) },
     celebrate,
     title,

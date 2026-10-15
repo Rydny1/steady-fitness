@@ -86,6 +86,12 @@ function paceMin(clause: string): number | null {
   return p ? Number(p[1]) : null;
 }
 
+/** "I fasted today" is a real day: a zero-calorie entry marks it logged. */
+function readFast(clause: string): DraftItem | null {
+  if (!/\b(?:fast|fasted|fasting|didn'?t eat|did not eat|no food|skipped (?:all )?(?:my )?meals?)\b/.test(clause)) return null;
+  return { kind: "food", name: "Fasting", quantity: null, unit: null, kcal: 0, protein_g: 0, confidence: 1, basis: "estimate", grams: null, per100: null };
+}
+
 function readActivity(clause: string): DraftItem | null {
   const st = steps(clause);
   let type: ActivityT | null = null;
@@ -156,6 +162,11 @@ export function quickParse(text: string, saved: readonly SavedLookup[] = []): Qu
   const items: DraftItem[] = [];
   const leftover: string[] = [];
   for (const clause of clauses) {
+    const fast = readFast(clause);
+    if (fast) {
+      items.push(fast);
+      continue;
+    }
     const act = readActivity(clause);
     if (act) {
       items.push(act);
