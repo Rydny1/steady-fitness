@@ -3,7 +3,7 @@
 import { useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { saveShoppingChecks, savePicks } from "../actions";
 import { copy } from "@/content/copy";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ export function FuelPicks({
               </button>
               <Link href={`/fuel/${m.slug}`} className="mt-[10px] block min-h-11">
                 <div className="text-body font-semibold">{m.name}</div>
-                <div className="text-[clamp(12px,3.59vw,13px)] text-muted">
+                <div className="text-[clamp(13px,3.8vw,14px)] text-muted">
                   {m.kcal} kcal, {m.protein} g protein a portion
                 </div>
               </Link>
@@ -95,11 +95,17 @@ export function ShoppingList({
   weekStart,
   groups,
   checked,
+  totalKcal,
+  portions,
 }: {
   weekStart: string;
   groups: ListGroup[];
   checked: string[];
+  /** Energy in everything on the list, for the picked recipes. */
+  totalKcal: number;
+  portions: number;
 }) {
+  const [open, setOpen] = useState(true);
   const [, start] = useTransition();
   const [done, setDone] = useState(new Set(checked));
   const total = groups.reduce((s, g) => s + g.items.length, 0);
@@ -122,16 +128,26 @@ export function ShoppingList({
 
   return (
     <>
-      <div className="mx-4 mt-8 flex items-baseline justify-between">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="mx-4 mt-8 flex min-h-11 w-[calc(100%-32px)] items-center justify-between text-left"
+      >
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.shopping}</h2>
-        <span className="text-small text-muted" aria-live="polite">
+        <span className="flex items-center gap-2 text-small text-muted" aria-live="polite">
           {done.size} of {total}
+          <ChevronDown size={18} strokeWidth={2} aria-hidden="true" className={cn("transition-transform", open && "rotate-180")} />
         </span>
-      </div>
+      </button>
+      <p className="mx-4 text-small text-muted">
+        About {new Intl.NumberFormat("en-GB").format(totalKcal)} kcal across {portions} portions.
+      </p>
+      {open ? (
       <div className="mx-4 mt-[10px] rounded-list bg-card px-[18px] py-1">
         {groups.map((g, gi) => (
           <div key={g.group} className={cn("py-[10px]", gi < groups.length - 1 && "border-b border-line")}>
-            <div className="pt-1 text-[clamp(12px,3.59vw,13px)] font-semibold text-muted">{g.group}</div>
+            <div className="pt-1 text-[clamp(13px,3.8vw,14px)] font-semibold text-muted">{g.group}</div>
             {g.items.map((i) => (
               <label key={i.id} className="flex min-h-12 items-center gap-[14px]">
                 <input
@@ -149,6 +165,7 @@ export function ShoppingList({
           </div>
         ))}
       </div>
+      ) : null}
     </>
   );
 }

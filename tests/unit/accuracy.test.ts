@@ -32,3 +32,17 @@ describe("finalizeFood", () => {
     expect(d.kcal).toBe(320);
   });
 });
+
+import { plausibleKcal } from "@/features/logging/accuracy";
+import { matchFood } from "@/features/nutrition/food-match";
+
+describe("guards", () => {
+  it("pulls an impossible soup back to a believable density", () => {
+    // 250 g of soup at 2,210 kcal is 8.8 kcal/g, which is pure oil
+    expect(plausibleKcal(2210, 250, "soup_stew")).toBeLessThanOrEqual(550);
+  });
+  it("matches the dish, not the side ingredient", () => {
+    expect(matchFood("egusi soup with spinach")?.food.id).toBe("egusi_soup");
+    expect(matchFood("ndole with shrimp")?.food.id).toBe("ndole");
+  });
+});

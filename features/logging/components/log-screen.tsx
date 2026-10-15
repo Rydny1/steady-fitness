@@ -449,7 +449,7 @@ export function LogScreen({
                       value={grams}
                       onChange={(e) => setGrams(e.target.value)}
                       inputMode="decimal"
-                      className="num w-16 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
+                      className="num w-16 border-0 bg-transparent text-[clamp(19px,5.9vw,22px)]"
                     />
                   </label>
                   <Button onClick={addScanned}>Add</Button>
@@ -592,14 +592,14 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium">{it.name}</div>
-          <div className={cn("text-[clamp(12px,3.59vw,13px)]", low ? "text-warn" : "text-muted")}>
+          <div className={cn("text-[clamp(13px,3.8vw,14px)]", low ? "text-warn" : "text-muted")}>
             {it.grams ? `${Math.round(it.grams)} g` : it.quantity ? `${it.quantity}${it.unit ? ` ${it.unit}` : ""}` : "1 portion"}
             {it.basis === "database" ? ", from food table" : it.basis === "saved" ? ", your saved food" : it.basis === "estimate" ? ", AI estimate" : ""}
             {low ? `. ${copy.log.check}` : ""}
           </div>
         </div>
         <div className="text-right">
-          <div className="num text-[clamp(18px,5.64vw,21px)] leading-none">{nf.format(it.kcal)}</div>
+          <div className="num text-[clamp(19px,5.9vw,22px)] leading-none">{nf.format(it.kcal)}</div>
           <div className="text-caption text-muted">{Math.round(it.protein_g)} g protein</div>
         </div>
       </>
@@ -610,10 +610,10 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium capitalize">{it.activity_type}</div>
-          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{it.duration_min} min</div>
+          <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{it.duration_min} min</div>
         </div>
         <div className="text-right">
-          <div className="num text-[clamp(18px,5.64vw,21px)] leading-none text-train">
+          <div className="num text-[clamp(19px,5.9vw,22px)] leading-none text-train">
             +{activityKcal(it.activity_type, it.duration_min, weightKg)}
           </div>
           <div className="text-caption text-muted">kcal burned</div>
@@ -629,7 +629,7 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
   return (
     <div className="min-w-0 flex-1">
       <div className="text-body font-medium">Body</div>
-      <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{bits.join(", ")}</div>
+      <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{bits.join(", ")}</div>
     </div>
   );
 }
@@ -713,7 +713,7 @@ function EditSheet({
 
   const field = (k: string, label: string, mode: "text" | "decimal" = "decimal") => (
     <label className="flex flex-col gap-2">
-      <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">{label}</span>
+      <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">{label}</span>
       <input
         value={f[k] ?? ""}
         onChange={(e) => setF({ ...f, [k]: e.target.value })}
@@ -734,7 +734,7 @@ function EditSheet({
                 {field("kcal", "kcal")}
                 {field("protein", "Protein, g")}
                 <label className="col-span-2 flex flex-col gap-2">
-                  <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Grams eaten</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Grams eaten</span>
                   <input
                     value={f.grams ?? ""}
                     onChange={(e) => setGrams(e.target.value)}

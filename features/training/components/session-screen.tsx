@@ -193,7 +193,7 @@ export function SessionScreen({
         </Link>
         <div className="flex-1">
           <h1 className="text-body font-semibold">{title}</h1>
-          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">
+          <div className="text-[clamp(13px,3.8vw,14px)] text-muted">
             Exercise {index + 1} of {list.length}
           </div>
         </div>
@@ -255,7 +255,7 @@ export function SessionScreen({
           >
             <span className={cn(s.done ? "text-muted" : "font-semibold")}>Set {i + 1}</span>
             {timed ? (
-              <span className="num col-span-2 text-[clamp(18px,5.64vw,21px)]">{ex.seconds} s hold</span>
+              <span className="num col-span-2 text-[clamp(19px,5.9vw,22px)]">{ex.seconds} s hold</span>
             ) : (
               <>
                 <label className="flex h-11 items-center gap-1 rounded-[12px] bg-bg px-[10px]">
@@ -265,9 +265,9 @@ export function SessionScreen({
                     disabled={s.done}
                     inputMode="decimal"
                     aria-label={`Set ${i + 1} weight in kg`}
-                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
+                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(19px,5.9vw,22px)]"
                   />
-                  <span className="text-[clamp(12px,3.59vw,13px)] text-muted">kg</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] text-muted">kg</span>
                 </label>
                 <label className="flex h-11 items-center gap-1 rounded-[12px] bg-bg px-[10px]">
                   <input
@@ -277,9 +277,9 @@ export function SessionScreen({
                     inputMode="numeric"
                     placeholder={String(ex.repMin ?? "")}
                     aria-label={`Set ${i + 1} reps`}
-                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(18px,5.64vw,21px)]"
+                    className="num w-10 flex-1 border-0 bg-transparent text-[clamp(19px,5.9vw,22px)]"
                   />
-                  <span className="text-[clamp(12px,3.59vw,13px)] text-muted">reps</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] text-muted">reps</span>
                 </label>
               </>
             )}
@@ -299,7 +299,7 @@ export function SessionScreen({
           </div>
         ))}
       </div>
-      <div className="mx-4 mt-[10px] text-[clamp(12px,3.59vw,13px)] text-muted">
+      <div className="mx-4 mt-[10px] text-[clamp(13px,3.8vw,14px)] text-muted">
         {ex.lastLabel ? `${copy.train.lastTime} ${ex.lastLabel}` : "No history for this exercise yet"}
       </div>
       {best ? (

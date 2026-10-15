@@ -22,7 +22,7 @@ export default function SignupPage() {
         <p className="mt-3 text-body text-muted">{copy.login.createSub}</p>
         <SignupForm />
       </div>
-      <p className="mb-10 text-center text-[clamp(12px,3.59vw,13px)] leading-[1.45] text-muted">{copy.login.privacy}</p>
+      <p className="mb-10 text-center text-[clamp(13px,3.8vw,14px)] leading-[1.45] text-muted">{copy.login.privacy}</p>
     </main>
   );
 }

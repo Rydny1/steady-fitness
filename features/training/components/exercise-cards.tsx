@@ -56,7 +56,7 @@ export function ExerciseCards({
                   {numbered ? `${i + 1}. ` : ""}
                   {e.name}
                 </span>
-                <span className="block truncate text-[clamp(12px,3.59vw,13px)] text-muted">
+                <span className="block truncate text-[clamp(13px,3.8vw,14px)] text-muted">
                   {e.prescription}
                   {e.lastLabel ? `. ${copy.train.lastTime} ${e.lastLabel}` : ""}
                 </span>

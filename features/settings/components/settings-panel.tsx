@@ -300,21 +300,21 @@ function AboutSheet({
           </p>
         ) : null}
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Name</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={inputCls} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-2">
-            <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Height, cm</span>
+            <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Height, cm</span>
             <input value={height} onChange={(e) => setHeight(e.target.value)} inputMode="decimal" className={inputCls} />
           </label>
           <label className="flex flex-col gap-2">
-            <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Goal weight, kg</span>
+            <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Goal weight, kg</span>
             <input value={goal} onChange={(e) => setGoal(e.target.value)} inputMode="decimal" className={inputCls} />
           </label>
         </div>
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Birth date</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Birth date</span>
           <input type="date" value={birth} onChange={(e) => setBirth(e.target.value)} className={inputCls} />
         </label>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Sex, for the calorie formula">
@@ -376,15 +376,15 @@ function TargetsSheet({
         className="flex flex-col gap-4"
       >
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Daily budget, kcal (not below {p.bmrKcal})</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Daily budget, kcal (not below {p.bmrKcal})</span>
           <input value={budget} onChange={(e) => setBudget(e.target.value)} inputMode="numeric" className={inputCls} />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Protein, g</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Protein, g</span>
           <input value={protein} onChange={(e) => setProtein(e.target.value)} inputMode="numeric" className={inputCls} />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Goal weight, kg</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Goal weight, kg</span>
           <input value={goal} onChange={(e) => setGoal(e.target.value)} inputMode="decimal" className={inputCls} />
         </label>
         <label className="flex min-h-11 items-center gap-3">

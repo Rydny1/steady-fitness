@@ -10,6 +10,7 @@ import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
 import { activityKcal } from "@/features/nutrition/targets";
 import { observe } from "@/features/insights/observer";
 import { finalizeFood, type SavedLookup } from "./accuracy";
+import { matchFood, nutrientsFor } from "@/features/nutrition/food-match";
 import {
   saveEntriesSchema,
   type DraftItem,
@@ -51,6 +52,7 @@ function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | n
         grams: item.grams,
         quantity: item.quantity,
         unit: item.unit,
+        category: item.category,
         kcal: item.kcal,
         protein_g: item.protein_g,
         confidence: item.confidence,
@@ -158,6 +160,7 @@ export async function estimateMealAction(input: unknown): Promise<ParseOutcome> 
       grams: c.grams,
       quantity: null,
       unit: null,
+      category: c.category,
       kcal: c.kcal,
       protein_g: c.protein_g,
       confidence: res.data.confidence,
@@ -364,6 +367,58 @@ export async function deleteEntry(input: unknown): Promise<SaveOutcome> {
 
   const table = parsed.data.kind === "food" ? "food_entries" : "activity_entries";
   const { error } = await supabase.from(table).delete().eq("id", parsed.data.id);
+  if (error) return { ok: false, reason: "failed" };
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+const updateInput = z.object({
+  id: z.uuid(),
+  name: z.string().trim().min(1).max(80),
+  quantity: z.number().positive().max(99999).nullable(),
+  /** Null means: work it out again from the new amount. */
+  kcal: z.number().int().min(0).max(5000).nullable(),
+  protein_g: z.number().min(0).max(300).nullable(),
+});
+
+/** Edit a saved food entry. Changing only the amount recalculates the numbers. */
+export async function updateFoodEntry(input: unknown): Promise<SaveOutcome> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, reason: "signed_out" };
+  const parsed = updateInput.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const p = parsed.data;
+
+  const { data: before } = await supabase
+    .from("food_entries")
+    .select("quantity,unit,kcal,protein_g")
+    .eq("id", p.id)
+    .maybeSingle();
+  if (!before) return { ok: false, reason: "failed" };
+
+  let kcal = p.kcal;
+  let protein = p.protein_g;
+  if (kcal === null || protein === null) {
+    const m = matchFood(p.name);
+    const grams = p.quantity;
+    if (m && grams !== null && (before.unit === "g" || before.unit === "ml" || before.unit === null)) {
+      const n = nutrientsFor(m.food, grams);
+      kcal = n.kcal;
+      protein = n.protein_g;
+    } else {
+      // No table match: scale the old numbers by the change in amount.
+      const was = before.quantity === null ? null : Number(before.quantity);
+      const ratio = was && grams ? grams / was : 1;
+      kcal = Math.max(0, Math.min(5000, Math.round(before.kcal * ratio)));
+      protein = Math.max(0, Math.min(300, Math.round(Number(before.protein_g) * ratio * 10) / 10));
+    }
+  }
+
+  const { error } = await supabase
+    .from("food_entries")
+    .update({ name: p.name, quantity: p.quantity, kcal, protein_g: protein, confidence: 1 })
+    .eq("id", p.id);
   if (error) return { ok: false, reason: "failed" };
   revalidatePath("/today");
   return { ok: true };

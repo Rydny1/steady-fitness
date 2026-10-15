@@ -37,6 +37,8 @@
   --coach-edge: #e6d5a8;
   --coach-rule: #b7791f;
   --coach-ink: #7a5a1e;
+  /* Neon: scarce. Mic ring, trophy title, celebration, sheet edge. Nowhere else. */
+  --neon: linear-gradient(120deg, #00d9a3 0%, #3b82f6 52%, #a855f7 100%);
 }
 
 html {
@@ -85,7 +87,7 @@ button {
   width: 100%;
   max-width: 520px;
   min-height: 100dvh;
-  padding-bottom: calc(var(--nav-h) + 16px);
+  padding-bottom: calc(var(--nav-h) + 28px);
 }
 
 /* Sheets slide up in 220 ms. Everything else is instant. */
@@ -176,8 +178,14 @@ input[type="number"] {
   background: var(--hero-bg);
   box-shadow: var(--shadow-hero);
 }
+/* Sheets sit on a cool grey so they read as a separate layer; fields inside stay white. */
 .sheet {
-  background: var(--surface);
+  background: var(--neon) top / 100% 3px no-repeat, #dfe3e8;
+  box-shadow: 0 -12px 32px -12px rgba(18, 20, 23, 0.35);
+}
+.sheet .bg-card,
+.sheet .bg-card.rounded-ctl {
+  background: #fff;
 }
 .raised {
   box-shadow: var(--shadow-2);
@@ -244,6 +252,54 @@ button:active:not(:disabled) {
     }
     to {
       opacity: 1;
+    }
+  }
+}
+
+/* ---- Neon accent (rare) ---- */
+.neon-ring {
+  background: var(--neon);
+  padding: 4px;
+  box-shadow: 0 0 28px -4px rgba(59, 130, 246, 0.55);
+}
+.neon-text {
+  background: var(--neon);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.neon-chip {
+  border: 1.5px solid transparent;
+  background-image: linear-gradient(var(--surface), var(--surface)), var(--neon);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.confetti span {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--neon);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .confetti span {
+    animation: confetti-fall 1400ms ease-in forwards;
+  }
+  @keyframes confetti-fall {
+    0% {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(380px) rotate(280deg);
     }
   }
 }

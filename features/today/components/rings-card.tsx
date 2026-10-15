@@ -112,7 +112,7 @@ function Stat({
 }) {
   return (
     <div>
-      <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{label}</div>
+      <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{label}</div>
       <div className={`num text-[clamp(24px,7.18vw,27px)] leading-none ${color}`}>
         {value}
         <span className="text-[clamp(15px,4.62vw,17px)] text-muted">{of}</span>

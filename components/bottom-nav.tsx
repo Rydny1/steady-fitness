@@ -23,7 +23,7 @@ export function BottomNav() {
       href={it.href}
       aria-current={active(it.href) ? "page" : undefined}
       className={cn(
-        "flex min-h-11 flex-col items-center gap-1 text-nav",
+        "flex min-h-11 flex-col items-center justify-center gap-0.5 text-nav",
         active(it.href) ? "font-semibold text-ink" : "text-muted",
       )}
     >
@@ -35,18 +35,20 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="mx-auto grid h-[96px] max-w-app grid-cols-5 items-start pt-[10px]">
+      <div className="mx-auto grid h-16 max-w-app grid-cols-5 items-center">
         {tab(items[0])}
         {tab(items[1])}
         <Link
           href="/log"
           aria-label={copy.nav.log}
-          className="-mt-[26px] flex justify-center"
+          className="-mt-6 flex justify-center"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full border-[5px] border-bg bg-ink">
-            <Mic size={26} strokeWidth={1.9} className="text-white" aria-hidden="true" />
+          <span className="neon-ring flex h-16 w-16 items-center justify-center rounded-full">
+            <span className="flex h-full w-full items-center justify-center rounded-full bg-ink">
+              <Mic size={26} strokeWidth={1.9} className="text-white" aria-hidden="true" />
+            </span>
           </span>
         </Link>
         {tab(items[2])}

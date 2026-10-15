@@ -26,6 +26,9 @@ export const sessionKeys = [
 
 const num = z.number().finite();
 
+/** What kind of thing it is. Used only to sanity-check the model's own calorie guess. */
+export const foodCategories = ["dish", "soup_stew", "meat_fish", "grain_starch", "produce", "dairy_egg", "snack_sweet", "drink", "fat_oil"] as const;
+
 export const parsedItemSchema = z.object({
   kind: z.enum(["food", "activity", "body", "note"]),
   name: z.string().max(120),
@@ -33,6 +36,7 @@ export const parsedItemSchema = z.object({
   unit: z.string().max(16).nullable(),
   /** Weight eaten in grams (millilitres for drinks). The numbers are computed from this. */
   grams: num.nullable(),
+  category: z.enum(foodCategories).nullable(),
   kcal: num.nullable(),
   protein_g: num.nullable(),
   activity_type: z.enum(activityTypes).nullable(),

@@ -108,12 +108,12 @@ export default async function ProgressPage({
           <>
             <div className="mt-[14px] flex items-end justify-between">
               <div>
-                <div className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">You</div>
+                <div className="text-[clamp(13px,3.8vw,14px)] text-muted-dark">You</div>
                 <div className="num text-score leading-[0.9]">{cmp.scoreYou}</div>
               </div>
               <div className="num text-[clamp(34px,10.26vw,38px)] leading-[1.2] text-ink-faint">-</div>
               <div className="text-right">
-                <div className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">Last week</div>
+                <div className="text-[clamp(13px,3.8vw,14px)] text-muted-dark">Last week</div>
                 <div className="num text-score leading-[0.9] text-muted-dark">{cmp.scoreGhost}</div>
               </div>
             </div>
@@ -127,10 +127,10 @@ export default async function ProgressPage({
                   )}
                 >
                   <span className="text-ink-soft">{roundNames[r.key]}</span>
-                  <span className={cn("num text-right text-[clamp(18px,5.64vw,21px)]", r.outcome === "loss" ? "text-muted-dark" : "text-white")}>
+                  <span className={cn("num text-right text-[clamp(19px,5.9vw,22px)]", r.outcome === "loss" ? "text-muted-dark" : "text-white")}>
                     {r.you}
                   </span>
-                  <span className={cn("num text-right text-[clamp(18px,5.64vw,21px)]", r.outcome === "win" ? "text-muted-dark" : "text-white")}>
+                  <span className={cn("num text-right text-[clamp(19px,5.9vw,22px)]", r.outcome === "win" ? "text-muted-dark" : "text-white")}>
                     {r.ghost}
                   </span>
                   <span className="flex justify-end" aria-label={r.outcome}>
@@ -147,7 +147,7 @@ export default async function ProgressPage({
             </ul>
             {text ? <p className="mt-4 text-[clamp(14px,4.36vw,16px)] font-medium leading-[1.4]">{text}</p> : null}
             {d.winStreak >= 2 ? (
-              <div className="mt-[14px] text-[clamp(12px,3.59vw,13px)] text-muted-dark">{matchLines.streak(d.winStreak)}</div>
+              <div className="mt-[14px] text-[clamp(13px,3.8vw,14px)] text-muted-dark">{matchLines.streak(d.winStreak)}</div>
             ) : null}
           </>
         )}
@@ -155,7 +155,7 @@ export default async function ProgressPage({
 
       {d.answerBack ? (
         <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]">
-          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{copy.progress.answerBack}</div>
+          <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{copy.progress.answerBack}</div>
           <p className="mt-2 text-body">{copy.progress.answerBackLine}</p>
         </section>
       ) : null}
@@ -163,11 +163,11 @@ export default async function ProgressPage({
       {d.picked ? (
         <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label="Weekly challenge">
           <div className="flex items-center justify-between">
-            <span className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
+            <span className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
               {copy.progress.picked}
               <InfoTip tip="weeklyChallenge" className="-my-3 -ml-1" />
             </span>
-            <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[clamp(12px,3.59vw,13px)] font-semibold">
+            <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[clamp(13px,3.8vw,14px)] font-semibold">
               <span className="h-2 w-2 rounded-full bg-amber" />
               {copy.progress.reward}
             </span>
@@ -191,7 +191,7 @@ export default async function ProgressPage({
               />
             ))}
           </div>
-          <div className="mt-[10px] flex justify-between gap-3 text-[clamp(12px,3.59vw,13px)] text-muted">
+          <div className="mt-[10px] flex justify-between gap-3 text-[clamp(13px,3.8vw,14px)] text-muted">
             <span>
               {d.picked.progress.done
                 ? "Done"
@@ -214,7 +214,7 @@ export default async function ProgressPage({
 
       <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.season}>
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
+          <h3 className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
             {copy.progress.season}
             <InfoTip tip="seasonRecord" className="-my-3 -ml-1" />
           </h3>
@@ -245,7 +245,7 @@ export default async function ProgressPage({
       </section>
 
       <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.levels}>
-        <h3 className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
+        <h3 className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
           {copy.progress.levels}
           <InfoTip tip="level" className="-my-3 -ml-1" />
         </h3>
@@ -277,6 +277,7 @@ export default async function ProgressPage({
           <Link
             key={r.key}
             href={`/progress?r=${r.key}`}
+            scroll={false}
             role="tab"
             aria-selected={range === r.key}
             className={cn(
@@ -470,7 +471,7 @@ function BodyTile({
 }) {
   return (
     <div className="rounded-tile bg-card p-4">
-      <div className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
+      <div className="flex items-center text-[clamp(13px,3.8vw,14px)] text-muted">
         {label}
         {tip ? <InfoTip tip={tip} className="-my-3 -ml-1" /> : null}
       </div>

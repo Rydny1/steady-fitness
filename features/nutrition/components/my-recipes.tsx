@@ -94,7 +94,7 @@ export function MyRecipes({ recipes, day }: { recipes: MyRecipe[]; day: string }
                 aria-label={`Log ${r.name}`}
               >
                 <span className="block truncate text-body">{r.name}</span>
-                <span className="block text-[clamp(12px,3.59vw,13px)] text-muted">
+                <span className="block text-[clamp(13px,3.8vw,14px)] text-muted">
                   {r.kcal} kcal, {Math.round(Number(r.protein_g))} g protein a portion
                 </span>
               </button>
@@ -125,16 +125,16 @@ export function MyRecipes({ recipes, day }: { recipes: MyRecipe[]; day: string }
             <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.addRecipe}</h2>
             <div className="mt-4 flex flex-col gap-4">
               <label className="flex flex-col gap-2">
-                <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Name</span>
+                <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Name</span>
                 <input name="name" maxLength={80} required className="h-[54px] rounded-ctl border-0 bg-card px-4 text-body" />
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-2">
-                  <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">kcal a portion</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">kcal a portion</span>
                   <input name="kcal" inputMode="numeric" required className="num h-[54px] rounded-ctl border-0 bg-card px-4 text-[clamp(20px,6.15vw,23px)]" />
                 </label>
                 <label className="flex flex-col gap-2">
-                  <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">Protein, g a portion</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">Protein, g a portion</span>
                   <input name="protein" inputMode="decimal" required className="num h-[54px] rounded-ctl border-0 bg-card px-4 text-[clamp(20px,6.15vw,23px)]" />
                 </label>
               </div>
