@@ -94,7 +94,7 @@ export function CheckinCard({
                 defaultValue={checkin?.water_ml ? checkin.water_ml / 1000 : ""}
               />
               <label className="flex flex-col gap-2">
-                <span className="text-[14px] font-semibold">{copy.checkin.cravings}</span>
+                <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">{copy.checkin.cravings}</span>
                 <textarea
                   name="cravings"
                   rows={3}

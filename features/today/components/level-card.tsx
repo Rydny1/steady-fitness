@@ -26,14 +26,14 @@ export function LevelCard({
       role="dialog"
       aria-modal="true"
       aria-label={`Level ${level.n}, ${level.name}`}
-      className="fixed inset-0 z-[60] flex flex-col justify-center bg-ink px-6 text-white"
+      className="fixed inset-0 z-[60] flex flex-col justify-center bg-ink px-4 text-white"
     >
       <div className="mx-auto w-full max-w-app">
         <div className="text-small text-muted-dark">
           {kind === "promoted" ? `Level ${level.n}` : "Level dropped"}
         </div>
         <h2 className="chapter-name num mt-2 text-score leading-[0.95]">{level.name}</h2>
-        <p className="chapter-story mt-6 text-[21px] font-medium leading-[1.3]">
+        <p className="chapter-story mt-6 text-[clamp(18px,5.38vw,20px)] font-medium leading-[1.3]">
           {kind === "promoted" ? level.story : droppedChapter(level.name)}
         </p>
         <div className="mt-8 h-[10px] overflow-hidden rounded-full bg-ink-line">

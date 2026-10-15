@@ -13,7 +13,7 @@ export function Library({ byMuscle }: { byMuscle: Record<string, CardExercise[]>
   const list = byMuscle[muscle] ?? [];
   return (
     <section aria-labelledby="library-h" className="mt-8">
-      <h2 id="library-h" className="mx-6 text-section font-bold tracking-[-0.3px]">
+      <h2 id="library-h" className="mx-4 text-section font-bold tracking-[-0.3px]">
         {copy.train.library}
       </h2>
       <div className="mx-4 mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Muscle">

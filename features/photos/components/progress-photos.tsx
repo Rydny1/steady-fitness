@@ -60,7 +60,7 @@ export function ProgressPhotos({
 
   return (
     <section id="photos" aria-labelledby="photos-h" className="mt-8">
-      <div className="mx-6 flex items-center justify-between">
+      <div className="mx-4 flex items-center justify-between">
         <h2 id="photos-h" className="text-section font-bold tracking-[-0.3px]">
           {copy.progress.photos}
         </h2>
@@ -77,9 +77,9 @@ export function ProgressPhotos({
         </p>
       ) : null}
       {photos.length === 0 ? (
-        <p className="mx-6 mt-3 text-small text-muted">{copy.progress.photosEmpty}</p>
+        <p className="mx-4 mt-3 text-small text-muted">{copy.progress.photosEmpty}</p>
       ) : (
-        <div className="mx-6 mt-[10px] grid grid-cols-3 gap-2">
+        <div className="mx-4 mt-[10px] grid grid-cols-3 gap-2">
           {latest.map((p, i) => (
             <div key={POSES[i]} className="relative flex aspect-[3/4] items-end overflow-hidden rounded-inner bg-line p-[10px] text-[12px] text-muted">
               {p?.url ? (
@@ -95,7 +95,7 @@ export function ProgressPhotos({
         </div>
       )}
 
-      <div className="mx-6 mt-3 flex items-center gap-2">
+      <div className="mx-4 mt-3 flex items-center gap-2">
         <div className="flex gap-1" role="radiogroup" aria-label="Pose">
           {POSES.map((p) => (
             <button
@@ -126,15 +126,15 @@ export function ProgressPhotos({
         </label>
       </div>
       {error ? (
-        <p role="alert" className="mx-6 mt-2 text-small text-danger">
+        <p role="alert" className="mx-4 mt-2 text-small text-danger">
           {error}
         </p>
       ) : null}
 
       {photos.length > 3 ? (
         <>
-          <h3 className="mx-6 mt-6 text-small font-semibold text-muted">All photos, newest first</h3>
-          <ul className="mx-6 mt-2 grid grid-cols-3 gap-2">
+          <h3 className="mx-4 mt-6 text-small font-semibold text-muted">All photos, newest first</h3>
+          <ul className="mx-4 mt-2 grid grid-cols-3 gap-2">
             {photos.map((p) => (
               <li key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-inner bg-line">
                 {p.url ? (

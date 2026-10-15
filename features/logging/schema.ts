@@ -31,6 +31,8 @@ export const parsedItemSchema = z.object({
   name: z.string().max(120),
   quantity: num.nullable(),
   unit: z.string().max(16).nullable(),
+  /** Weight eaten in grams (millilitres for drinks). The numbers are computed from this. */
+  grams: num.nullable(),
   kcal: num.nullable(),
   protein_g: num.nullable(),
   activity_type: z.enum(activityTypes).nullable(),
@@ -64,6 +66,13 @@ export const draftFoodSchema = z.object({
   kcal: z.number().int().min(0).max(5000),
   protein_g: z.number().min(0).max(300),
   confidence: z.number().min(0).max(1).nullable(),
+  /** Where the numbers came from: your saved food, the verified table, or the model's guess. */
+  basis: z.enum(["database", "saved", "estimate"]).optional(),
+  grams: z.number().min(0).max(5000).nullable().optional(),
+  per100: z
+    .object({ kcal: z.number().min(0).max(900), protein: z.number().min(0).max(100) })
+    .nullable()
+    .optional(),
 });
 
 export const draftActivitySchema = z.object({

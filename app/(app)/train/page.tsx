@@ -12,28 +12,13 @@ import { QuickDone } from "@/features/training/components/quick-done";
 import { SESSION_NAMES } from "@/features/settings/defaults";
 import { ExerciseImage } from "@/components/exercise-image";
 import { copy } from "@/content/copy";
-import { capitalize, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { SessionKeyT } from "@/lib/supabase/types";
 
 export const metadata = { title: "Train" };
 
-const SHORT: Record<SessionKeyT, string> = {
-  gym_a: "Legs",
-  gym_b: "Chest",
-  gym_c: "Back",
-  run: "Run",
-  run_intervals: "Run",
-  football: "Ball",
-  stretch: "Rest",
-  rest: "Rest",
-};
 
 const MUSCLES = ["chest", "back", "shoulders", "arms", "legs", "core"] as const;
-const COVERAGE: Partial<Record<SessionKeyT, (typeof MUSCLES)[number][]>> = {
-  gym_a: ["legs", "core"],
-  gym_b: ["chest", "shoulders", "arms", "core"],
-  gym_c: ["back", "arms", "shoulders", "core"],
-};
 
 const TAGS: Partial<Record<SessionKeyT, string[]>> = {
   gym_a: ["Legs", "Core"],
@@ -81,33 +66,15 @@ export default async function TrainPage({
   const days = weekDays(ws);
   const selected = d && isDay(d) && days.includes(d) ? d : today;
 
-  const [facts, planRows, sessionsRows, activityRows] = await Promise.all([
+  const [facts, planRows] = await Promise.all([
     loadDayFacts(supabase, user.id, ws, addDays(ws, 6)),
     supabase.from("weekly_plan").select("weekday,session_key"),
-    supabase
-      .from("workout_sessions")
-      .select("session_key,finished_at")
-      .gte("day", ws)
-      .lte("day", addDays(ws, 6))
-      .not("finished_at", "is", null),
-    supabase
-      .from("activity_entries")
-      .select("session_key")
-      .gte("day", ws)
-      .lte("day", addDays(ws, 6)),
   ]);
 
   const plan: PlanMap = new Map((planRows.data ?? []).map((p) => [p.weekday, p.session_key] as const));
   const keyOn = (day: string): SessionKeyT => plan.get(isoWeekday(day)) ?? "rest";
   const key = keyOn(selected);
   const playable = planKey(plan, selected);
-
-  const done = new Set<string>([
-    ...(sessionsRows.data ?? []).map((s) => s.session_key),
-    ...(activityRows.data ?? []).flatMap((a) => (a.session_key ? [a.session_key] : [])),
-  ]);
-  const covered = new Set<string>();
-  for (const k of done) for (const m of COVERAGE[k as SessionKeyT] ?? []) covered.add(m);
 
   const gymKey = key === "gym_a" || key === "gym_b" || key === "gym_c" ? key : null;
   const gymExercises = gymKey ? exercisesForSession(gymKey) : [];
@@ -138,16 +105,16 @@ export default async function TrainPage({
 
   return (
     <main>
-      <h1 className="px-6 pt-[60px] text-title font-bold tracking-[-0.8px]">{copy.train.title}</h1>
+      <h1 className="px-4 pt-[max(16px,env(safe-area-inset-top))] text-title font-bold tracking-[-0.8px]">{copy.train.title}</h1>
 
-      <nav aria-label="Week" className="mx-4 mt-5 grid grid-cols-7 gap-[5px]">
+      <nav aria-label="Week" className="mx-4 mt-4 grid grid-cols-7 gap-1">
         {days.map((day) => {
           const k = keyOn(day);
           const isSel = day === selected;
           const isToday = day === today;
-          const finished = day <= today && done.has(k) && k !== "rest";
           const fact = facts.find((f) => f.day === day);
-          const doneDay = finished && fact?.sessionDone;
+          const planned = k !== "rest" && k !== "stretch";
+          const doneDay = Boolean(fact?.sessionDone) && day <= today;
           return (
             <Link
               key={day}
@@ -155,62 +122,57 @@ export default async function TrainPage({
               aria-current={isSel ? "date" : undefined}
               aria-label={`${weekdayShort(day)} ${Number(day.slice(8))}, ${SESSION_NAMES[k]}`}
               className={cn(
-                "flex h-[72px] flex-col items-center justify-center gap-1 rounded-ctl text-nav",
+                "flex h-16 flex-col items-center justify-center gap-0.5 rounded-ctl text-nav",
                 isSel ? "bg-ink text-white" : "bg-card text-muted",
-                !isSel && isToday && "bg-bg ring-2 ring-inset ring-ink",
+                !isSel && isToday && "ring-2 ring-inset ring-ink",
               )}
             >
-              <span>{weekdayShort(day)}</span>
-              {doneDay ? (
-                <Check size={18} strokeWidth={2.6} aria-hidden="true" className="text-fuel" />
-              ) : (
-                <span className={cn("num text-[18px]", !isSel && "text-muted")}>
-                  {Number(day.slice(8))}
-                </span>
-              )}
-              <span className="text-[11px]">{SHORT[k]}</span>
+              <span className="text-[11px] leading-none">{weekdayShort(day)}</span>
+              <span className={cn("num text-[clamp(16px,4.6vw,18px)] leading-none", !isSel && "text-ink")}>
+                {Number(day.slice(8))}
+              </span>
+              <span className="flex h-3 items-center">
+                {doneDay ? (
+                  <Check size={12} strokeWidth={3} aria-hidden="true" className={isSel ? "text-white" : "text-fuel"} />
+                ) : planned ? (
+                  <span className={cn("h-1.5 w-1.5 rounded-full", isSel ? "bg-white" : "bg-train")} />
+                ) : null}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mx-6 mt-4 flex items-center justify-between gap-[10px]">
-        <span className="flex-none text-small text-muted">{copy.train.coverage}</span>
-        <div className="flex flex-wrap justify-end gap-[5px]">
-          {MUSCLES.map((m) => (
-            <span
-              key={m}
-              className={cn(
-                "rounded-full px-[10px] py-[5px] text-caption",
-                covered.has(m) ? "bg-fuel-soft font-semibold text-fuel-ink" : "bg-card text-muted",
-              )}
-            >
-              {capitalize(m)}
-            </span>
-          ))}
-        </div>
-      </div>
 
-      <section
-        aria-label={SESSION_NAMES[key]}
-        className="relative mx-4 mt-4 h-[200px] overflow-hidden rounded-hero bg-line"
-      >
-        {heroSlug ? <ExerciseImage slug={heroSlug} name={SESSION_NAMES[key]} className="h-full w-full" /> : null}
-        <span className="absolute left-4 top-4 rounded-full bg-bg px-3 py-[6px] text-caption font-semibold text-ink">
-          {new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "UTC" }).format(
-            new Date(`${selected}T12:00:00Z`),
-          )}
-        </span>
-      </section>
-      <div className="mx-6 mt-[18px]">
+      {heroSlug ? (
+        <section
+          aria-label={SESSION_NAMES[key]}
+          className="relative mx-4 mt-3 h-[150px] overflow-hidden rounded-hero bg-line"
+        >
+          <ExerciseImage slug={heroSlug} name={SESSION_NAMES[key]} className="h-full w-full" />
+          <span className="absolute left-3 top-3 rounded-full bg-surface px-3 py-1 text-caption font-semibold text-ink">
+            {new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "UTC" }).format(
+              new Date(`${selected}T12:00:00Z`),
+            )}
+          </span>
+        </section>
+      ) : null}
+      <div className="mx-4 mt-4">
+        {!heroSlug ? (
+          <div className="text-small text-muted">
+            {new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "UTC" }).format(
+              new Date(`${selected}T12:00:00Z`),
+            )}
+          </div>
+        ) : null}
         <div className="text-sub font-bold tracking-[-0.5px]">{SESSION_NAMES[key]}</div>
-        <div className="mt-[2px] text-[16px] text-muted">
+        <div className="mt-[2px] text-[clamp(13px,4.10vw,15px)] text-muted">
           {gymKey ? `5 exercises and a core finisher. ${minutes} min` : (quick?.desc ?? "No session planned. Stretch if you like.")}
         </div>
         {TAGS[key] ? (
           <div className="mt-3 flex flex-wrap gap-[6px]">
             {TAGS[key]?.map((t) => (
-              <span key={t} className="rounded-full bg-card px-3 py-[6px] text-[14px]">
+              <span key={t} className="rounded-full bg-card px-3 py-[6px] text-[clamp(12px,3.59vw,13px)]">
                 {t}
               </span>
             ))}
@@ -219,7 +181,7 @@ export default async function TrainPage({
       </div>
 
       {gymKey ? (
-        <div className="mx-6 mt-[18px] flex gap-[10px]">
+        <div className="mx-4 mt-[18px] flex gap-[10px]">
           {selected === today ? (
             <Link
               href={`/train/${gymKey}`}
@@ -254,11 +216,11 @@ export default async function TrainPage({
       {gymKey ? (
         <ExerciseCards key={gymKey} items={cards} />
       ) : (
-        <p className="mx-6 mt-5 text-small text-muted">{sessions.gym_a.name} on Tuesday. {sessions.gym_b.name} on Friday. {sessions.gym_c.name} on Saturday.</p>
+        <p className="mx-4 mt-5 text-small text-muted">{sessions.gym_a.name} on Tuesday. {sessions.gym_b.name} on Friday. {sessions.gym_c.name} on Saturday.</p>
       )}
 
       <section className="mt-8" aria-labelledby="stretch-h">
-        <h2 id="stretch-h" className="mx-6 text-section font-bold tracking-[-0.3px]">
+        <h2 id="stretch-h" className="mx-4 text-section font-bold tracking-[-0.3px]">
           {copy.train.stretch}
         </h2>
         <ExerciseCards items={stretchCards} startOpen={false} numbered={false} />

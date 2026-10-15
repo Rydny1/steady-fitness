@@ -48,7 +48,7 @@ export default async function SettingsPage() {
 
   return (
     <main>
-      <div className="px-4 pt-[52px]">
+      <div className="px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <Link
           href="/today"
           aria-label="Back to Today"
@@ -57,12 +57,12 @@ export default async function SettingsPage() {
           <ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
-      <div className="mx-6 mt-5 flex items-center gap-4">
-        <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-ink text-[28px] font-semibold text-white">
+      <div className="mx-4 mt-5 flex items-center gap-4">
+        <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-ink text-[clamp(24px,7.18vw,27px)] font-semibold text-white">
           {capitalize(profile.display_name.slice(0, 1))}
         </span>
         <div>
-          <h1 className="text-[26px] font-bold tracking-[-0.5px]">{profile.display_name}</h1>
+          <h1 className="text-[clamp(22px,6.67vw,25px)] font-bold tracking-[-0.5px]">{profile.display_name}</h1>
           <div className="text-small text-muted">
             {form.name}. Chapter {chapter.n}, {chapter.name}
           </div>
@@ -103,7 +103,7 @@ export default async function SettingsPage() {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="rounded-tile bg-card p-[14px]">
-      <div className="num text-[26px] leading-tight">{value}</div>
+      <div className="num text-[clamp(22px,6.67vw,25px)] leading-tight">{value}</div>
       <div className="text-caption text-muted">{label}</div>
     </div>
   );

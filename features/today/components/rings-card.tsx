@@ -59,15 +59,13 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
   )} percent, train ${Math.round(rings.train.progress * 100)} percent`;
   return (
     <>
-      <div className="relative mx-4 mt-6 flex items-center gap-5 rounded-hero bg-card px-5 py-6">
+      <div className="raised relative mx-4 mt-4 flex items-center gap-4 rounded-hero bg-card p-4 min-[380px]:gap-5 min-[380px]:p-5">
         <InfoTip tip="rings" className="absolute right-2 top-2" />
         <svg
-          width="168"
-          height="168"
           viewBox="0 0 180 180"
           role="img"
           aria-label={label}
-          className="flex-none"
+          className="h-auto w-[clamp(124px,38vw,168px)] flex-none"
         >
           <g transform="rotate(-90 90 90)" fill="none" strokeWidth="17" strokeLinecap="round">
             <Ring r={R[0]} color="var(--fuel)" progress={rings.fuel.progress} />
@@ -75,7 +73,7 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
             <Ring r={R[2]} color="var(--train)" progress={rings.train.progress} />
           </g>
         </svg>
-        <div className="flex min-w-0 flex-col gap-[14px]">
+        <div className="flex min-w-0 flex-col gap-3">
           <Stat
             label={copy.today.ringFuel}
             color="text-fuel"
@@ -96,7 +94,7 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
           />
         </div>
       </div>
-      <p className="mx-6 mt-3 text-small text-muted">{footer}</p>
+      <p className="mx-4 mt-3 text-small text-muted">{footer}</p>
     </>
   );
 }
@@ -114,10 +112,10 @@ function Stat({
 }) {
   return (
     <div>
-      <div className="text-[14px] text-muted">{label}</div>
-      <div className={`num text-[28px] leading-none ${color}`}>
+      <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{label}</div>
+      <div className={`num text-[clamp(24px,7.18vw,27px)] leading-none ${color}`}>
         {value}
-        <span className="text-[18px] text-muted">{of}</span>
+        <span className="text-[clamp(15px,4.62vw,17px)] text-muted">{of}</span>
       </div>
     </div>
   );

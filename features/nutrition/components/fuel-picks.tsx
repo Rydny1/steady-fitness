@@ -47,13 +47,13 @@ export function FuelPicks({
 
   return (
     <>
-      <div className="mx-6 mt-6 flex items-baseline justify-between">
+      <div className="mx-4 mt-6 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.prep}</h2>
         <span className="text-small text-muted" aria-live="polite">
           {items.length} of {maxPicks} picked
         </span>
       </div>
-      <ul className="mt-[14px] flex gap-3 overflow-x-auto px-6 pb-1">
+      <ul className="mt-[14px] flex gap-3 overflow-x-auto px-4 pb-1">
         {meals.map((m) => {
           const on = items.includes(m.slug);
           return (
@@ -79,7 +79,7 @@ export function FuelPicks({
               </button>
               <Link href={`/fuel/${m.slug}`} className="mt-[10px] block min-h-11">
                 <div className="text-body font-semibold">{m.name}</div>
-                <div className="text-[14px] text-muted">
+                <div className="text-[clamp(12px,3.59vw,13px)] text-muted">
                   {m.kcal} kcal, {m.protein} g protein a portion
                 </div>
               </Link>
@@ -116,13 +116,13 @@ export function ShoppingList({
 
   if (total === 0) {
     return (
-      <p className="mx-6 mt-3 text-small text-muted">{copy.fuel.pickTwo}. The list builds itself.</p>
+      <p className="mx-4 mt-3 text-small text-muted">{copy.fuel.pickTwo}. The list builds itself.</p>
     );
   }
 
   return (
     <>
-      <div className="mx-6 mt-8 flex items-baseline justify-between">
+      <div className="mx-4 mt-8 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.shopping}</h2>
         <span className="text-small text-muted" aria-live="polite">
           {done.size} of {total}
@@ -131,7 +131,7 @@ export function ShoppingList({
       <div className="mx-4 mt-[10px] rounded-list bg-card px-[18px] py-1">
         {groups.map((g, gi) => (
           <div key={g.group} className={cn("py-[10px]", gi < groups.length - 1 && "border-b border-line")}>
-            <div className="pt-1 text-[14px] font-semibold text-muted">{g.group}</div>
+            <div className="pt-1 text-[clamp(12px,3.59vw,13px)] font-semibold text-muted">{g.group}</div>
             {g.items.map((i) => (
               <label key={i.id} className="flex min-h-12 items-center gap-[14px]">
                 <input

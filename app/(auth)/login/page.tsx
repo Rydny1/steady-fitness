@@ -17,7 +17,7 @@ export default function LoginPage() {
           priority
           className="rounded-[20px]"
         />
-        <h1 className="mt-7 text-[40px] font-bold leading-[1.05] tracking-[-1px]">
+        <h1 className="mt-7 text-[clamp(34px,10.26vw,38px)] font-bold leading-[1.05] tracking-[-1px]">
           One steady day
           <br />
           at a time.
@@ -31,7 +31,7 @@ export default function LoginPage() {
           {copy.login.newHere}
         </Link>
       </div>
-      <p className="mb-10 text-center text-[14px] leading-[1.45] text-muted">
+      <p className="mb-10 text-center text-[clamp(12px,3.59vw,13px)] leading-[1.45] text-muted">
         {copy.login.privacy}
       </p>
     </main>

@@ -15,6 +15,8 @@ export type AdaptiveInput = {
   trendEndKg: number;
   currentBudgetKcal: number;
   bmrKcal: number;
+  /** Share of real burn to eat. Below 1 loses, 1 holds, above 1 gains. Defaults to the loss share. */
+  budgetFactor?: number;
 };
 
 export type AdaptiveResult =
@@ -54,13 +56,14 @@ export function adaptiveBudget(input: AdaptiveInput): AdaptiveResult {
   const trendChange = input.trendEndKg - input.trendStartKg;
   const realBurn = avgIn - (trendChange * ADAPTIVE.kcalPerKg) / n;
 
-  const target = realBurn * ADAPTIVE.budgetFactor;
+  const factor = input.budgetFactor ?? ADAPTIVE.budgetFactor;
+  const target = realBurn * factor;
   const delta = target - input.currentBudgetKcal;
   const clampedDelta = Math.max(-ADAPTIVE.maxWeeklyChange, Math.min(ADAPTIVE.maxWeeklyChange, delta));
   const capped = clampedDelta !== delta;
   let next = Math.round(input.currentBudgetKcal + clampedDelta);
   let atFloor = false;
-  if (next < input.bmrKcal) {
+  if (factor < 1 && next < input.bmrKcal) {
     next = Math.round(input.bmrKcal);
     atFloor = true;
   }

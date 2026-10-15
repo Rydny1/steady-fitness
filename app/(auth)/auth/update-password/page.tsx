@@ -12,7 +12,7 @@ export default function UpdatePasswordPage() {
   const [state, action, pending] = useActionState(updatePassword, initial);
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-app flex-col justify-center px-6 py-10">
-      <h1 className="text-[34px] font-bold leading-[1.1] tracking-[-0.8px]">
+      <h1 className="text-[clamp(29px,8.72vw,32px)] font-bold leading-[1.1] tracking-[-0.8px]">
         {copy.login.updateTitle}
       </h1>
       <p className="mt-3 text-body text-muted">{copy.login.updateSub}</p>

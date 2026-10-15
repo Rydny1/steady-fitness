@@ -81,9 +81,9 @@ export default async function ProgressPage({
 
   return (
     <main>
-      <h1 className="px-6 pt-[60px] text-title font-bold tracking-[-0.8px]">{copy.progress.title}</h1>
+      <h1 className="px-4 pt-[max(16px,env(safe-area-inset-top))] text-title font-bold tracking-[-0.8px]">{copy.progress.title}</h1>
 
-      <div id="challenges" className="mx-6 mt-7 flex items-baseline justify-between">
+      <div id="challenges" className="mx-4 mt-7 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.progress.challenges}</h2>
         <span className="text-small text-muted">
           {d.daysLeft === 0 ? "Last day" : `${d.daysLeft} ${d.daysLeft === 1 ? "day" : "days"} left`}
@@ -103,17 +103,17 @@ export default async function ProgressPage({
           ) : null}
         </div>
         {cmp.noGhost ? (
-          <p className="mt-4 text-[17px] font-medium leading-[1.4]">{matchLines.noGhost}</p>
+          <p className="mt-4 text-[clamp(14px,4.36vw,16px)] font-medium leading-[1.4]">{matchLines.noGhost}</p>
         ) : (
           <>
             <div className="mt-[14px] flex items-end justify-between">
               <div>
-                <div className="text-[14px] text-muted-dark">You</div>
+                <div className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">You</div>
                 <div className="num text-score leading-[0.9]">{cmp.scoreYou}</div>
               </div>
-              <div className="num text-[40px] leading-[1.2] text-ink-faint">-</div>
+              <div className="num text-[clamp(34px,10.26vw,38px)] leading-[1.2] text-ink-faint">-</div>
               <div className="text-right">
-                <div className="text-[14px] text-muted-dark">Last week</div>
+                <div className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">Last week</div>
                 <div className="num text-score leading-[0.9] text-muted-dark">{cmp.scoreGhost}</div>
               </div>
             </div>
@@ -122,15 +122,15 @@ export default async function ProgressPage({
                 <li
                   key={r.key}
                   className={cn(
-                    "grid min-h-[46px] grid-cols-[1fr_44px_44px_20px] items-center gap-2 text-[16px]",
+                    "grid min-h-[46px] grid-cols-[1fr_44px_44px_20px] items-center gap-2 text-[clamp(13px,4.10vw,15px)]",
                     i < cmp.rounds.length - 1 && "border-b border-ink-line",
                   )}
                 >
                   <span className="text-ink-soft">{roundNames[r.key]}</span>
-                  <span className={cn("num text-right text-[22px]", r.outcome === "loss" ? "text-muted-dark" : "text-white")}>
+                  <span className={cn("num text-right text-[clamp(18px,5.64vw,21px)]", r.outcome === "loss" ? "text-muted-dark" : "text-white")}>
                     {r.you}
                   </span>
-                  <span className={cn("num text-right text-[22px]", r.outcome === "win" ? "text-muted-dark" : "text-white")}>
+                  <span className={cn("num text-right text-[clamp(18px,5.64vw,21px)]", r.outcome === "win" ? "text-muted-dark" : "text-white")}>
                     {r.ghost}
                   </span>
                   <span className="flex justify-end" aria-label={r.outcome}>
@@ -145,9 +145,9 @@ export default async function ProgressPage({
                 </li>
               ))}
             </ul>
-            {text ? <p className="mt-4 text-[17px] font-medium leading-[1.4]">{text}</p> : null}
+            {text ? <p className="mt-4 text-[clamp(14px,4.36vw,16px)] font-medium leading-[1.4]">{text}</p> : null}
             {d.winStreak >= 2 ? (
-              <div className="mt-[14px] text-[14px] text-muted-dark">{matchLines.streak(d.winStreak)}</div>
+              <div className="mt-[14px] text-[clamp(12px,3.59vw,13px)] text-muted-dark">{matchLines.streak(d.winStreak)}</div>
             ) : null}
           </>
         )}
@@ -155,7 +155,7 @@ export default async function ProgressPage({
 
       {d.answerBack ? (
         <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]">
-          <div className="text-[14px] text-muted">{copy.progress.answerBack}</div>
+          <div className="text-[clamp(12px,3.59vw,13px)] text-muted">{copy.progress.answerBack}</div>
           <p className="mt-2 text-body">{copy.progress.answerBackLine}</p>
         </section>
       ) : null}
@@ -163,19 +163,19 @@ export default async function ProgressPage({
       {d.picked ? (
         <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label="Weekly challenge">
           <div className="flex items-center justify-between">
-            <span className="flex items-center text-[14px] text-muted">
+            <span className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
               {copy.progress.picked}
               <InfoTip tip="weeklyChallenge" className="-my-3 -ml-1" />
             </span>
-            <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[14px] font-semibold">
+            <span className="flex items-center gap-[6px] rounded-full bg-bg px-3 py-[6px] text-[clamp(12px,3.59vw,13px)] font-semibold">
               <span className="h-2 w-2 rounded-full bg-amber" />
               {copy.progress.reward}
             </span>
           </div>
-          <div className="mt-[10px] text-[24px] font-bold tracking-[-0.4px]">
+          <div className="mt-[10px] text-[clamp(20px,6.15vw,23px)] font-bold tracking-[-0.4px]">
             {challengeCards[d.picked.key]?.name}
           </div>
-          <div className="mt-1 text-[16px] text-ink-2">{challengeCards[d.picked.key]?.goal}</div>
+          <div className="mt-1 text-[clamp(13px,4.10vw,15px)] text-ink-2">{challengeCards[d.picked.key]?.goal}</div>
           <div
             className="mt-4 grid gap-[6px]"
             style={{ gridTemplateColumns: `repeat(${Math.min(d.picked.progress.goal, 7)}, minmax(0, 1fr))` }}
@@ -191,7 +191,7 @@ export default async function ProgressPage({
               />
             ))}
           </div>
-          <div className="mt-[10px] flex justify-between gap-3 text-[14px] text-muted">
+          <div className="mt-[10px] flex justify-between gap-3 text-[clamp(12px,3.59vw,13px)] text-muted">
             <span>
               {d.picked.progress.done
                 ? "Done"
@@ -214,11 +214,11 @@ export default async function ProgressPage({
 
       <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.season}>
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center text-[14px] text-muted">
+          <h3 className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
             {copy.progress.season}
             <InfoTip tip="seasonRecord" className="-my-3 -ml-1" />
           </h3>
-          <span className="num text-[28px] leading-none">
+          <span className="num text-[clamp(24px,7.18vw,27px)] leading-none">
             {d.season.w}-{d.season.d}-{d.season.l}
           </span>
         </div>
@@ -245,7 +245,7 @@ export default async function ProgressPage({
       </section>
 
       <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.levels}>
-        <h3 className="flex items-center text-[14px] text-muted">
+        <h3 className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
           {copy.progress.levels}
           <InfoTip tip="level" className="-my-3 -ml-1" />
         </h3>
@@ -271,7 +271,7 @@ export default async function ProgressPage({
       <div
         role="tablist"
         aria-label="Range"
-        className="mx-6 mt-9 grid grid-cols-4 rounded-full bg-card p-1"
+        className="mx-4 mt-9 grid grid-cols-4 rounded-full bg-card p-1"
       >
         {RANGES.map((r) => (
           <Link
@@ -289,7 +289,7 @@ export default async function ProgressPage({
         ))}
       </div>
 
-      <div className="mx-6 mt-5 flex justify-between" aria-label={copy.progress.weekRings}>
+      <div className="mx-4 mt-5 flex justify-between" aria-label={copy.progress.weekRings}>
         {d.weekRings.map((w) => (
           <div key={w.day} className="flex flex-col items-center gap-[6px]">
             <MiniRings fuel={w.fuel} protein={w.protein} train={w.train} />
@@ -327,7 +327,7 @@ export default async function ProgressPage({
 
       <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]" aria-label={copy.progress.calories}>
         <div className="flex items-baseline justify-between">
-          <span className="text-[18px] font-bold">{copy.progress.calories}</span>
+          <span className="text-[clamp(15px,4.62vw,17px)] font-bold">{copy.progress.calories}</span>
           <span className="text-small text-muted">
             {d.calories.onBudget} of {d.calories.total} on budget
           </span>
@@ -384,17 +384,17 @@ export default async function ProgressPage({
         </details>
       ) : null}
 
-      <h2 className="mx-6 mt-9 text-section font-bold tracking-[-0.3px]">{copy.progress.noticed}</h2>
+      <h2 className="mx-4 mt-9 text-section font-bold tracking-[-0.3px]">{copy.progress.noticed}</h2>
       {d.weeklySummary ? (
-        <div className="mx-6 mt-3 rounded-inner bg-card p-4">
+        <div className="mx-4 mt-3 rounded-inner bg-card p-4">
           <div className="text-caption font-semibold text-muted">{copy.progress.weeklyReport}</div>
           <p className="mt-1 text-body leading-[1.4]">{d.weeklySummary}</p>
         </div>
       ) : null}
       {d.notes.length === 0 ? (
-        <p className="mx-6 mt-3 text-small text-muted">{copy.progress.patternsEmpty}</p>
+        <p className="mx-4 mt-3 text-small text-muted">{copy.progress.patternsEmpty}</p>
       ) : (
-        <ul className="mx-6 mt-2">
+        <ul className="mx-4 mt-2">
           {d.notes.map((n, i) => (
             <li key={n.id} className={cn("py-[14px]", i < d.notes.length - 1 && "border-b border-line")}>
               <div className="text-body leading-[1.4]">{n.text}</div>
@@ -404,13 +404,13 @@ export default async function ProgressPage({
         </ul>
       )}
 
-      <div className="mx-6 mt-8 flex items-baseline justify-between">
+      <div className="mx-4 mt-8 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.progress.trophyRoom}</h2>
         <span className="text-small text-muted">
           {earned} of {trophies.length}
         </span>
       </div>
-      <ul className="mx-6 mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
+      <ul className="mx-4 mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
         {trophies.map((t) => {
           const on = d.trophies[t.key] === true;
           return (
@@ -448,7 +448,7 @@ function Record({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-tile bg-card p-[14px]">
       <div className="text-caption text-muted">{label}</div>
-      <div className="num mt-[2px] text-[24px] leading-tight">{value}</div>
+      <div className="num mt-[2px] text-[clamp(20px,6.15vw,23px)] leading-tight">{value}</div>
     </div>
   );
 }
@@ -470,13 +470,13 @@ function BodyTile({
 }) {
   return (
     <div className="rounded-tile bg-card p-4">
-      <div className="flex items-center text-[14px] text-muted">
+      <div className="flex items-center text-[clamp(12px,3.59vw,13px)] text-muted">
         {label}
         {tip ? <InfoTip tip={tip} className="-my-3 -ml-1" /> : null}
       </div>
-      <div className="num mt-1 text-[30px] leading-[1.1]">
+      <div className="num mt-1 text-[clamp(25px,7.69vw,29px)] leading-[1.1]">
         {value}
-        {unit ? <span className="text-[17px] text-muted">{unit}</span> : null}
+        {unit ? <span className="text-[clamp(14px,4.36vw,16px)] text-muted">{unit}</span> : null}
       </div>
       <div className={cn("text-caption", good ? "font-semibold text-fuel" : "text-muted")}>{note}</div>
     </div>

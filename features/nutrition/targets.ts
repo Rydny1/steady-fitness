@@ -1,6 +1,7 @@
 // Targets: BMR, budget, protein, exercise add-back, safety lines (PRODUCT.md > Targets).
 import type { ActivityT, SexT } from "@/lib/supabase/types";
 import { MET, MET_FAST_RUN, SAFETY, TARGETS, type SafetyKey } from "./config";
+import { budgetFactorFor, goalFor } from "./energy";
 
 export type TargetsInput = {
   sex: SexT;
@@ -27,7 +28,11 @@ export function bmr(input: Pick<TargetsInput, "sex" | "weightKg" | "heightCm" | 
 export function computeTargets(input: TargetsInput): Targets {
   const rawBmr = bmr(input);
   const base = rawBmr * TARGETS.activityFactor;
-  const budget = Math.max(base * TARGETS.budgetFactor, rawBmr);
+  // The goal sets the budget: under base burn to lose, at it to hold, over it to gain.
+  // Only a loss goal is held at or above resting burn.
+  const goal = goalFor(input.weightKg, input.goalWeightKg);
+  const scaled = base * budgetFactorFor(goal);
+  const budget = goal === "lose" ? Math.max(scaled, rawBmr) : scaled;
   const protein = Math.max(
     TARGETS.proteinPerGoalKg * input.goalWeightKg,
     TARGETS.proteinMinPerCurrentKg * input.weightKg,

@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" aria-label="Couch stretch: back knee on the floor against a wall, back foot up the wall, torso upright"><rect width="480" height="270" fill="#FFFFFF"/><g fill="none" stroke="#121417" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-<line x1="30" y1="226" x2="450" y2="226"/>
-<line x1="436" y1="30" x2="436" y2="226"/>
-<circle cx="372" cy="46" r="13"/>
-<path d="M372 60 L380 150"/>
-<path d="M380 150 L410 226"/>
-<path d="M410 226 L432 110"/>
-<path d="M380 150 L300 168 L292 226"/>
-<path d="M292 226 L270 226"/>
-<path d="M374 78 L306 164"/>
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" aria-label="Couch stretch: back knee on the floor against a wall, back foot up the wall, torso upright" role="img" viewBox="0 0 480 270"><path fill="#fff" d="M0 0h480v270H0z"/><g fill="none" stroke="#121417" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M30 226h420M436 30v196"/><circle cx="372" cy="46" r="13"/><path d="m372 60 8 90m0 0 30 76m0 0 22-116m-52 40-80 18-8 58m0 0h-22M374 78l-68 86"/></g></svg>

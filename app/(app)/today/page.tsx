@@ -11,6 +11,8 @@ import { LogList } from "@/features/today/components/log-list";
 import { CheckinCard } from "@/features/today/components/checkin-sheet";
 import { LevelCard } from "@/features/today/components/level-card";
 import { AdaptiveNote } from "@/features/today/components/adaptive-note";
+import { EnergyLine } from "@/features/today/components/energy-line";
+import { CoachNote } from "@/components/coach-note";
 import { signedUrls } from "@/features/photos/signed-urls";
 import { copy } from "@/content/copy";
 
@@ -33,7 +35,7 @@ export default async function TodayPage() {
       {d.levelEvent ? (
         <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
       ) : null}
-      <div className="flex items-center justify-between px-6 pt-14">
+      <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
         <Link
           href="/settings"
@@ -43,7 +45,7 @@ export default async function TodayPage() {
           {capitalize(profile.display_name.slice(0, 1))}
         </Link>
       </div>
-      <h1 className="mx-6 mt-[6px] text-title font-bold tracking-[-0.8px]">
+      <h1 className="mx-4 mt-1 text-title font-bold tracking-[-0.8px]">
         {greeting(d.hour, profile.display_name)}
       </h1>
 
@@ -54,17 +56,24 @@ export default async function TodayPage() {
         train={{ done: d.trainDone, planned: d.trainPlanned }}
         footer={footerParts.join(" ")}
       />
+      <EnergyLine
+        goal={d.energy.goal}
+        yesterdayNet={d.energy.yesterdayNet}
+        plannedNet={d.energy.plannedNet}
+        read={d.energy.read}
+      />
+      {d.observer ? <CoachNote className="mx-4 mt-4">{d.observer}</CoachNote> : null}
 
       <section
-        className="mx-4 mt-5 rounded-hero bg-ink px-6 pb-6 pt-7 text-white"
+        className="mx-4 mt-5 rounded-hero bg-ink px-4 pb-6 pt-7 text-white"
         aria-label={copy.today.todaysLine}
       >
         <div className="text-caption text-muted-dark">{copy.today.todaysLine}</div>
-        <p className="mt-3 text-[26px] font-semibold leading-[1.22] tracking-[-0.4px]">
+        <p className="mt-3 text-[clamp(22px,6.67vw,25px)] font-semibold leading-[1.22] tracking-[-0.4px]">
           {d.line.text}
         </p>
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[14px] text-muted-dark">{d.line.byline}</span>
+          <span className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">{d.line.byline}</span>
           <span className="h-1 w-7 rounded-full bg-amber" />
         </div>
       </section>
@@ -81,7 +90,7 @@ export default async function TodayPage() {
           <Dumbbell size={24} strokeWidth={1.9} className="text-train" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[18px] font-semibold">{d.sessionName}</span>
+          <span className="block text-[clamp(15px,4.62vw,17px)] font-semibold">{d.sessionName}</span>
           <span className="block text-small text-muted">
             {d.sessionKey ? `About ${d.trainPlanned} min` : copy.today.restDay}
           </span>
@@ -97,15 +106,6 @@ export default async function TodayPage() {
         sickUsed={d.sickUsedThisMonth}
         show={d.hour >= 18}
       />
-      {d.photoDue ? (
-        <Link
-          href="/progress#photos"
-          className="mx-4 mt-4 flex min-h-[56px] items-center justify-between rounded-list bg-card px-[18px]"
-        >
-          <span className="text-body">{copy.progress.photoDay}</span>
-          <span className="text-small font-semibold">Add photo</span>
-        </Link>
-      ) : null}
       <Promises habits={d.habits} day={today} />
       <LogList foods={d.foods} activities={d.activities} photoUrls={photoUrls} />
     </main>

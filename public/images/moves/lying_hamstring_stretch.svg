@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" aria-label="Lying hamstring stretch: on your back, one leg raised with a towel around the foot"><rect width="480" height="270" fill="#FFFFFF"/><g fill="none" stroke="#121417" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-<line x1="30" y1="210" x2="450" y2="210"/>
-<circle cx="62" cy="194" r="13"/>
-<path d="M76 200 L210 202 L400 204"/>
-<path d="M210 202 L250 70"/>
-<path d="M250 70 L135 118"/>
-<path d="M92 200 L135 118"/>
-<path d="M400 204 L412 196"/>
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" aria-label="Lying hamstring stretch: on your back, one leg raised with a towel around the foot" role="img" viewBox="0 0 480 270"><path fill="#fff" d="M0 0h480v270H0z"/><g fill="none" stroke="#121417" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M30 210h420"/><circle cx="62" cy="194" r="13"/><path d="m76 200 134 2 190 2m-190-2 40-132m0 0-115 48m-43 82 43-82m265 86 12-8"/></g></svg>

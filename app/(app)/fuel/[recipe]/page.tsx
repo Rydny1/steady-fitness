@@ -32,8 +32,8 @@ export default async function RecipePage({
           <ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
-      <h1 className="px-6 pt-6 text-title font-bold tracking-[-0.8px]">{meal.name}</h1>
-      <p className="mx-6 mt-[6px] text-body text-muted">
+      <h1 className="px-4 pt-6 text-title font-bold tracking-[-0.8px]">{meal.name}</h1>
+      <p className="mx-4 mt-[6px] text-body text-muted">
         {meal.kcal} kcal, {meal.protein} g protein a portion.{meal.kind === "batch" ? ` ${copy.fuel.portions}.` : ""}
       </p>
       <LogPortion
@@ -43,7 +43,7 @@ export default async function RecipePage({
         protein={meal.protein}
       />
 
-      <h2 className="mx-6 mt-8 text-section font-bold tracking-[-0.3px]">Ingredients</h2>
+      <h2 className="mx-4 mt-8 text-section font-bold tracking-[-0.3px]">Ingredients</h2>
       <ul className="mx-4 mt-3 rounded-list bg-card px-[18px] py-1">
         {meal.ingredients.map((i, idx) => (
           <li
@@ -56,13 +56,13 @@ export default async function RecipePage({
         ))}
       </ul>
 
-      <h2 className="mx-6 mt-8 text-section font-bold tracking-[-0.3px]">{copy.fuel.steps}</h2>
-      <ol className="mx-6 mt-3 flex list-decimal flex-col gap-3 pl-5 text-body">
+      <h2 className="mx-4 mt-8 text-section font-bold tracking-[-0.3px]">{copy.fuel.steps}</h2>
+      <ol className="mx-4 mt-3 flex list-decimal flex-col gap-3 pl-5 text-body">
         {meal.steps.map((s) => (
           <li key={s}>{s}</li>
         ))}
       </ol>
-      {meal.note ? <p className="mx-6 mt-4 text-small text-muted">{meal.note}</p> : null}
+      {meal.note ? <p className="mx-4 mt-4 text-small text-muted">{meal.note}</p> : null}
     </main>
   );
 }

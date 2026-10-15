@@ -10,9 +10,12 @@ export type Profile = Row<"profiles">;
 /** Verified user for this request, or redirect to /login. */
 export const requireUser = cache(async () => {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) redirect("/login");
-  return { supabase, user: data.user };
+  // Claims are verified against the project's signing keys without a network round trip
+  // (getUser() costs one call to Supabase Auth per page). The proxy has already checked MFA.
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) redirect("/login");
+  return { supabase, user: { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null } };
 });
 
 /** User plus profile. No profile yet means onboarding. */

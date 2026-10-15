@@ -22,6 +22,9 @@ const barlow = Barlow_Condensed({
   fallback: ["system-ui", "sans-serif"],
 });
 
+// Log parsing calls Gemini; the default serverless limit is too short for a model fallback.
+export const maxDuration = 60;
+
 export const metadata: Metadata = {
   title: { default: "Steady", template: "%s | Steady" },
   description: "One steady day at a time.",

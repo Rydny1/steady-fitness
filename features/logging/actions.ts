@@ -9,6 +9,7 @@ import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
 import { activityKcal } from "@/features/nutrition/targets";
 import { observe } from "@/features/insights/observer";
+import { finalizeFood, type SavedLookup } from "./accuracy";
 import {
   saveEntriesSchema,
   type DraftItem,
@@ -41,19 +42,21 @@ const parseInput = z.object({
   day: dayField.optional(),
 });
 
-function toDraft(item: ParsedItem): DraftItem | null {
-  const round = (n: number | null, max: number) =>
-    n === null ? 0 : Math.max(0, Math.min(max, Math.round(n)));
+function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | null {
   if (item.kind === "food") {
-    return {
-      kind: "food",
-      name: item.name.trim().slice(0, 80) || "Food",
-      quantity: item.quantity && item.quantity > 0 ? Math.min(item.quantity, 99999) : null,
-      unit: item.unit ? item.unit.slice(0, 16) : null,
-      kcal: round(item.kcal, 5000),
-      protein_g: Math.max(0, Math.min(300, Math.round((item.protein_g ?? 0) * 10) / 10)),
-      confidence: item.confidence,
-    };
+    // Name and grams from the model, numbers from the verified table (see accuracy.ts).
+    return finalizeFood(
+      {
+        name: item.name,
+        grams: item.grams,
+        quantity: item.quantity,
+        unit: item.unit,
+        kcal: item.kcal,
+        protein_g: item.protein_g,
+        confidence: item.confidence,
+      },
+      saved,
+    );
   }
   if (item.kind === "activity" && item.activity_type && item.duration_min) {
     return {
@@ -102,10 +105,18 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
   }
   await supabase.from("logs").update({ model: result.model }).eq("id", log.id);
 
+  const { data: savedRows } = await supabase.from("saved_foods").select("name,kcal,protein_g,quantity");
+  const saved: SavedLookup[] = (savedRows ?? []).map((s) => ({
+    name: s.name,
+    kcal: s.kcal,
+    protein_g: Number(s.protein_g),
+    quantity: s.quantity === null ? null : Number(s.quantity),
+  }));
+
   const items: DraftItem[] = [];
   const unclear = [...result.data.unclear];
   for (const it of result.data.items) {
-    const draft = toDraft(it);
+    const draft = toDraft(it, saved);
     if (draft) items.push(draft);
     else if (it.name) unclear.push(it.name);
   }
@@ -141,23 +152,18 @@ export async function estimateMealAction(input: unknown): Promise<ParseOutcome> 
     return { ok: false, reason: res.reason === "limit" ? "ai_limit" : "failed", logId: log.id };
   }
   await supabase.from("logs").update({ model: res.model }).eq("id", log.id);
-  const e = res.data;
-  return {
-    ok: true,
-    logId: log.id,
-    unclear: [],
-    items: [
-      {
-        kind: "food",
-        name: e.name.trim().slice(0, 80) || "Meal",
-        quantity: e.quantity && e.quantity > 0 ? Math.min(e.quantity, 99999) : null,
-        unit: e.unit ? e.unit.slice(0, 16) : null,
-        kcal: Math.max(0, Math.min(5000, Math.round(e.kcal))),
-        protein_g: Math.max(0, Math.min(300, Math.round(e.protein_g * 10) / 10)),
-        confidence: e.confidence,
-      },
-    ],
-  };
+  const items: DraftItem[] = res.data.items.map((c) =>
+    finalizeFood({
+      name: c.name,
+      grams: c.grams,
+      quantity: null,
+      unit: null,
+      kcal: c.kcal,
+      protein_g: c.protein_g,
+      confidence: res.data.confidence,
+    }),
+  );
+  return { ok: true, logId: log.id, unclear: [], items };
 }
 
 /** Confirmed items in: food, activity (calories computed here), body measurements. */

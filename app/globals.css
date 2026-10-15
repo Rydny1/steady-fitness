@@ -3,16 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --bg: #ffffff;
-  --card: #f5f6f7;
+  --bg: #f2f3f5;
+  --page: #f2f3f5;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --sunken: #e9ebee;
+  --edge: #dde0e5;
+  --shadow-1: 0 1px 2px rgba(18, 20, 23, 0.05), 0 1px 1px rgba(18, 20, 23, 0.03);
+  --shadow-2: 0 1px 2px rgba(18, 20, 23, 0.06), 0 8px 20px -6px rgba(18, 20, 23, 0.12);
+  --hero-bg: linear-gradient(165deg, #1e2228 0%, #121417 75%);
+  --shadow-hero: 0 12px 24px -12px rgba(18, 20, 23, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   --ink: #121417;
   --ink-2: #3d4248;
-  --muted: #5f656d;
+  --muted: #5a6068;
   --muted-dark: #a9aeb5;
   --line: #e6e8eb;
-  --fuel: #0e8a4f;
+  --fuel: #0b7f47;
   --protein: #2563eb;
-  --train: #e5432d;
+  --train: #d13a26;
   --train-soft: #fde7e3;
   --fuel-soft: #e7f3ec;
   --fuel-ink: #0b6e3f;
@@ -24,20 +32,24 @@
   --warn: #8a5a00;
   --amber: #f2b300;
   --danger: #c2301f;
-  --nav-h: 96px;
+  --nav-h: calc(64px + env(safe-area-inset-bottom));
+  --coach-bg: #fbf5e6;
+  --coach-edge: #e6d5a8;
+  --coach-rule: #b7791f;
+  --coach-ink: #7a5a1e;
 }
 
 html {
-  background: var(--bg);
+  background: var(--page);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--page);
   color: var(--ink);
   font-family: var(--font-hanken), system-ui, sans-serif;
-  font-size: 17px;
+  font-size: clamp(0.938rem, 0.756rem + 0.909vw, 1rem);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -73,7 +85,7 @@ button {
   width: 100%;
   max-width: 520px;
   min-height: 100dvh;
-  padding-bottom: calc(var(--nav-h) + 24px);
+  padding-bottom: calc(var(--nav-h) + 16px);
 }
 
 /* Sheets slide up in 220 ms. Everything else is instant. */
@@ -144,4 +156,94 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* ---- Surfaces (DESIGN_RESEARCH.md section 2): grey page, white cards with a hairline and a soft edge ---- */
+.bg-card.rounded-hero,
+.bg-card.rounded-list,
+.bg-card.rounded-tile {
+  border: 1px solid var(--edge);
+  box-shadow: var(--shadow-1);
+}
+/* Controls and chips sit on a sunken tone so they read as inputs, not cards. */
+.bg-card.rounded-full,
+.bg-card.rounded-ctl,
+.bg-card.rounded-inner {
+  background: var(--sunken);
+}
+/* One dark hero per screen carries the gradient. */
+.bg-ink.rounded-hero {
+  background: var(--hero-bg);
+  box-shadow: var(--shadow-hero);
+}
+.sheet {
+  background: var(--surface);
+}
+.raised {
+  box-shadow: var(--shadow-2);
+}
+
+/* ---- The Coach callout: the one thing on a screen that must stand out ---- */
+.coach {
+  position: relative;
+  background: var(--coach-bg);
+  border: 1px solid var(--coach-edge);
+  border-radius: 18px;
+  padding: 14px 16px 14px 20px;
+  box-shadow: var(--shadow-2);
+}
+.coach::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--coach-rule);
+}
+.coach-eyebrow {
+  color: var(--coach-ink);
+  font-weight: 600;
+}
+
+/* ---- Press feedback: instant, only transform ---- */
+a,
+button {
+  transition: transform 90ms cubic-bezier(0.2, 0, 0, 1), opacity 120ms ease-out;
+}
+a:active,
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Page content fades in; no movement. */
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    animation: page-in 160ms ease-out;
+  }
+  @keyframes page-in {
+    from {
+      opacity: 0.4;
+    }
+  }
+}
+
+/* Skeletons: same shapes as the cards, a slow pulse, no shimmer. */
+.skeleton {
+  background: var(--sunken);
+  border-radius: 18px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: pulse 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes pulse {
+    from {
+      opacity: 0.6;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
