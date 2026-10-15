@@ -3,6 +3,8 @@ import { requireProfile } from "@/lib/session";
 import { loadProgress, type ProgressData, type Range } from "@/features/data/progress";
 import { diffDays, formatDayShort, rigaParts, weekdayShort } from "@/lib/dates";
 import {  MiniRings, WeightChart } from "@/features/progress/components/charts";
+import { FORM_BANDS } from "@/features/game/config";
+import { WinOnce } from "@/components/win-once";
 import { TrophyGrid } from "@/features/progress/components/trophy-grid";
 import { CoachNote } from "@/components/coach-note";
 import { NetCard } from "@/features/progress/components/net-card";
@@ -72,6 +74,7 @@ export default async function ProgressPage({
     }));
 
   const text = matchText(d.matchLine, d);
+  const nextBand = FORM_BANDS.find((b) => b.from > d.callus) ?? null;
   const cmp = d.comparison;
   const earned = Object.values(d.trophies).filter(Boolean).length;
   const weightChange =
@@ -155,6 +158,9 @@ export default async function ProgressPage({
         )}
       </section>
 
+      {d.picked?.progress.done ? (
+        <WinOnce id={`challenge-${d.weekStart}`} message="Challenge done." detail="+6 Callus. Nicely done." />
+      ) : null}
       {d.answerBack ? (
         <section className="mx-4 mt-3 rounded-hero bg-card p-[22px]">
           <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{copy.progress.answerBack}</div>
@@ -178,6 +184,10 @@ export default async function ProgressPage({
             {challengeCards[d.picked.key]?.name}
           </div>
           <div className="mt-1 text-[clamp(13px,4.10vw,15px)] text-ink-2">{challengeCards[d.picked.key]?.goal}</div>
+          <div className="mt-2 text-caption text-muted">
+            +6 Callus lifts your form and level.{" "}
+            {nextBand ? `${nextBand.name} starts at ${nextBand.from}. You're at ${d.callus}.` : "You're at the top."}
+          </div>
           <div
             className="mt-4 grid gap-[6px]"
             style={{ gridTemplateColumns: `repeat(${Math.min(d.picked.progress.goal, 7)}, minmax(0, 1fr))` }}

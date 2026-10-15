@@ -4,6 +4,7 @@ import { requireProfile } from "@/lib/session";
 import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
 import { deficitStatus } from "@/features/nutrition/energy";
+import { deficitFact } from "@/features/game/streak-moments";
 import { formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { FormCard } from "@/features/today/components/form-card";
@@ -27,14 +28,26 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   const net = d.energy.todayNet ?? 0;
   const status = deficitStatus(net, d.energy.plannedNet, d.energy.goal, d.facts.eatenKcal, d.budgetKcal, d.hour);
-  const footerParts = [status.text];
+  const fact = d.energy.goal === "lose" ? deficitFact(-net) : null;
+  const footerParts = [status.text, fact].filter(Boolean);
 
   return (
     <main>
       {d.levelEvent ? (
         <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
       ) : null}
-      <Moments name={capitalize(profile.display_name)} streak={d.streak} saved={sp.saved === "1"} status={status.text} />
+      <Moments
+        name={capitalize(profile.display_name)}
+        day={today}
+        streak={d.streak}
+        week={d.weekDots}
+        loggedToday={d.loggedToday}
+        saved={sp.saved === "1"}
+        status={status.text}
+        proteinHit={d.proteinHit}
+        trained={d.trainDone > 0}
+        quiet={Boolean(d.levelEvent) || d.celebrate.length > 0}
+      />
       {!d.levelEvent && d.celebrate.length > 0 ? <Celebration trophies={d.celebrate} /> : null}
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
@@ -64,6 +77,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         footer={footerParts.join(" ")}
       />
       {d.observer ? <CoachNote className="mx-4 mt-4">{d.observer}</CoachNote> : null}
+
+      <Promises habits={d.habits} day={today} streak={d.streak} week={d.weekDots} />
 
       <section
         className="mx-4 mt-5 rounded-hero bg-ink px-4 pb-6 pt-7 text-white"
@@ -107,7 +122,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         sickUsed={d.sickUsedThisMonth}
         show={d.hour >= 18}
       />
-      <Promises habits={d.habits} day={today} />
       <LogList foods={d.foods} activities={d.activities} photoUrls={{}} />
     </main>
   );

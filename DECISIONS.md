@@ -43,3 +43,11 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - **Logging reads the plain stuff without AI.** `features/logging/quick-parse.ts` reads times, distances, steps, pace and foods with grams or counts. Only what it cannot read goes to Gemini, and if Gemini is down the rule-read items are still returned. Distance, steps and pace become minutes and speed in `nutrition/activity.ts` (run, walk and cycling burn by speed).
 - **Gemini quota:** the free tier is about 20 requests a day per model, so the chain now spans eight models (lite first), with a 45 s total deadline.
 - **Less text everywhere.** Form bands are explained in its tooltip: off form is bad, finding form medium, in form good, peak form best.
+
+## Round 6 (owner changes)
+
+- **Voice no longer repeats on phones.** Android Chrome re-sends earlier words in every result when continuous recognition is on. Recognition is now one utterance at a time, and segments are merged without repeats (`features/logging/speech.ts`, tested).
+- **Streak and promises as circles.** Today shows a circle that fills with how many promises are done (small % inside), the streak with a flame and the distance to the next milestone, and the week as seven circles. Small wins pop once a day each: the Duolingo-style streak card on the first log of the day, all promises done, protein target hit, training done, challenge done. Milestones: 3, 7, 14, 21, 30, 50, 75, 100, 150, 200, 365.
+- **Deficit fun fact:** "About 0.19 kg of body fat. Repeat it for a week: 1.3 kg." (7,700 kcal per kg.)
+- **Any logged day counts toward net averages**, fasting days included ("I fasted today" logs a zero-calorie entry).
+- **Photo buttons** everywhere offer camera or gallery (`components/photo-picker.tsx`).
