@@ -85,6 +85,12 @@ Change the grams in the edit sheet and the calories follow. Change the kcal and 
 
 ---
 
+## Your deficit, your call
+
+Pick a goal weight and a number of weeks. Steady suggests a daily deficit (or surplus, to gain), tells you plainly what pace that is, and you can change it. Today shows the deficit so far against your target and how much you can still eat.
+
+Logging is built the same way: simple things ("ran 4 km", "5000 steps", "2 eggs") are read by rules, instantly, with no AI. Only the rest goes to Gemini, and the numbers always come from code.
+
 ## Net calories that know your goal
 
 Steady estimates what you burned (resting burn plus exercise) and subtracts it from what you ate.

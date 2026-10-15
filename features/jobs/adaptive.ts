@@ -6,6 +6,7 @@ import { adaptiveBudget, adaptiveLine, type AdaptiveDay } from "@/features/nutri
 import { trendAt } from "@/features/body/metrics";
 import { loadDayFacts } from "@/features/data/day-facts";
 import { budgetFactorFor, fullBurn, goalFor } from "@/features/nutrition/energy";
+import { baseBurn, netForLimit } from "@/features/nutrition/plan";
 
 type Db = SupabaseClient<Database>;
 
@@ -58,6 +59,7 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
     currentBudgetKcal: target.data.budget_kcal,
     bmrKcal: target.data.bmr_kcal,
     budgetFactor: budgetFactorFor(goalFor(end, Number(profile.data?.goal_weight_kg ?? end))),
+    targetNetKcal: netForLimit(baseBurn(target.data.bmr_kcal), target.data.budget_kcal),
     avgExerciseKcal: facts.length > 0 ? facts.reduce((s, f) => s + fullBurn(f.burnedKcal), 0) / facts.length : 0,
   });
   const line = adaptiveLine(result);

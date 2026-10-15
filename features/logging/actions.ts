@@ -8,6 +8,8 @@ import { overLimit } from "@/lib/rate-limit";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
 import { activityKcal } from "@/features/nutrition/targets";
+import { resolveActivity } from "@/features/nutrition/activity";
+import { quickParse } from "./quick-parse";
 import { observe } from "@/features/insights/observer";
 import { finalizeFood, type SavedLookup } from "./accuracy";
 import { matchFood, nutrientsFor } from "@/features/nutrition/food-match";
@@ -21,7 +23,7 @@ import {
 // Every action: get user, validate with zod, then write.
 
 export type ParseOutcome =
-  | { ok: true; logId: string; items: DraftItem[]; unclear: string[] }
+  | { ok: true; logId: string | null; items: DraftItem[]; unclear: string[] }
   | { ok: false; reason: "signed_out" | "invalid" | "limit" | "ai_limit" | "failed"; logId?: string };
 
 export type SaveOutcome =
@@ -60,13 +62,24 @@ function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | n
       saved,
     );
   }
-  if (item.kind === "activity" && item.activity_type && item.duration_min) {
+  if (item.kind === "activity" && item.activity_type) {
+    // Minutes come from a time, or from a distance, steps or pace (see nutrition/activity.ts).
+    const r = resolveActivity({
+      type: item.activity_type,
+      durationMin: item.duration_min,
+      distanceKm: item.distance_km,
+      steps: item.steps,
+      paceMinPerKm: item.pace_min_per_km,
+    });
+    if (!r) return null;
     return {
       kind: "activity",
       activity_type: item.activity_type,
       session_key: item.session_key,
-      duration_min: Math.max(1, Math.min(600, Math.round(item.duration_min))),
+      duration_min: Math.max(1, Math.min(600, r.durationMin)),
       rpe: null,
+      speed_kmh: r.speedKmh,
+      note: r.note,
     };
   }
   if (item.kind === "body" && item.body) {
@@ -91,7 +104,31 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
   const { text, source } = parsed.data;
   const day = parsed.data.day ?? todayRiga();
 
-  if (await overLimit(supabase, "parse")) return { ok: false, reason: "limit" };
+  // Rules first: simple logs are read instantly and for free, without the AI.
+  const { data: savedRows } = await supabase.from("saved_foods").select("name,kcal,protein_g,quantity");
+  const saved: SavedLookup[] = (savedRows ?? []).map((s) => ({
+    name: s.name,
+    kcal: s.kcal,
+    protein_g: Number(s.protein_g),
+    quantity: s.quantity === null ? null : Number(s.quantity),
+  }));
+  const quick = quickParse(text, saved);
+  if (quick.items.length > 0 && quick.leftover.length === 0) {
+    const { data: ruleLog } = await supabase
+      .from("logs")
+      .insert({ day, raw_text: text, source, model: "rules" })
+      .select("id")
+      .single();
+    return { ok: true, logId: ruleLog?.id ?? null, items: quick.items, unclear: [] };
+  }
+  // Only the part the rules could not read goes to the AI.
+  const aiText = quick.items.length > 0 ? quick.leftover.join(", ") : text;
+
+  if (await overLimit(supabase, "parse")) {
+    return quick.items.length > 0
+      ? { ok: true, logId: null, items: quick.items, unclear: quick.leftover }
+      : { ok: false, reason: "limit" };
+  }
 
   // Keep the raw words first, so a failed parse never loses them.
   const { data: log, error: logError } = await supabase
@@ -101,21 +138,15 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
     .single();
   if (logError || !log) return { ok: false, reason: "failed" };
 
-  const result = await parseLog(text, todayRiga());
+  const result = await parseLog(aiText, todayRiga());
   if (!result.ok) {
+    // The AI is busy or out of quota. Keep whatever the rules read, and say what was left.
+    if (quick.items.length > 0) return { ok: true, logId: log.id, items: quick.items, unclear: quick.leftover };
     return { ok: false, reason: result.reason === "limit" ? "ai_limit" : "failed", logId: log.id };
   }
   await supabase.from("logs").update({ model: result.model }).eq("id", log.id);
 
-  const { data: savedRows } = await supabase.from("saved_foods").select("name,kcal,protein_g,quantity");
-  const saved: SavedLookup[] = (savedRows ?? []).map((s) => ({
-    name: s.name,
-    kcal: s.kcal,
-    protein_g: Number(s.protein_g),
-    quantity: s.quantity === null ? null : Number(s.quantity),
-  }));
-
-  const items: DraftItem[] = [];
+  const items: DraftItem[] = [...quick.items];
   const unclear = [...result.data.unclear];
   for (const it of result.data.items) {
     const draft = toDraft(it, saved);
@@ -241,7 +272,7 @@ export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesO
         session_key: a.session_key,
         duration_min: a.duration_min,
         // Frozen at save: it depends on the weight of that day.
-        kcal_burned: activityKcal(a.activity_type, a.duration_min, weight),
+        kcal_burned: activityKcal(a.activity_type, a.duration_min, weight, { speedKmh: a.speed_kmh }),
         rpe: a.rpe,
         source,
       })),

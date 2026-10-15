@@ -36,3 +36,10 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - **Meal photos are no longer kept** (only used to read the plate). Progress photos stay. Quick buys are a shopping reference and no longer log on tap.
 - **Trophies renamed** (Spark, Momentum, Outdone, Surge, Daybreak, Rebound, Driven, Lighter, Transformed, Trim, Peak, Proof) with a tap-for-meaning sheet. Moments: trophy celebration, saved toast, welcome-back toast.
 - Days with less than 40 percent of resting burn logged are not counted in net averages.
+
+## Round 5 (owner changes)
+
+- **Built around the deficit you choose.** Limit = daily burn plus the deficit (or surplus, to gain) the person picks. Steady suggests one from goal weight and weeks (capped at -1,000 / +600 a day, 0.5 kg a week by default), reads it back ("0.8 kg a week. Fast and doable."), and the person overrides it. Below the resting burn is allowed and warned about; the limit never goes under 1,000. Today's first ring is the deficit so far against the target, with one short line: "Eat up to 140 more."
+- **Logging reads the plain stuff without AI.** `features/logging/quick-parse.ts` reads times, distances, steps, pace and foods with grams or counts. Only what it cannot read goes to Gemini, and if Gemini is down the rule-read items are still returned. Distance, steps and pace become minutes and speed in `nutrition/activity.ts` (run, walk and cycling burn by speed).
+- **Gemini quota:** the free tier is about 20 requests a day per model, so the chain now spans eight models (lite first), with a 45 s total deadline.
+- **Less text everywhere.** Form bands are explained in its tooltip: off form is bad, finding form medium, in form good, peak form best.

@@ -252,7 +252,7 @@ export function LogScreen({
   const foodKcal = items.reduce((s, i) => (i.kind === "food" ? s + i.kcal : s), 0);
   const burned = items.reduce(
     (s, i) =>
-      i.kind === "activity" ? s + activityKcal(i.activity_type, i.duration_min, weightKg) : s,
+      i.kind === "activity" ? s + activityKcal(i.activity_type, i.duration_min, weightKg, { speedKmh: i.speed_kmh }) : s,
     0,
   );
   const after = eatenKcal + foodKcal;
@@ -672,11 +672,13 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
       <>
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-medium capitalize">{it.activity_type}</div>
-          <div className="text-[clamp(13px,3.8vw,14px)] text-muted">{it.duration_min} min</div>
+          <div className="text-[clamp(13px,3.8vw,14px)] text-muted">
+            {it.duration_min} min{it.note ? `, ${it.note}` : ""}
+          </div>
         </div>
         <div className="text-right">
           <div className="num text-[clamp(19px,5.9vw,22px)] leading-none text-train">
-            -{fullBurn(activityKcal(it.activity_type, it.duration_min, weightKg))}
+            -{fullBurn(activityKcal(it.activity_type, it.duration_min, weightKg, { speedKmh: it.speed_kmh }))}
           </div>
           <div className="text-caption text-muted">kcal burned</div>
         </div>

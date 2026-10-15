@@ -22,12 +22,12 @@ describe("targets", () => {
     expect(bmr({ sex: "female", weightKg: 70, heightCm: 165, ageYears: 25 })).toBeCloseTo(1445.25, 5);
   });
 
-  it("budget is 75 percent of base burn but never below BMR (floor wins)", () => {
+  it("limit is base burn plus the suggested deficit (about 0.5 kg a week)", () => {
     const t = computeTargets({ sex: "male", weightKg: 85, heightCm: 180, ageYears: 30, goalWeightKg: 78 });
     expect(t.bmrKcal).toBe(1830);
     expect(t.baseBurnKcal).toBe(2379);
-    // 2379 * 0.75 = 1784, under the 1830 floor
-    expect(t.budgetKcal).toBe(1830);
+    // 7 kg at 0.5 kg a week: 550 kcal a day under the base burn
+    expect(t.budgetKcal).toBe(1829);
   });
 
   it("protein is 2 g per goal kg, with a 1.6 g per current kg minimum", () => {

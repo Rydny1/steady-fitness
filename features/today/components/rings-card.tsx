@@ -4,7 +4,8 @@ import { InfoTip } from "@/components/info-tip";
 
 type Props = {
   rings: Rings;
-  fuel: { eaten: number; budget: number };
+  /** Net so far today (eaten minus the day's burn) and the target net, both signed. */
+  fuel: { net: number; target: number; goal: "lose" | "gain" | "maintain" };
   protein: { eaten: number; target: number };
   train: { done: number; planned: number };
   footer: string;
@@ -54,7 +55,12 @@ function Ring({
 const nf = new Intl.NumberFormat("en-GB");
 
 export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
-  const label = `Rings: fuel ${Math.round(rings.fuel.progress * 100)} percent, protein ${Math.round(
+  // Size of the deficit (or surplus when gaining) against the one you chose.
+  const sign = fuel.goal === "gain" ? 1 : -1;
+  const got = Math.max(0, sign * fuel.net);
+  const want = Math.max(1, Math.abs(fuel.target));
+  const deficitProgress = got / want;
+  const label = `Rings: ${fuel.goal === "gain" ? "surplus" : "deficit"} ${Math.round(deficitProgress * 100)} percent, protein ${Math.round(
     rings.protein.progress * 100,
   )} percent, train ${Math.round(rings.train.progress * 100)} percent`;
   return (
@@ -68,17 +74,17 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
           className="h-auto w-[clamp(124px,38vw,168px)] flex-none"
         >
           <g transform="rotate(-90 90 90)" fill="none" strokeWidth="17" strokeLinecap="round">
-            <Ring r={R[0]} color="var(--fuel)" progress={rings.fuel.progress} />
+            <Ring r={R[0]} color="var(--fuel)" progress={deficitProgress} />
             <Ring r={R[1]} color="var(--protein)" progress={rings.protein.progress} />
             <Ring r={R[2]} color="var(--train)" progress={rings.train.progress} />
           </g>
         </svg>
         <div className="flex min-w-0 flex-col gap-3">
           <Stat
-            label={copy.today.ringFuel}
+            label={fuel.goal === "gain" ? "Surplus" : "Deficit"}
             color="text-fuel"
-            value={nf.format(fuel.eaten)}
-            of={`/${nf.format(fuel.budget)} kcal`}
+            value={nf.format(Math.round(got))}
+            of={`/${nf.format(Math.round(want))} kcal`}
           />
           <Stat
             label={copy.today.ringProtein}

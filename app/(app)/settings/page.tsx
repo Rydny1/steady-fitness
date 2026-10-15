@@ -79,6 +79,7 @@ export default async function SettingsPage() {
         bmrKcal={targets.data?.bmr_kcal ?? 0}
         proteinG={targets.data?.protein_g ?? 0}
         goalKg={profile.goal_weight_kg}
+        currentKg={last === null ? null : Number(last)}
         plan={(plan.data ?? []).map((p) => ({ weekday: p.weekday, sessionKey: p.session_key }))}
         habits={habits.data ?? []}
         prefs={(prefs.data ?? []).map((p) => ({ kind: p.kind, atTime: p.at_time, enabled: p.enabled }))}

@@ -1,5 +1,6 @@
 // Adaptive budget, learned from what you ate and how your weight trend moved (PRODUCT.md #19).
 import { ADAPTIVE } from "./config";
+import { MIN_LIMIT } from "./plan";
 
 export type AdaptiveDay = {
   day: string;
@@ -19,6 +20,8 @@ export type AdaptiveInput = {
   budgetFactor?: number;
   /** Average full exercise burn per day in the window. The measured burn already contains it. */
   avgExerciseKcal?: number;
+  /** The daily net the person chose (negative is a deficit). When set, the limit keeps this deficit and only the burn is relearned. */
+  targetNetKcal?: number;
 };
 
 export type AdaptiveResult =
@@ -61,14 +64,16 @@ export function adaptiveBudget(input: AdaptiveInput): AdaptiveResult {
   const factor = input.budgetFactor ?? ADAPTIVE.budgetFactor;
   // The limit is for a rest day: today's exercise is added on top, so take the average out here.
   const restBurn = Math.max(0, realBurn - (input.avgExerciseKcal ?? 0));
-  const target = restBurn * factor;
+  const target = input.targetNetKcal !== undefined ? restBurn + input.targetNetKcal : restBurn * factor;
   const delta = target - input.currentBudgetKcal;
   const clampedDelta = Math.max(-ADAPTIVE.maxWeeklyChange, Math.min(ADAPTIVE.maxWeeklyChange, delta));
   const capped = clampedDelta !== delta;
   let next = Math.round(input.currentBudgetKcal + clampedDelta);
   let atFloor = false;
-  if (factor < 1 && next < input.bmrKcal) {
-    next = Math.round(input.bmrKcal);
+  // With a chosen deficit the person is in charge: only the absolute floor applies. Without one, a loss never goes under resting burn.
+  const floor = input.targetNetKcal !== undefined ? MIN_LIMIT : factor < 1 ? input.bmrKcal : 0;
+  if (floor > 0 && next < floor) {
+    next = Math.round(floor);
     atFloor = true;
   }
   return {

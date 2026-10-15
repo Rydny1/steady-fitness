@@ -50,8 +50,9 @@ describe("energy balance", () => {
     expect(budgetFactorFor("gain")).toBeGreaterThan(budgetFactorFor("maintain"));
     expect(gain.budgetKcal).toBeGreaterThan(maintain.budgetKcal);
     expect(maintain.budgetKcal).toBeGreaterThan(lose.budgetKcal - 1);
-    // A loss goal never goes below resting burn.
-    expect(lose.budgetKcal).toBeGreaterThanOrEqual(lose.bmrKcal);
+    // The deficit you choose wins: 1,000 a day sits well under the base burn.
+    const chosen = computeTargets({ ...base, goalWeightKg: 65, netKcal: -1000 });
+    expect(chosen.baseBurnKcal - chosen.budgetKcal).toBe(1000);
   });
 });
 
@@ -72,5 +73,25 @@ describe("budget is a ceiling", () => {
   });
   it("shows the full exercise burn, double the stored add-back", () => {
     expect(fullBurn(329)).toBe(658);
+  });
+});
+
+import { deficitStatus } from "@/features/nutrition/energy";
+
+describe("deficit status", () => {
+  it("says how much more you can eat while ahead of the target", () => {
+    expect(deficitStatus(-1340, -1200, "lose", 1000, 2000, 14).text).toBe("Eat up to 140 more.");
+  });
+  it("says how far over you are when the deficit is short", () => {
+    const s = deficitStatus(-1000, -1200, "lose", 2200, 2000, 14);
+    expect(s.tone).toBe("over");
+    expect(s.text).toBe("200 over target.");
+  });
+  it("works for gaining: eat more until the surplus is there", () => {
+    expect(deficitStatus(100, 300, "gain", 2000, 2800, 14).text).toBe("Eat 200 more.");
+    expect(deficitStatus(400, 300, "gain", 3000, 2800, 14).text).toBe("Target hit.");
+  });
+  it("flags eating far too little late in the day", () => {
+    expect(deficitStatus(-1900, -1200, "lose", 500, 2000, 20).tone).toBe("low");
   });
 });

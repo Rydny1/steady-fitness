@@ -19,6 +19,7 @@ type Answers = {
   sex: "male" | "female" | "";
   weightKg: string;
   goalKg: string;
+  weeks: string;
   waistCm: string;
   neckCm: string;
   wakeTime: string;
@@ -39,6 +40,7 @@ const steps: Step[] = [
   { key: "sex", label: copy.onboarding.sex, type: "sex" },
   { key: "weightKg", label: copy.onboarding.weight, type: "number", unit: "kg" },
   { key: "goalKg", label: copy.onboarding.goal, type: "number", unit: "kg" },
+  { key: "weeks", label: copy.onboarding.weeks, type: "number", unit: "weeks", optional: true },
   { key: "waistCm", label: copy.onboarding.waist, type: "number", unit: "cm", optional: true },
   { key: "neckCm", label: copy.onboarding.neck, type: "number", unit: "cm", optional: true },
   { key: "wakeTime", label: copy.onboarding.wake, type: "time" },
@@ -64,6 +66,7 @@ export function OnboardingFlow() {
     sex: "",
     weightKg: "",
     goalKg: "",
+    weeks: "",
     waistCm: "",
     neckCm: "",
     wakeTime: "06:30",
@@ -84,6 +87,7 @@ export function OnboardingFlow() {
       heightCm: num(a.heightCm),
       ageYears: ageOn(a.birthDate, todayRiga()),
       goalWeightKg: a.goalKg === "" ? num(a.weightKg) : num(a.goalKg),
+      weeks: a.weeks === "" ? null : num(a.weeks),
     });
   }, [targetsShown, a, coreAnswered]);
 
@@ -99,6 +103,7 @@ export function OnboardingFlow() {
       sex: a.sex === "" ? null : a.sex,
       weightKg: a.weightKg === "" ? null : num(a.weightKg),
       goalKg: a.goalKg === "" ? null : num(a.goalKg),
+      weeks: a.weeks === "" ? null : num(a.weeks),
       waistCm: a.waistCm === "" ? null : num(a.waistCm),
       neckCm: a.neckCm === "" ? null : num(a.neckCm),
       wakeTime: a.wakeTime === "" ? null : a.wakeTime,
@@ -115,6 +120,7 @@ export function OnboardingFlow() {
       sex: "sex",
       weightKg: "weight",
       goalKg: "goal weight",
+      weeks: "weeks",
       waistCm: "waist",
       neckCm: "neck",
       wakeTime: "wake time",
