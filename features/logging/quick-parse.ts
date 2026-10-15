@@ -12,7 +12,7 @@ const WORDS: Record<string, number> = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   eleven: 11, twelve: 12, fifteen: 15, twenty: 20, thirty: 30, forty: 40, fifty: 50, half: 0.5,
 };
-const NUM = String.raw`(\d+(?:\.\d+)?|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|half)`;
+const NUM = String.raw`(\d+(?:\.\d+)?|\b(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|half)\b)`;
 
 const num = (s: string): number | null => {
   const n = Number(s);
@@ -88,11 +88,14 @@ function paceMin(clause: string): number | null {
 
 /** "I fasted today" is a real day: a zero-calorie entry marks it logged. */
 function readFast(clause: string): DraftItem | null {
-  if (!/\b(?:fast|fasted|fasting|didn'?t eat|did not eat|no food|skipped (?:all )?(?:my )?meals?)\b/.test(clause)) return null;
+  if (!/\b(?:fasted|fasting|water fast|a fast(?!\s+\w)|my fast(?!\s+\w)|didn'?t eat|did not eat|no food|skipped (?:all )?(?:my )?meals?)\b/.test(clause)) return null;
   return { kind: "food", name: "Fasting", quantity: null, unit: null, kcal: 0, protein_g: 0, confidence: 1, basis: "estimate", grams: null, per100: null };
 }
 
 const EX = String.raw`(bench press|bench|squats?|deadlifts?|pull-?ups?|chin-?ups?|push-?ups?|press-?ups?|bicep curls?|curls?|rows?|dips|lunges?|abs|crunch(?:es)?|sit-?ups?|planks?|shoulder press|overhead press|lat pull-?downs?|leg press|leg curls?|leg extensions?|flys?|burpees|calf raises?|hip thrusts?)`;
+
+/** Exercise words safe to take on their own (no "chips and dips"). */
+const EX_BARE = String.raw`(bench press|bench|squats?|deadlifts?|pull-?ups?|chin-?ups?|push-?ups?|press-?ups?|bicep curls?|crunch(?:es)?|sit-?ups?|planks?|shoulder press|overhead press|lat pull-?downs?|leg press|leg curls?|leg extensions?|burpees|calf raises?|hip thrusts?)`;
 
 /** "4 sets of 30 abs", "bench press 4x8 at 60 kg", or just "did bench press". */
 function readStrength(clause: string): DraftItem | null {
@@ -115,7 +118,11 @@ function readStrength(clause: string): DraftItem | null {
     sets = num(m[1] ?? "");
     reps = num(m[2] ?? "");
     name = m[3] ?? "";
-  } else if ((m = c.match(new RegExp(`\\b${EX}\\b`)))) {
+  } else if ((m = c.match(new RegExp(`${NUM}\\s*(?:reps?\\s*(?:of\\s*)?)?${EX}`)))) {
+    sets = 1;
+    reps = num(m[1] ?? "");
+    name = m[2] ?? "";
+  } else if ((m = c.match(new RegExp(`\\b${EX_BARE}\\b`)))) {
     name = m[1] ?? "";
   } else return null;
   const assumed = sets === null || reps === null || sets <= 0 || reps <= 0;
@@ -196,10 +203,16 @@ function readFood(clause: string, saved: readonly SavedLookup[]): DraftItem | nu
 
 /** Reads what it can with rules. The rest comes back in `leftover`. */
 export function quickParse(text: string, saved: readonly SavedLookup[] = []): QuickResult {
-  const cleaned = text.toLowerCase().replace(/(\d),(\d{3})\b/g, "$1$2").replace(/\s+/g, " ").trim();
+  // A dot between digits is a decimal point (2.5 km), not the end of a sentence.
+  const cleaned = text
+    .toLowerCase()
+    .replace(/(\d),(\d{3})\b/g, "$1$2")
+    .replace(/(\d)\.(\d)/g, "$1\u0001$2")
+    .replace(/\s+/g, " ")
+    .trim();
   const clauses = cleaned
-    .split(/[;.\n]|,|\band\b|\bthen\b|\bafter that\b|\bplus\b|\bwith\b/)
-    .map((c) => c.replace(FILLER, "").trim())
+    .split(/[;.\n]|,|\band\b|\bthen\b|\bafter that\b|\bplus\b|\bwith\b(?!\s*\d+(?:\u0001\d+)?\s*(?:kg|kilos?))/)
+    .map((c) => c.replace(/\u0001/g, ".").replace(FILLER, "").trim())
     .filter((c) => c.length > 0);
 
   const items: DraftItem[] = [];

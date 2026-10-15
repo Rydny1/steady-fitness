@@ -15,6 +15,8 @@ import {
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
 import { dayBurn, fullBurn, goalFor, netKcal, readBalance, type BalanceRead, type Goal } from "@/features/nutrition/energy";
+import { FREEZE } from "@/features/game/config";
+import { freezesLeft } from "@/features/game/freeze";
 import { chapters, coachForm, matchLines, trophies as trophyCopy, type FormName } from "@/content/copy";
 import { comebackQuotes, quotes } from "@/content/lines";
 import { SESSION_NAMES } from "@/features/settings/defaults";
@@ -82,6 +84,8 @@ export type TodayData = {
   weekDots: { day: string; letter: string; pct: number; today: boolean; future: boolean; logged: boolean }[];
   loggedToday: boolean;
   proteinHit: boolean;
+  /** Streak freeze: set for today, how many are left this month, and the Callus it would cost. */
+  freeze: { frozenToday: boolean; left: number; cost: number; canAfford: boolean };
   /** The week's deficit so far against the week's goal (surplus when gaining). Settled days only. */
   weekDeficit: { got: number; target: number };
   /** The allowance split: what you can eat on a rest day, and what exercise added. */
@@ -169,7 +173,7 @@ export async function loadToday(
         .order("taken_on", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase.from("user_flags").select("key,value").in("key", ["chapter_event", "adaptive_note", "trophies_seen"]),
+      supabase.from("user_flags").select("key,value").in("key", ["chapter_event", "adaptive_note", "trophies_seen", "streak_freezes"]),
       supabase
         .from("observer_notes")
         .select("text")
@@ -212,6 +216,7 @@ export async function loadToday(
     proteinG: facts.proteinG,
     proteinTargetG: facts.proteinTargetG,
     habitsDone: facts.habitsDone,
+    habitsTotal: facts.habitsTotal,
     sick: facts.sick,
     prev: {
       callus: prev.callus,
@@ -258,7 +263,11 @@ export async function loadToday(
   const celebrate = earned
     .filter((t) => !seenKeys.includes(t.key))
     .map((t) => ({ key: t.key, name: t.name, line: t.line }));
-  const title = earned.length > 0 ? (earned[earned.length - 1]?.name ?? null) : null;
+  // The name under your name: the highest trophy of the most meaningful group you have earned from.
+  const GROUP_ORDER = ["Weight", "Streaks", "Journey", "Weeks", "Challenges", "Strength", "Waist", "Photos", "Habits", "Start"];
+  const titleGroup = GROUP_ORDER.find((g) => earned.some((t) => t.group === g));
+  const inGroup = earned.filter((t) => t.group === titleGroup);
+  const title = inGroup.length > 0 ? (inGroup[inGroup.length - 1]?.name ?? null) : null;
   const adFlag = (flagRows.data ?? []).find((f) => f.key === "adaptive_note")?.value as
     | { text?: string; seen?: boolean }
     | undefined;
@@ -268,7 +277,7 @@ export async function loadToday(
   const goal = goalFor(weightRow.data ? Number(weightRow.data.weight_kg) : null, Number(profile.goal_weight_kg));
   const yFacts = days.find((x) => x.day === addDays(today, -1));
   const yesterdayNet =
-    yFacts && yFacts.loggedOnDay && yFacts.bmrKcal > 0
+    yFacts && yFacts.anyEntry && yFacts.bmrKcal > 0
       ? netKcal(yFacts.eatenKcal, dayBurn(yFacts.bmrKcal, yFacts.burnedKcal))
       : null;
   const energy: TodayData["energy"] = {
@@ -329,10 +338,14 @@ export async function loadToday(
         // Today only counts once the day has settled: the net is for the whole day's burn.
         if (day > today || (day === today && rigaParts(now).hour < 21)) continue;
         const f = days.find((x) => x.day === day);
-        if (!f || f.bmrKcal <= 0 || !f.loggedOnDay) continue;
+        if (!f || f.bmrKcal <= 0 || !f.anyEntry) continue;
         got += sign * netKcal(f.eatenKcal, dayBurn(f.bmrKcal, f.burnedKcal));
       }
       return { got: Math.max(0, Math.round(got)), target: Math.abs(Math.round(energy.plannedNet)) * 7 };
+    })(),
+    freeze: (() => {
+      const days = ((flagRows.data ?? []).find((f) => f.key === "streak_freezes")?.value as { days?: string[] } | undefined)?.days ?? [];
+      return { frozenToday: days.includes(today), left: freezesLeft(days, today), cost: FREEZE.cost, canAfford: ledger.callus >= FREEZE.cost };
     })(),
     loggedToday: facts.loggedOnDay,
     proteinHit: facts.proteinTargetG > 0 && facts.proteinG >= facts.proteinTargetG,

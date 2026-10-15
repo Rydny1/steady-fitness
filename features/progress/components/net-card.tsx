@@ -63,9 +63,12 @@ export function NetCard({
       </div>
       <NetChart bars={bars} goal={goal} targetNet={targetNet} />
       <div className="mt-1 flex justify-between text-caption text-muted">
-        <span>Dashed: your daily {word} target</span>
+        <span>Dashed line: your {word} target</span>
         <span className="num">{signed(targetNet)}</span>
       </div>
+      <p className="mt-1 text-caption text-muted">
+        Each bar is one day: eaten minus burned. Below the line, weight goes down.
+      </p>
       <p className={"mt-3 text-body leading-[1.4] " + (ai ? "neon-text" : "text-ink")} aria-live="polite">
         {text}
       </p>

@@ -26,3 +26,14 @@ describe("streak moments", () => {
     expect(f?.kind === "food" && f.kcal).toBe(0);
   });
 });
+
+import { isDay } from "@/lib/dates";
+
+describe("isDay", () => {
+  it("rejects dates that do not exist", () => {
+    expect(isDay("2026-10-16")).toBe(true);
+    expect(isDay("2026-09-31")).toBe(false);
+    expect(isDay("2026-02-30")).toBe(false);
+    expect(isDay("2026-13-01")).toBe(false);
+  });
+});

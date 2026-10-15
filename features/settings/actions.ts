@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ageOn, todayRiga } from "@/lib/dates";
 import { MAX_PROMISES } from "./defaults";
 import { computeTargets } from "@/features/nutrition/targets";
+import { baseBurn, netForLimit } from "@/features/nutrition/plan";
 
 export type SettingsOutcome =
   | { ok: true }
@@ -54,6 +55,10 @@ export async function saveTargets(input: unknown): Promise<SettingsOutcome> {
     supabase.from("profiles").update({ goal_weight_kg: v.goalKg }).eq("user_id", user.id),
   ]);
   if (t.error || p.error) return { ok: false, reason: "failed" };
+  // The chosen deficit, kept as a constant for the weekly fine-tuning.
+  await supabase
+    .from("user_flags")
+    .upsert({ user_id: user.id, key: "plan_net", value: { net: netForLimit(baseBurn(current.bmr_kcal), v.budgetKcal) } }, { onConflict: "user_id,key" });
   if (v.adaptive !== undefined) {
     await supabase
       .from("user_flags")
@@ -122,7 +127,7 @@ export async function saveHabits(input: unknown): Promise<SettingsOutcome> {
 
   const { data: all, error: readError } = await supabase.from("habits").select("id,position,archived_at");
   if (readError) return { ok: false, reason: "failed" };
-  const known = new Set((all ?? []).map((h) => h.id));
+  const known = new Set((all ?? []).filter((h) => h.archived_at === null).map((h) => h.id));
   const keep = parsed.data.habits.filter((h): h is { id: string; name: string } => h.id !== null && known.has(h.id));
   const keepIds = new Set(keep.map((h) => h.id));
   const maxPos = Math.max(0, ...(all ?? []).map((h) => h.position));

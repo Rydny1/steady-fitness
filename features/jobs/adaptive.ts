@@ -46,6 +46,14 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
   ]);
   if (!target.data) return null;
 
+  // The deficit the person chose is stored once and never rebuilt from the limit it produced.
+  const { data: planRow } = await admin.from("user_flags").select("value").eq("user_id", userId).eq("key", "plan_net").maybeSingle();
+  let planNet = (planRow?.value as { net?: number } | null)?.net;
+  if (typeof planNet !== "number") {
+    planNet = netForLimit(baseBurn(target.data.bmr_kcal), target.data.budget_kcal);
+    await admin.from("user_flags").upsert({ user_id: userId, key: "plan_net", value: { net: planNet } }, { onConflict: "user_id,key" });
+  }
+
   const entries = (weights.data ?? []).map((w) => ({ day: w.measured_on, kg: Number(w.weight_kg) }));
   const start = trendAt(entries, from);
   const end = trendAt(entries, to);
@@ -59,7 +67,7 @@ export async function runAdaptiveBudget(admin: Db, userId: string, today: string
     currentBudgetKcal: target.data.budget_kcal,
     bmrKcal: target.data.bmr_kcal,
     budgetFactor: budgetFactorFor(goalFor(end, Number(profile.data?.goal_weight_kg ?? end))),
-    targetNetKcal: netForLimit(baseBurn(target.data.bmr_kcal), target.data.budget_kcal),
+    targetNetKcal: planNet,
     avgExerciseKcal: facts.length > 0 ? facts.reduce((s, f) => s + fullBurn(f.burnedKcal), 0) / facts.length : 0,
   });
   const line = adaptiveLine(result);

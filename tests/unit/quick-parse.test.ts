@@ -48,3 +48,36 @@ describe("quickParse", () => {
     expect(r.leftover.length).toBe(1);
   });
 });
+
+describe("quickParse edge cases", () => {
+  const first = (t: string) => quickParse(t).items[0];
+  it("decimals are decimals", () => {
+    const a = first("ran 2.5 km");
+    expect(quickParse("ran 2.5 km").leftover).toEqual([]);
+    expect(a?.kind === "activity" && a.duration_min).toBe(17);
+    const h = first("walked 1.5 hours");
+    expect(h?.kind === "activity" && h.duration_min).toBe(90);
+  });
+  it("fast food is food, not fasting; a fast walk is a walk", () => {
+    expect(quickParse("had fast food").items.every((i) => !(i.kind === "food" && i.name === "Fasting"))).toBe(true);
+    const w = first("went for a fast walk 30 min");
+    expect(w?.kind === "activity" && w.duration_min).toBe(30);
+  });
+  it("keeps the load with its exercise", () => {
+    const r = quickParse("bench press 4x8 with 60 kg");
+    expect(r.leftover).toEqual([]);
+    const b = r.items[0];
+    expect(b?.kind === "activity" && b.note).toContain("60 kg");
+  });
+  it("apple and avocado are foods, not 'a' + something", () => {
+    const r = quickParse("an apple");
+    expect(r.items[0]?.kind).toBe("food");
+  });
+  it("20 push-ups counts the 20", () => {
+    const p = first("20 push-ups");
+    expect(p?.kind === "activity" && p.note).toContain("push-ups 1x20");
+  });
+  it("chips and dips is not a workout", () => {
+    expect(quickParse("chips and dips").items.some((i) => i.kind === "activity")).toBe(false);
+  });
+});

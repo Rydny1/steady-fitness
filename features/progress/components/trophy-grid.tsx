@@ -4,15 +4,22 @@ import { useState } from "react";
 import { Award, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type TrophyItem = { key: string; name: string; hint: string; line: string; on: boolean };
+export type TrophyItem = { key: string; group: string; name: string; hint: string; line: string; on: boolean };
 
 // Tap a trophy to see what it means and how to earn it.
 export function TrophyGrid({ items }: { items: TrophyItem[] }) {
   const [open, setOpen] = useState<TrophyItem | null>(null);
+  const groups = [...items.reduce((m, t) => m.set(t.group, [...(m.get(t.group) ?? []), t]), new Map<string, TrophyItem[]>())];
   return (
     <>
-      <ul className="mx-4 mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
-        {items.map((t) => (
+      {groups.map(([group, list]) => (
+      <div key={group} className="mt-5">
+      <div className="mx-4 flex items-baseline justify-between">
+        <h3 className="text-small font-semibold text-muted">{group}</h3>
+        <span className="text-caption text-muted">{list.filter((t) => t.on).length} of {list.length}</span>
+      </div>
+      <ul className="mx-4 mt-3 grid grid-cols-4 gap-x-2 gap-y-4">
+        {list.map((t) => (
           <li key={t.key}>
             <button
               type="button"
@@ -37,6 +44,8 @@ export function TrophyGrid({ items }: { items: TrophyItem[] }) {
           </li>
         ))}
       </ul>
+      </div>
+      ))}
       {open ? (
         <div
           role="dialog"

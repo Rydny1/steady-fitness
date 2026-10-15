@@ -26,6 +26,8 @@ export async function aiCallsToday(
     .from("logs")
     .select("id", { count: "exact", head: true })
     .in("source", sources)
+    // Logs read by plain rules never touched the AI.
+    .or("model.is.null,model.neq.rules")
     .gte("created_at", sinceIso());
   return count ?? 0;
 }

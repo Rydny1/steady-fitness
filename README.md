@@ -85,11 +85,21 @@ Change the grams in the edit sheet and the calories follow. Change the kcal and 
 
 ---
 
+## Say anything you did
+
+"I ran 4 km." "Walked 5,000 steps." "4 sets of 30 abs, 4 of 4 pull-ups." "Hiked 15 km." "Swam for 40 minutes."
+
+Plain phrases are read by rules, instantly. For everything else the AI names the activity and judges how hard it is (its MET), and code checks that against a built-in table and sane limits before doing the maths. Distance, steps and pace become minutes. Sets and reps become minutes. One gym session stays one entry. If the AI is busy, rule-read items still go through and you can add by hand.
+
 ## Your deficit, your call
 
 Pick a goal weight and a number of weeks. Steady suggests a daily deficit (or surplus, to gain), tells you plainly what pace that is, and you can change it. Today shows the deficit so far against your target and how much you can still eat.
 
 Logging is built the same way: simple things ("ran 4 km", "5000 steps", "2 eggs") are read by rules, instantly, with no AI. Only the rest goes to Gemini, and the numbers always come from code.
+
+## Streaks, levels, trophies
+
+A streak circle fills with the promises you kept today (any number, up to nine). A week of circles, a weekly deficit goal, and a streak freeze that costs Callus. Callus gets harder to earn the higher it climbs. Eight levels (Rookie to Icon) run a year, and 43 trophies in nine groups keep going until the goal is met.
 
 ## Net calories that know your goal
 
@@ -112,7 +122,7 @@ Your daily budget and the Monday budget adjustment use the same goal logic. 7,70
 | Data | Supabase: Postgres, Auth, private Storage |
 | AI | Gemini, with a speed-ranked model fallback chain |
 | Hosting | Vercel |
-| Tests | Vitest. 180+ unit tests on the pure engine |
+| Tests | Vitest. 240+ unit tests on the pure engine |
 
 ### Shape of the code
 

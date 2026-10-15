@@ -522,6 +522,7 @@ describe("trophies", () => {
   const none: TrophyInput = {
     logCount: 0,
     bestStreak: 0,
+    careerDays: 0,
     weekResults: [],
     gymStartsBefore08: 0,
     answerBacksDone: 0,
@@ -535,7 +536,7 @@ describe("trophies", () => {
   };
 
   it("nothing is earned from nothing, and there are twelve", () => {
-    expect(TROPHY_KEYS).toHaveLength(12);
+    expect(TROPHY_KEYS).toHaveLength(43);
     expect(Object.values(evaluateTrophies(none)).some(Boolean)).toBe(false);
   });
 
@@ -567,9 +568,9 @@ describe("trophies", () => {
 
   it("lists only newly earned trophies", () => {
     const input = { ...none, logCount: 3, bestStreak: 8 };
-    expect(newlyEarned(input, [])).toEqual(["first_whistle", "seven_straight"]);
-    expect(newlyEarned(input, ["first_whistle"])).toEqual(["seven_straight"]);
-    expect(newlyEarned(input, ["first_whistle", "seven_straight"])).toEqual([]);
+    expect(newlyEarned(input, [])).toEqual(["first_whistle", "streak_3", "seven_straight"]);
+    expect(newlyEarned(input, ["first_whistle"])).toEqual(["streak_3", "seven_straight"]);
+    expect(newlyEarned(input, ["first_whistle", "streak_3", "seven_straight"])).toEqual([]);
   });
 });
 

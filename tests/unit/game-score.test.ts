@@ -58,11 +58,12 @@ describe("Callus daily points (PRODUCT.md table)", () => {
       overBudget: 0,
       protein: 1,
       habits: 1,
+      freeze: 0,
       weekly: 0,
     });
     expect(s.points).toBe(11);
     expect(s.callus).toBe(61);
-    expect(s.form.name).toBe("In form");
+    expect(s.form.name).toBe("Finding form");
     expect(s.streak).toBe(1);
     expect(s.careerDays).toBe(1);
     expect(s.counted).toBe(true);
@@ -231,12 +232,12 @@ describe("streak", () => {
 describe("form bands", () => {
   it("covers the boundaries", () => {
     expect(formFor(0).name).toBe("Off form");
-    expect(formFor(29).name).toBe("Off form");
-    expect(formFor(30).name).toBe("Finding form");
-    expect(formFor(59).name).toBe("Finding form");
-    expect(formFor(60).name).toBe("In form");
-    expect(formFor(84).name).toBe("In form");
-    expect(formFor(85).name).toBe("Peak form");
+    expect(formFor(34).name).toBe("Off form");
+    expect(formFor(35).name).toBe("Finding form");
+    expect(formFor(64).name).toBe("Finding form");
+    expect(formFor(65).name).toBe("In form");
+    expect(formFor(89).name).toBe("In form");
+    expect(formFor(90).name).toBe("Peak form");
     expect(formFor(100).name).toBe("Peak form");
     expect(formFor(-4).key).toBe("off_form");
     expect(formFor(140).key).toBe("peak_form");
@@ -252,20 +253,20 @@ describe("form bands", () => {
 
 describe("divisions", () => {
   it("promotes when career days reach the mark and Callus clears the bar", () => {
-    const r = applyDivision({ division: "starting_line", careerDays: 7, offFormDays: 0 }, 60);
-    expect(r).toMatchObject({ division: "showing_up", promoted: true, dropped: false, from: "starting_line", careerDays: 7 });
+    const r = applyDivision({ division: "starting_line", careerDays: 10, offFormDays: 0 }, 50);
+    expect(r).toMatchObject({ division: "showing_up", promoted: true, dropped: false, from: "starting_line", careerDays: 10 });
   });
 
   it("does not promote under the Callus bar or before the mark", () => {
-    expect(applyDivision({ division: "starting_line", careerDays: 7, offFormDays: 0 }, 59).promoted).toBe(false);
-    expect(applyDivision({ division: "starting_line", careerDays: 6, offFormDays: 0 }, 90).promoted).toBe(false);
+    expect(applyDivision({ division: "starting_line", careerDays: 10, offFormDays: 0 }, 49).promoted).toBe(false);
+    expect(applyDivision({ division: "starting_line", careerDays: 9, offFormDays: 0 }, 90).promoted).toBe(false);
   });
 
   it("uses the higher bars further up", () => {
-    expect(applyDivision({ division: "strong", careerDays: 120, offFormDays: 0 }, 64).promoted).toBe(false);
-    expect(applyDivision({ division: "strong", careerDays: 120, offFormDays: 0 }, 65).division).toBe("disciplined");
-    expect(applyDivision({ division: "disciplined", careerDays: 180, offFormDays: 0 }, 69).promoted).toBe(false);
-    expect(applyDivision({ division: "disciplined", careerDays: 180, offFormDays: 0 }, 70).division).toBe("proven");
+    expect(applyDivision({ division: "strong", careerDays: 150, offFormDays: 0 }, 69).promoted).toBe(false);
+    expect(applyDivision({ division: "strong", careerDays: 150, offFormDays: 0 }, 70).division).toBe("disciplined");
+    expect(applyDivision({ division: "disciplined", careerDays: 220, offFormDays: 0 }, 74).promoted).toBe(false);
+    expect(applyDivision({ division: "disciplined", careerDays: 220, offFormDays: 0 }, 75).division).toBe("proven");
     expect(applyDivision({ division: "proven", careerDays: 365, offFormDays: 0 }, 79).promoted).toBe(false);
     expect(applyDivision({ division: "proven", careerDays: 365, offFormDays: 0 }, 80).division).toBe("one_year");
   });
@@ -288,12 +289,12 @@ describe("divisions", () => {
     const two = applyDivision({ division: "building", careerDays: 30, offFormDays: 1 }, 20);
     expect(two).toMatchObject({ dropped: false, offFormDays: 2, division: "building" });
     const three = applyDivision({ division: "building", careerDays: 30, offFormDays: 2 }, 20);
-    expect(three).toMatchObject({ dropped: true, division: "showing_up", careerDays: 7, offFormDays: 0, from: "building" });
+    expect(three).toMatchObject({ dropped: true, division: "showing_up", careerDays: 10, offFormDays: 0, from: "building" });
   });
 
   it("a good day resets the off-form counter", () => {
-    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 2 }, 30).offFormDays).toBe(0);
-    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 1 }, 29).offFormDays).toBe(2);
+    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 2 }, 40).offFormDays).toBe(0);
+    expect(applyDivision({ division: "building", careerDays: 30, offFormDays: 1 }, 34).offFormDays).toBe(2);
   });
 
   it("nothing to drop at Sunday League, the counter keeps running", () => {
@@ -319,33 +320,33 @@ describe("divisions", () => {
     expect(s.callus).toBe(18);
     expect(s.dropped).toBe(true);
     expect(s.division).toBe("showing_up");
-    expect(s.careerDays).toBe(7);
+    expect(s.careerDays).toBe(10);
     expect(s.previousDivision).toBe("building");
   });
 
   it("scoreDay drives a promotion end to end, and a sub-bar day holds back", () => {
-    const up = scoreDay(day({}, { callus: 55, careerDays: 6 }));
+    const up = scoreDay(day({}, { callus: 55, careerDays: 9 }));
     expect(up.callus).toBe(66);
-    expect(up.careerDays).toBe(7);
+    expect(up.careerDays).toBe(10);
     expect(up.promoted).toBe(true);
     expect(up.division).toBe("showing_up");
-    const held = scoreDay(day({ eatenKcal: 1700, proteinG: 0, habitsDone: 0 }, { callus: 50, careerDays: 6 }));
-    expect(held.callus).toBe(57);
+    const held = scoreDay(day({ eatenKcal: 1700, proteinG: 0, habitsDone: 0 }, { callus: 30, careerDays: 9 }));
+    expect(held.callus).toBeLessThan(50);
     expect(held.promoted).toBe(false);
   });
 
   it("helpers", () => {
     expect(divisionIndex("starting_line")).toBe(0);
     expect(divisionIndex("one_year")).toBe(7);
-    expect(divisionMark("disciplined")).toBe(120);
+    expect(divisionMark("disciplined")).toBe(150);
     expect(nextDivision("showing_up")).toBe("building");
     expect(nextDivision("one_year")).toBeNull();
     expect(previousDivision("showing_up")).toBe("starting_line");
     expect(previousDivision("starting_line")).toBeNull();
-    expect(daysToNextDivision({ division: "showing_up", careerDays: 10 })).toBe(11);
+    expect(daysToNextDivision({ division: "showing_up", careerDays: 10 })).toBe(20);
     expect(daysToNextDivision({ division: "showing_up", careerDays: 40 })).toBe(0);
     expect(daysToNextDivision({ division: "one_year", careerDays: 400 })).toBeNull();
-    expect(nextDivisionBar("strong")).toBe(65);
+    expect(nextDivisionBar("strong")).toBe(70);
     expect(nextDivisionBar("one_year")).toBeNull();
   });
 });
@@ -429,5 +430,37 @@ describe("rings", () => {
     expect(sessionStatus("rest", false, true)).toBe("rest");
     expect(sessionStatus(null, false, true)).toBe("rest");
     expect(sessionStatus("stretch", true, true)).toBe("rest");
+  });
+});
+
+describe("Callus gets harder as it climbs, and a freeze keeps the streak", () => {
+  it("the same perfect day earns less near the top", () => {
+    const low = scoreDay(day({}, { callus: 50 })).points;
+    const high = scoreDay(day({}, { callus: 90 })).points;
+    expect(low).toBe(11);
+    expect(high).toBeLessThan(low);
+    expect(high).toBeGreaterThanOrEqual(5);
+  });
+  it("a frozen, unlogged day costs 8 Callus, keeps the streak and counts as a day", () => {
+    const s = scoreDay(day({ logged: false, loggedOnDay: false, frozen: true }, { callus: 60, streak: 12, careerDays: 20 }));
+    expect(s.points).toBe(-8);
+    expect(s.callus).toBe(52);
+    expect(s.streak).toBe(12);
+    expect(s.counted).toBe(false);
+  });
+  it("an unfrozen miss still breaks the streak", () => {
+    const s = scoreDay(day({ logged: false, loggedOnDay: false }, { callus: 60, streak: 12 }));
+    expect(s.streak).toBe(0);
+    expect(s.points).toBe(-12);
+  });
+  it("a freeze costs nothing if you end up logging", () => {
+    const s = scoreDay(day({ frozen: true }, { callus: 60, streak: 12 }));
+    expect(s.points).toBeGreaterThan(0);
+    expect(s.streak).toBe(13);
+  });
+  it("the all-promises point needs all of them, whatever the count", () => {
+    expect(pointsForDay(day({ habitsDone: 3, habitsTotal: 3 })).breakdown.habits).toBe(1);
+    expect(pointsForDay(day({ habitsDone: 2, habitsTotal: 3 })).breakdown.habits).toBe(0);
+    expect(pointsForDay(day({ habitsDone: 0, habitsTotal: 0 })).breakdown.habits).toBe(0);
   });
 });

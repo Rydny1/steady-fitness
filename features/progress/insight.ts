@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { todayRiga } from "@/lib/dates";
 import { netInsight } from "@/lib/ai/gemini";
 import { monthNeed, paceSentence, type NetProjection } from "@/features/nutrition/projection";
 
@@ -52,7 +53,7 @@ export async function getNetInsight(raw: unknown): Promise<{ text: string; ai: b
   if (cached?.key === p.key && cached.text) return { text: cached.text, ai: cached.ai !== false };
   // The free AI quota is shared, so each person gets a few of these a day.
   const counter = rows?.find((r) => r.key === "net_insight_count")?.value as { day?: string; n?: number } | undefined;
-  const todayKey = p.key.split("|")[0] ?? "";
+  const todayKey = todayRiga();
   const used = counter?.day === todayKey ? (counter.n ?? 0) : 0;
   if (used >= 5) return { text: plain, ai: false };
   await supabase

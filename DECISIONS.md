@@ -24,7 +24,7 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - Delete everything uses the secret-key client once (to delete the auth user, which cascades every table). It is the only place outside `api/cron` that imports it.
 - Photos: client re-encodes to JPEG 1600 px (drops EXIF and GPS), uploads straight to private Storage, signed URLs last one hour. The export zip is built by a 60-line stored-zip writer (`lib/zip.ts`) so no zip dependency was added.
 - Packages added: zod, @google/genai, web-push, server-only, vitest, @vitest/coverage-v8, eslint-plugin-security, prettier, @playwright/test, @types/web-push. All pinned to exact versions.
-- Gemini: model chain from `GEMINI_MODEL` then `GEMINI_FALLBACK_MODELS` (comma separated), one attempt per model, 12 s each. The key currently shows 5 requests a minute and 20 a day per model, so three models give three times the headroom.
+- Gemini: model chain from `GEMINI_MODEL` then `GEMINI_FALLBACK_MODELS` (comma separated), one attempt per model (now 8 s each, 45 s total). The key currently shows 5 requests a minute and 20 a day per model, so three models give three times the headroom.
 - Offline queue holds tap logs only (saved foods, quick buys, barcode results), never AI calls.
 - **Security review fixes (SECURITY_REPORT.md)**: two-step sign-in is now enforced by the database too (restrictive policy `require_aal2` on every user table and on Storage), so a password-only session cannot read data through the REST API. Direct calls to the public Auth sign-up endpoint are refused by a trigger that needs a secret token (Vault `steady_signup_token`, env `SIGNUP_TOKEN`) that only the Steady server knows, so the 12-character rule, consent box and rate guard cannot be skipped. Consent time and version are stored in the user's metadata. Failed AI calls now count toward the daily limit. Force RLS is on every table. `/auth/confirm` rejects backslash redirects, export downloads refuse cross-site requests, and every dependency is pinned to an exact version.
 
@@ -51,3 +51,12 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - **Deficit fun fact:** "About 0.19 kg of body fat. Repeat it for a week: 1.3 kg." (7,700 kcal per kg.)
 - **Any logged day counts toward net averages**, fasting days included ("I fasted today" logs a zero-calorie entry).
 - **Photo buttons** everywhere offer camera or gallery (`components/photo-picker.tsx`).
+
+## Round 7 (owner changes)
+
+- **Any activity can be logged.** The type stays one of eight (other for anything new), the person's own name is stored as `label` (migration 0010). Known activities use a MET table; unknown ones use the AI's estimate held to 1.5 to 15, and an assumed time is flagged. Strength is sets x reps turned into minutes and merged into one gym entry; hiking is MET 6 at 4 km/h.
+- **Promises: zero to nine** (migration 0011). Removed ones are archived, never deleted. The all-promises point needs all of them.
+- **Harder Callus, longer road.** Gains shrink above 50 (floor 50 percent). Form bands 35 / 65 / 90. Eight levels over 365 days (10, 30, 60, 100, 150, 220, 365) named Rookie, Contender, Grinder, Dialed In, Locked On, Elite, Legend, Icon. 43 trophies in nine groups.
+- **Streak freeze.** Two a month, set for today, costs 8 Callus only if nothing is logged that day; the streak is kept. Stored in `user_flags.streak_freezes`.
+- **Day pages** (`/day/[date]`, up to 60 days back) with the same edit sheet; "Add to this day" on the Log screen.
+- **Known simplification:** net uses burn = BMR x 1.3 + full exercise MET x kg x h, so steps and long walks are partly counted twice and hard runs are about 10 percent high. Kept on purpose: it is simple to explain and errs toward a bigger burn number. Revisit if real weight change disagrees.

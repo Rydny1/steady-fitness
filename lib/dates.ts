@@ -145,7 +145,9 @@ export function greeting(hour: number, name: string): string {
 }
 
 export function isDay(value: string): value is DayString {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const t = Date.parse(`${value}T12:00:00Z`);
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === value;
 }
 
 export function ageOn(birthDate: DayString, day: DayString): number {

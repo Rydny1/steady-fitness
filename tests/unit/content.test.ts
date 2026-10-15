@@ -87,14 +87,14 @@ describe("meals", () => {
 describe("naming", () => {
   it("uses levels, not football divisions", () => {
     expect(Object.values(chapters).map((c) => c.name)).toEqual([
-      "Starting line",
-      "Showing up",
-      "Building",
-      "Consistent",
-      "Strong",
-      "Disciplined",
-      "Proven",
-      "One year",
+      "Rookie",
+      "Contender",
+      "Grinder",
+      "Dialed In",
+      "Locked On",
+      "Elite",
+      "Legend",
+      "Icon",
     ]);
   });
 

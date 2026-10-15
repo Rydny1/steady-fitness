@@ -3,7 +3,9 @@ import type { DivisionT, SessionStatusT } from "@/lib/supabase/types";
 import {
   CALLUS_MAX,
   CALLUS_MIN,
+  FREEZE,
   FUEL_TOLERANCE,
+  GAIN_FLOOR,
   HABITS_REQUIRED,
   OVER_BUDGET_LIMIT,
   POINTS,
@@ -21,6 +23,8 @@ export type ScoreBreakdown = {
   overBudget: number;
   protein: number;
   habits: number;
+  /** A used streak freeze: the price of keeping the streak. */
+  freeze: number;
   /** Weekly match result and challenge reward, applied on the day they land. */
   weekly: number;
 };
@@ -41,7 +45,11 @@ export type DayScoreInput = {
   proteinTargetG: number;
   /** Promises ticked on the day. */
   habitsDone: number;
+  /** How many promises the person has. Defaults to five. The point needs all of them. */
+  habitsTotal?: number;
   sick: boolean;
+  /** A streak freeze was set for this day. Costs Callus only if nothing gets logged. */
+  frozen?: boolean;
   /** Weekly points to add today (week result and challenge reward). */
   weeklyPoints?: number;
   prev: {
@@ -74,6 +82,11 @@ export type DayScore = {
   counted: boolean;
 };
 
+/** 1 up to 50 Callus, then falling to the floor at 100. */
+export function gainFactor(callus: number): number {
+  return Math.max(GAIN_FLOOR, Math.min(1, 1 - (callus - 50) / 100));
+}
+
 export function clampCallus(value: number): number {
   return Math.max(CALLUS_MIN, Math.min(CALLUS_MAX, Math.round(value)));
 }
@@ -86,6 +99,7 @@ const ZERO: ScoreBreakdown = {
   overBudget: 0,
   protein: 0,
   habits: 0,
+  freeze: 0,
   weekly: 0,
 };
 
@@ -100,7 +114,10 @@ export function pointsForDay(input: DayScoreInput): {
   const counted = input.logged && input.loggedOnDay;
   const b: ScoreBreakdown = { ...ZERO };
 
-  if (!counted) {
+  if (!counted && input.frozen) {
+    // The freeze keeps the streak and takes the place of the missed-day penalty.
+    b.freeze = -FREEZE.cost;
+  } else if (!counted) {
     b.notLogged = POINTS.dayNotLogged;
   } else {
     b.logged = POINTS.dayLogged;
@@ -123,12 +140,21 @@ export function pointsForDay(input: DayScoreInput): {
     ) {
       b.protein = POINTS.protein;
     }
-    if (input.habitsDone >= HABITS_REQUIRED) b.habits = POINTS.habits;
+    const total = input.habitsTotal ?? HABITS_REQUIRED;
+    if (total > 0 && input.habitsDone >= total) b.habits = POINTS.habits;
+    // The higher your Callus, the harder it climbs: gains shrink toward the floor.
+    const k = gainFactor(input.prev.callus);
+    const soften = (n: number) => (n > 0 ? Math.max(1, Math.round(n * k)) : n);
+    b.logged = soften(b.logged);
+    b.session = soften(b.session);
+    b.fuel = soften(b.fuel);
+    b.protein = soften(b.protein);
+    b.habits = soften(b.habits);
   }
   b.weekly = input.weeklyPoints ?? 0;
 
   const points =
-    b.logged + b.notLogged + b.session + b.fuel + b.overBudget + b.protein + b.habits + b.weekly;
+    b.logged + b.notLogged + b.session + b.fuel + b.overBudget + b.protein + b.habits + b.freeze + b.weekly;
   return { points, breakdown: b, counted };
 }
 
@@ -162,9 +188,10 @@ export function scoreDay(input: DayScoreInput): DayScore {
 
   const { points, breakdown, counted } = pointsForDay(input);
   const callus = clampCallus(prev.callus + points);
+  // A freeze pauses the streak, like a sick day, but costs Callus.
   const streakResult = stepStreak(
     { streak: prev.streak, bestStreak: prev.bestStreak },
-    { loggedOnDay: counted, sick: false },
+    { loggedOnDay: counted, sick: Boolean(input.frozen) && !counted },
   );
   const div = applyDivision(
     {
