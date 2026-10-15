@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dumbbell } from "lucide-react";
+import { Award, Dumbbell } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
@@ -9,6 +9,7 @@ import { FormCard } from "@/features/today/components/form-card";
 import { Promises } from "@/features/today/components/promises";
 import { LogList } from "@/features/today/components/log-list";
 import { CheckinCard } from "@/features/today/components/checkin-sheet";
+import { Celebration } from "@/features/today/components/celebration";
 import { LevelCard } from "@/features/today/components/level-card";
 import { AdaptiveNote } from "@/features/today/components/adaptive-note";
 import { EnergyLine } from "@/features/today/components/energy-line";
@@ -35,6 +36,7 @@ export default async function TodayPage() {
       {d.levelEvent ? (
         <LevelCard kind={d.levelEvent.kind} division={d.levelEvent.division} callus={d.form.callus} />
       ) : null}
+      {!d.levelEvent && d.celebrate.length > 0 ? <Celebration trophies={d.celebrate} /> : null}
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
         <span className="text-small text-muted">{formatDayLong(today)}</span>
         <Link
@@ -48,6 +50,12 @@ export default async function TodayPage() {
       <h1 className="mx-4 mt-1 text-title font-bold tracking-[-0.8px]">
         {greeting(d.hour, profile.display_name)}
       </h1>
+      {d.title ? (
+        <span className="neon-chip mx-4 mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-semibold">
+          <Award size={14} strokeWidth={2} aria-hidden="true" />
+          {d.title}
+        </span>
+      ) : null}
 
       <RingsCard
         rings={d.rings}
@@ -73,7 +81,7 @@ export default async function TodayPage() {
           {d.line.text}
         </p>
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[clamp(12px,3.59vw,13px)] text-muted-dark">{d.line.byline}</span>
+          <span className="text-[clamp(13px,3.8vw,14px)] text-muted-dark">{d.line.byline}</span>
           <span className="h-1 w-7 rounded-full bg-amber" />
         </div>
       </section>

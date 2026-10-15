@@ -69,7 +69,7 @@ export function QuickBuys({ items, day }: { items: QuickBuy[]; day: string }) {
                 ) : null}
               </span>
               <span className="mt-2 block text-[clamp(13px,4.10vw,15px)] font-semibold">{q.name}</span>
-              <span className="block text-[clamp(12px,3.59vw,13px)] text-muted">{q.detail}</span>
+              <span className="block text-[clamp(13px,3.8vw,14px)] text-muted">{q.detail}</span>
             </button>
           </li>
         ))}

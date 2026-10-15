@@ -117,3 +117,23 @@ export async function markSeen(input: unknown): Promise<SimpleOutcome> {
   revalidatePath("/today");
   return { ok: true };
 }
+
+const ackSchema = z.object({ keys: z.array(z.string().min(1).max(40)).min(1).max(20) });
+
+/** Remember which trophies the person has seen celebrated, so the popup shows each once. */
+export async function ackTrophies(input: unknown): Promise<SimpleOutcome> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, reason: "signed_out" };
+  const parsed = ackSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const { data: row } = await supabase.from("user_flags").select("value").eq("key", "trophies_seen").maybeSingle();
+  const before = ((row?.value as { keys?: string[] } | null)?.keys ?? []).filter((k) => typeof k === "string");
+  const keys = [...new Set([...before, ...parsed.data.keys])];
+  const { error } = await supabase
+    .from("user_flags")
+    .upsert({ user_id: auth.user.id, key: "trophies_seen", value: { keys } }, { onConflict: "user_id,key" });
+  if (error) return { ok: false, reason: "failed" };
+  revalidatePath("/today");
+  return { ok: true };
+}

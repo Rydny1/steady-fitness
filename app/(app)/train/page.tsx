@@ -172,7 +172,7 @@ export default async function TrainPage({
         {TAGS[key] ? (
           <div className="mt-3 flex flex-wrap gap-[6px]">
             {TAGS[key]?.map((t) => (
-              <span key={t} className="rounded-full bg-card px-3 py-[6px] text-[clamp(12px,3.59vw,13px)]">
+              <span key={t} className="rounded-full bg-card px-3 py-[6px] text-[clamp(13px,3.8vw,14px)]">
                 {t}
               </span>
             ))}

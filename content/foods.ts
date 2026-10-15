@@ -3548,4 +3548,14 @@ export const foods: Food[] = [
     source: "usda-sr",
     sourceId: "169985",
   },
+  {
+    id: "ndole",
+    name: "Ndolé (bitterleaf and peanut stew with shrimp)",
+    aliases: ["ndole", "ndolé", "ndole with shrimp", "ndole stew", "bitterleaf stew", "ndole plantain"],
+    state: "prepared",
+    per100: { kcal: 163, protein: 8.6, carbs: 5.2, fat: 12.4 },
+    portions: [{ unit: "bowl", grams: 250 }, { unit: "serving", grams: 200 }, { unit: "ladle", grams: 100 }],
+    source: "composite",
+    sourceId: "Peanut butter 30 g (172470), vegetable oil 20 g (171025), boiled spinach 150 g (168463) as bitterleaf stand-in, cooked shrimp 50 g (175180), onion 20 g (170000); simmered total 270 g",
+  },
 ];

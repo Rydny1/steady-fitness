@@ -68,7 +68,7 @@ export function WeighIn({ day, openOnLoad }: { day: string; openOnLoad: boolean 
                 ] as const
               ).map(([k, label]) => (
                 <label key={k} className="flex flex-col gap-2">
-                  <span className="text-[clamp(12px,3.59vw,13px)] font-semibold">{label}</span>
+                  <span className="text-[clamp(13px,3.8vw,14px)] font-semibold">{label}</span>
                   <input
                     name={k}
                     inputMode="decimal"

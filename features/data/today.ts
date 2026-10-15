@@ -15,7 +15,7 @@ import {
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
 import { dayBurn, goalFor, netKcal, readBalance, type BalanceRead, type Goal } from "@/features/nutrition/energy";
-import { chapters, coachForm, matchLines, type FormName } from "@/content/copy";
+import { chapters, coachForm, matchLines, trophies as trophyCopy, type FormName } from "@/content/copy";
 import { comebackQuotes, quotes } from "@/content/lines";
 import { SESSION_NAMES } from "@/features/settings/defaults";
 import { loadDayFacts, ringsFor, sessionStatusFor, toRecord, type DayFacts } from "./day-facts";
@@ -30,6 +30,10 @@ export type FoodItem = {
   name: string;
   detail: string;
   kcal: number;
+  protein_g: number;
+  /** Amount as saved, in grams when the unit is g. */
+  quantity: number | null;
+  unit: string | null;
   photoPath: string | null;
 };
 
@@ -70,6 +74,10 @@ export type TodayData = {
   photoDue: boolean;
   /** Net energy against the goal: yesterday, and what eating the budget would give. */
   energy: { goal: Goal; yesterdayNet: number | null; plannedNet: number; read: BalanceRead | null };
+  /** Trophies earned since the last visit: a celebration popup shows them once. */
+  celebrate: { key: string; name: string; line: string }[];
+  /** The name on your profile: the latest trophy you have earned. */
+  title: string | null;
   /** One level change not yet seen: a full-screen card shows it once. */
   levelEvent: { kind: "promoted" | "dropped"; division: DivisionT; from: DivisionT } | null;
   /** The Coach's latest true line today, from the Observer. */
@@ -153,7 +161,7 @@ export async function loadToday(
         .order("taken_on", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase.from("user_flags").select("key,value").in("key", ["chapter_event", "adaptive_note"]),
+      supabase.from("user_flags").select("key,value").in("key", ["chapter_event", "adaptive_note", "trophies_seen"]),
       supabase
         .from("observer_notes")
         .select("text")
@@ -236,6 +244,13 @@ export async function loadToday(
       levelEvent = { kind: evFlag.kind, division: evFlag.division, from: evFlag.from };
     }
   }
+  const seenKeys =
+    ((flagRows.data ?? []).find((f) => f.key === "trophies_seen")?.value as { keys?: string[] } | undefined)?.keys ?? [];
+  const earned = trophyCopy.filter((t) => trophies[t.key as keyof typeof trophies]);
+  const celebrate = earned
+    .filter((t) => !seenKeys.includes(t.key))
+    .map((t) => ({ key: t.key, name: t.name, line: t.line }));
+  const title = earned.length > 0 ? (earned[earned.length - 1]?.name ?? null) : null;
   const adFlag = (flagRows.data ?? []).find((f) => f.key === "adaptive_note")?.value as
     | { text?: string; seen?: boolean }
     | undefined;
@@ -286,6 +301,8 @@ export async function loadToday(
     },
     streak: prev.streak + (facts.loggedOnDay && !facts.sick ? 1 : 0),
     careerDays: prev.careerDays,
+    celebrate,
+    title,
     trophiesEarned: Object.values(trophies).filter(Boolean).length,
     trophiesTotal: TROPHY_TOTAL,
     habits: (habits.data ?? []).map((h) => ({ id: h.id, name: h.name, checked: checked.has(h.id) })),
@@ -300,6 +317,9 @@ export async function loadToday(
         .filter(Boolean)
         .join(", "),
       kcal: f.kcal,
+      protein_g: Number(f.protein_g),
+      quantity: f.quantity === null ? null : Number(f.quantity),
+      unit: f.unit,
       photoPath: photoByFood.get(f.id) ?? null,
     })),
     activities: (acts.data ?? []).map((a) => ({

@@ -41,7 +41,10 @@ export type Match = { food: Food; score: number };
 
 /** Best food for a spoken name, with a score from 0 to 1. Accept at 0.72 or more. */
 export function matchFood(name: string): Match | null {
-  const q = tokens(name);
+  // "ndole with shrimp": the dish is what comes before "with". Matching the side ingredient
+  // would price a whole dish as shrimp.
+  const head = name.split(/\s+with\s+/i)[0] ?? name;
+  const q = tokens(head.length >= 3 ? head : name);
   if (q.length === 0) return null;
   const qText = q.join(" ");
   const qSet = new Set(q);

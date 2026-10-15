@@ -55,6 +55,10 @@ export default async function FuelPage() {
     })),
   }));
 
+  const pickedMeals = picked.flatMap((slug) => batchMeals.filter((m) => m.slug === slug));
+  const planKcal = pickedMeals.reduce((s, m) => s + m.kcal * m.portions, 0);
+  const planPortions = pickedMeals.reduce((s, m) => s + m.portions, 0);
+
   const urls = await signedUrls(
     supabase,
     "meal-photos",
@@ -109,7 +113,13 @@ export default async function FuelPage() {
       />
       <p className="mx-4 mt-3 text-caption text-muted">{copy.fuel.pickTwo}. {copy.fuel.pickThursday}. {copy.fuel.fridge}</p>
 
-      <ShoppingList weekStart={ws} groups={groups} checked={checkedValue?.checked ?? []} />
+      <ShoppingList
+        weekStart={ws}
+        groups={groups}
+        checked={checkedValue?.checked ?? []}
+        totalKcal={planKcal}
+        portions={planPortions}
+      />
 
       <div className="mx-4 mt-8 flex items-baseline justify-between">
         <h2 className="text-section font-bold tracking-[-0.3px]">{copy.fuel.quickBuys}</h2>
