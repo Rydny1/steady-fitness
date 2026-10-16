@@ -838,7 +838,7 @@ export const foods: Food[] = [
   {
     id: "yogurt_greek_whole",
     name: "Greek yogurt, whole milk",
-    aliases: ["greek yogurt", "greek yoghurt", "full fat greek yogurt", "grieķu jogurts"],
+    aliases: ["greek yogurt", "greek yoghurt", "full fat greek yogurt", "strained yogurt", "grieķu jogurts"],
     state: "packaged",
     per100: { kcal: 97, protein: 9.0, carbs: 4.0, fat: 5.0 },
     portions: [{ unit: "pot", grams: 150 }, { unit: "cup", grams: 245 }, { unit: "tbsp", grams: 18 }, { unit: "bowl", grams: 200 }],

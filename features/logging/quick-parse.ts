@@ -5,7 +5,7 @@
 import type { ActivityT } from "@/lib/supabase/types";
 import { matchFood } from "@/features/nutrition/food-match";
 import { HIKE_MET, exerciseNote, resolveActivity, strengthMinutes } from "@/features/nutrition/activity";
-import { finalizeFood, type SavedLookup } from "./accuracy";
+import { finalizeFood, findSaved, type SavedLookup } from "./accuracy";
 import type { DraftItem } from "./schema";
 
 const WORDS: Record<string, number> = {
@@ -182,19 +182,20 @@ function readFood(clause: string, saved: readonly SavedLookup[]): DraftItem | nu
   const name = (m[3] ?? "").trim();
   if (name.length < 3) return null;
   const hit = matchFood(name);
-  if (!hit || hit.score < 0.85) return null;
+  const mine = findSaved(name, saved);
+  if ((!hit || hit.score < 0.85) && !mine) return null;
   const u = unit?.toLowerCase() ?? null;
   const grams = qty !== null && u && /^(g|grams?)$/.test(u) ? qty : qty !== null && u === "kg" ? qty * 1000 : null;
   const ml = qty !== null && u && /^(ml)$/.test(u) ? qty : qty !== null && u && /^(l|litres?|liters?)$/.test(u) ? qty * 1000 : null;
   const food = finalizeFood(
     {
-      name: hit.food.name.split(",")[0] ?? name,
+      name: mine ? mine.name : (hit?.food.name.split(",")[0] ?? name),
       grams: grams ?? ml,
       quantity: grams === null && ml === null ? (qty ?? 1) : null,
       unit: grams === null && ml === null ? u : null,
       kcal: null,
       protein_g: null,
-      confidence: hit.score,
+      confidence: hit?.score ?? 1,
     },
     saved,
   );
@@ -212,7 +213,7 @@ export function quickParse(text: string, saved: readonly SavedLookup[] = []): Qu
     .trim();
   const clauses = cleaned
     .split(/[;.\n]|,|\band\b|\bthen\b|\bafter that\b|\bplus\b|\bwith\b(?!\s*\d+(?:\u0001\d+)?\s*(?:kg|kilos?))/)
-    .map((c) => c.replace(/\u0001/g, ".").replace(FILLER, "").trim())
+    .map((c) => c.replace(/\u0001/g, ".").trim().replace(FILLER, "").trim())
     .filter((c) => c.length > 0);
 
   const items: DraftItem[] = [];

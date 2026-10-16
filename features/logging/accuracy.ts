@@ -1,4 +1,4 @@
-import { gramsFor, matchFood, nutrientsFor } from "@/features/nutrition/food-match";
+import { gramsFor, matchFood, nutrientsFor, tokens } from "@/features/nutrition/food-match";
 import type { DraftFood } from "./schema";
 import type { foodCategories } from "./schema";
 
@@ -43,16 +43,51 @@ export type RawFood = {
   confidence: number;
 };
 
-export type SavedLookup = { name: string; kcal: number; protein_g: number; quantity: number | null };
+export type SavedLookup = {
+  name: string;
+  kcal: number;
+  protein_g: number;
+  quantity: number | null;
+  /** Exact values per 100 g, when the food came from a label. */
+  per100Kcal?: number | null;
+  per100Protein?: number | null;
+};
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+/** Your own food for a name: the same words, or all of a multi-word saved name inside the sentence. */
+export function findSaved(name: string, saved: readonly SavedLookup[]): SavedLookup | undefined {
+  const exact = saved.find((s) => norm(s.name) === norm(name));
+  if (exact) return exact;
+  const q = new Set(tokens(name));
+  return saved.find((s) => {
+    const t = tokens(s.name);
+    return t.length >= 2 && t.every((w) => q.has(w));
+  });
+}
 
 export function finalizeFood(item: RawFood, saved: readonly SavedLookup[] = []): DraftFood {
   const name = item.name.trim().slice(0, 80) || "Food";
 
   // 1. Your own saved food or recipe, exact name: use its numbers.
-  const mine = saved.find((s) => norm(s.name) === norm(name));
+  const mine = findSaved(name, saved);
+  // From a label: exact per 100 g, so any amount is exact.
+  if (mine && mine.per100Kcal != null && mine.per100Protein != null && item.grams !== null && item.grams > 0) {
+    const g = clamp(Math.round(item.grams), 1, 5000);
+    return {
+      kind: "food",
+      name,
+      quantity: g,
+      unit: "g",
+      kcal: clamp(Math.round((mine.per100Kcal * g) / 100), 0, 5000),
+      protein_g: clamp(Math.round(((mine.per100Protein * g) / 100) * 10) / 10, 0, 300),
+      confidence: 1,
+      basis: "label",
+      grams: g,
+      per100: { kcal: mine.per100Kcal, protein: mine.per100Protein },
+    };
+  }
   if (mine && (item.grams === null || item.grams <= 0)) {
     const times = item.quantity && item.quantity > 0 ? item.quantity : 1;
     return {

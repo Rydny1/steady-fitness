@@ -60,3 +60,10 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - **Streak freeze.** Two a month, set for today, costs 8 Callus only if nothing is logged that day; the streak is kept. Stored in `user_flags.streak_freezes`.
 - **Day pages** (`/day/[date]`, up to 60 days back) with the same edit sheet; "Add to this day" on the Log screen.
 - **Known simplification:** net uses burn = BMR x 1.3 + full exercise MET x kg x h, so steps and long walks are partly counted twice and hard runs are about 10 percent high. Kept on purpose: it is simple to explain and errs toward a bigger burn number. Revisit if real weight change disagrees.
+
+## Round 8 (owner changes)
+
+- **Three tiers of truth for food numbers:** (1) a label you read or a food you saved, exact per 100 g for any amount; (2) the verified table (USDA, Open Food Facts, composites); (3) an AI estimate, clamped to a believable range and marked. A bigger model does not fix a wrong table row; reading the printed label does.
+- **Read a label:** the AI only copies the printed nutrition table; code converts per serving to per 100 g, checks energy against protein, carbs and fat (4/4/9), converts kJ mistaken for kcal, and warns when the numbers do not add up. The person confirms, and the food is saved with its exact per 100 g values (migration 0012).
+- **Matcher fix:** rare words decide (greek beats plain), generic words (plain, natural) are ignored. "Greek yogurt, plain" used to land on plain yogurt (3.5 g protein per 100 g instead of 9).
+- Free AI options were compared (Gemini lite first, Groq as a text-only fallback candidate). Not switched; health data goes to whichever provider is used.
