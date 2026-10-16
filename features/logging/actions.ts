@@ -6,7 +6,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { overLimit } from "@/lib/rate-limit";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
-import { estimateMealPhoto, parseLog } from "@/lib/ai/gemini";
+import { estimateMealPhoto, parseLog, readLabel } from "@/lib/ai/gemini";
+import { resolveLabel, type LabelFacts } from "@/features/nutrition/label";
 import { activityKcal } from "@/features/nutrition/targets";
 import { HIKE_MET, exerciseNote, resolveActivity, strengthMinutes } from "@/features/nutrition/activity";
 import { mergeGym } from "./gym";
@@ -143,12 +144,14 @@ export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
   const day = parsed.data.day ?? todayRiga();
 
   // Rules first: simple logs are read instantly and for free, without the AI.
-  const { data: savedRows } = await supabase.from("saved_foods").select("name,kcal,protein_g,quantity");
+  const { data: savedRows } = await supabase.from("saved_foods").select("name,kcal,protein_g,quantity,per100_kcal,per100_protein");
   const saved: SavedLookup[] = (savedRows ?? []).map((s) => ({
     name: s.name,
     kcal: s.kcal,
     protein_g: Number(s.protein_g),
     quantity: s.quantity === null ? null : Number(s.quantity),
+    per100Kcal: s.per100_kcal === null ? null : Number(s.per100_kcal),
+    per100Protein: s.per100_protein === null ? null : Number(s.per100_protein),
   }));
   const quick = quickParse(text, saved);
   if (quick.items.length > 0 && quick.leftover.length === 0) {
@@ -395,6 +398,19 @@ async function touchSavedFoods(
   foods: Extract<DraftItem, { kind: "food" }>[],
 ) {
   for (const f of foods) {
+    if (f.basis === "label" && f.per100) {
+      // A label is the most trustworthy source there is: keep it, exact, for next time.
+      const { data: have } = await supabase
+        .from("saved_foods")
+        .select("id,use_count")
+        .ilike("name", f.name.replace(/[%_]/g, (ch) => `\\${ch}`))
+        .limit(1)
+        .then((r) => ({ data: r.data?.[0] ?? null }));
+      const row = { kcal: f.kcal, protein_g: f.protein_g, quantity: f.quantity, unit: f.unit, per100_kcal: f.per100.kcal, per100_protein: f.per100.protein };
+      if (have) await supabase.from("saved_foods").update({ ...row, use_count: have.use_count + 1 }).eq("id", have.id);
+      else await supabase.from("saved_foods").insert({ name: f.name, ...row, use_count: 1 });
+      continue;
+    }
     const { data: saved } = await supabase
       .from("saved_foods")
       .select("id,use_count")
@@ -499,4 +515,33 @@ export async function updateFoodEntry(input: unknown): Promise<SaveOutcome> {
   revalidatePath("/today");
   revalidatePath("/day/[date]", "page");
   return { ok: true };
+}
+
+const labelInput = z.object({
+  base64: z.string().min(100).max(7_000_000),
+  mime: z.enum(["image/jpeg", "image/webp"]),
+});
+
+export type LabelOutcome =
+  | { ok: true; label: LabelFacts }
+  | { ok: false; reason: "signed_out" | "invalid" | "limit" | "ai_limit" | "unreadable" | "failed" };
+
+/** Read the nutrition label on a pack. The AI copies the numbers; code checks they add up. */
+export async function readLabelAction(input: unknown): Promise<LabelOutcome> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, reason: "signed_out" };
+  const parsed = labelInput.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  if (await overLimit(supabase, "photo")) return { ok: false, reason: "limit" };
+
+  // Counts toward the daily photo limit, like any photo read.
+  const { error: logError } = await supabase.from("logs").insert({ day: todayRiga(), raw_text: "Label photo", source: "photo" });
+  if (logError) return { ok: false, reason: "failed" };
+
+  const res = await readLabel(parsed.data.base64, parsed.data.mime);
+  if (!res.ok) return { ok: false, reason: res.reason === "limit" ? "ai_limit" : "failed" };
+  const label = resolveLabel(res.data);
+  if (!label) return { ok: false, reason: "unreadable" };
+  return { ok: true, label };
 }

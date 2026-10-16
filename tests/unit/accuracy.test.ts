@@ -46,3 +46,25 @@ describe("guards", () => {
     expect(matchFood("ndole with shrimp")?.food.id).toBe("ndole");
   });
 });
+
+describe("the Greek yogurt problem", () => {
+  it("any way of saying greek yogurt reaches the greek entry, not plain", async () => {
+    const { matchFood } = await import("@/features/nutrition/food-match");
+    for (const n of ["greek yogurt", "greek yogurt, plain", "natural greek yogurt", "strained yogurt", "Greek-style yogurt"]) {
+      expect(matchFood(n)?.food.id).toBe("yogurt_greek_whole");
+    }
+    expect(matchFood("plain yogurt")?.food.id).toBe("yogurt_plain_whole");
+  });
+  it("400 g of greek yogurt is about 36 g protein, not 14", () => {
+    const d = finalizeFood(raw("greek yogurt, plain", 400));
+    expect(d.protein_g).toBeGreaterThan(30);
+  });
+  it("your own labelled food wins and is exact for any amount", () => {
+    const d = finalizeFood(raw("my high protein greek yogurt", 400), [
+      { name: "High protein greek yogurt", kcal: 0, protein_g: 0, quantity: null, per100Kcal: 98, per100Protein: 11.5 },
+    ]);
+    expect(d.basis).toBe("label");
+    expect(d.kcal).toBe(392);
+    expect(d.protein_g).toBe(46);
+  });
+});

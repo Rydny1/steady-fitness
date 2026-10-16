@@ -10,7 +10,7 @@ import {
   estimateMealAction,
   parseLogAction,
   saveEntries,
-} from "../actions";
+readLabelAction,} from "../actions";
 import type { DraftItem } from "../schema";
 import { enqueue } from "../offline-queue";
 import {
@@ -20,6 +20,7 @@ import {
   type Recognition,
 } from "../speech";
 import { fullBurn, signed } from "@/features/nutrition/energy";
+import { PhotoPicker } from "@/components/photo-picker";
 import { metFor } from "@/features/nutrition/mets";
 import { activityKcal } from "@/features/nutrition/targets";
 import { compressImage, type Compressed } from "@/features/photos/compress";
@@ -194,6 +195,67 @@ export function LogScreen({
     }
     setItems(res.items);
     setLogId(res.logId);
+  }
+
+  // ---- label: the AI copies the printed numbers, you confirm, it is saved exactly ----
+  const [label, setLabel] = useState<{ name: string; kcal100: string; protein100: string; grams: string; warnings: string[] } | null>(null);
+
+  async function onLabel(file: File | undefined) {
+    if (!file) return;
+    setMessage(null);
+    setBusy("photo");
+    try {
+      const c = await compressImage(file);
+      const res = await readLabelAction({ base64: c.base64, mime: "image/jpeg" });
+      if (res.ok) {
+        const l = res.label;
+        setLabel({
+          name: l.name,
+          kcal100: String(l.kcal100),
+          protein100: String(l.protein100),
+          grams: String(l.packG ?? l.servingG ?? 100),
+          warnings: l.warnings,
+        });
+      } else {
+        setMessage(
+          res.reason === "limit" || res.reason === "ai_limit"
+            ? copy.log.aiLimit
+            : res.reason === "unreadable"
+              ? "Couldn't read the label. Fill the numbers in by hand."
+              : copy.log.parseFailed,
+        );
+        setLabel({ name: "", kcal100: "", protein100: "", grams: "100", warnings: [] });
+      }
+    } catch {
+      setMessage(copy.errors.generic);
+    }
+    setBusy(null);
+  }
+
+  function addLabel() {
+    if (!label) return;
+    const k = Number(label.kcal100.replace(",", "."));
+    const p = Number(label.protein100.replace(",", "."));
+    const g = Number(label.grams.replace(",", "."));
+    if (![k, p, g].every(Number.isFinite) || g <= 0 || k < 0 || k > 900 || p < 0 || p > 100 || label.name.trim() === "") return;
+    setSource("barcode");
+    setItems((prev) => [
+      ...prev,
+      {
+        kind: "food",
+        name: label.name.trim().slice(0, 80),
+        quantity: Math.round(g),
+        unit: "g",
+        kcal: Math.round((k * g) / 100),
+        protein_g: Math.round(((p * g) / 100) * 10) / 10,
+        confidence: 1,
+        basis: "label",
+        grams: Math.round(g),
+        per100: { kcal: k, protein: p },
+      },
+    ]);
+    setLabel(null);
+    setMode("text");
   }
 
   async function onScan(file: File | undefined) {
@@ -442,6 +504,7 @@ export function LogScreen({
                 <Camera size={18} strokeWidth={1.9} aria-hidden="true" />
                 {copy.log.photo}
               </button>
+              <PhotoPicker label="Read a label" disabled={busy !== null} onFile={(f) => void onLabel(f)} />
               {photo ? (
                 <Button onClick={() => void estimate()} disabled={busy !== null}>
                   {copy.log.estimate}
@@ -460,6 +523,49 @@ export function LogScreen({
                 </label>
               ) : null}
             </div>
+            {label ? (
+              <div className="rounded-list bg-card p-4">
+                <div className="text-caption font-semibold text-muted">From the label, check it</div>
+                {label.warnings.map((w) => (
+                  <p key={w} className="mt-1 text-small text-warn">
+                    {w}
+                  </p>
+                ))}
+                <input
+                  value={label.name}
+                  onChange={(e) => setLabel({ ...label, name: e.target.value })}
+                  aria-label="Product name"
+                  placeholder="Name"
+                  className="mt-3 h-12 w-full rounded-ctl border-0 bg-bg px-3 text-body"
+                />
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {(["kcal100", "protein100", "grams"] as const).map((k) => (
+                    <label key={k} className="flex flex-col gap-1">
+                      <span className="text-caption text-muted">{k === "kcal100" ? "kcal / 100 g" : k === "protein100" ? "protein / 100 g" : "grams eaten"}</span>
+                      <input
+                        value={label[k]}
+                        onChange={(e) => setLabel({ ...label, [k]: e.target.value })}
+                        inputMode="decimal"
+                        className="h-12 rounded-ctl border-0 bg-bg px-3 text-body"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className="text-small text-muted">
+                    {Math.round((Number(label.kcal100.replace(",", ".")) * Number(label.grams.replace(",", "."))) / 100) || 0} kcal,{" "}
+                    {Math.round((Number(label.protein100.replace(",", ".")) * Number(label.grams.replace(",", "."))) / 10) / 10 || 0} g protein
+                  </span>
+                  <span className="flex gap-1">
+                    <Button variant="ghost" onClick={() => setLabel(null)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={addLabel}>Add</Button>
+                  </span>
+                </div>
+                <p className="mt-2 text-caption text-muted">Saved to your foods, exact for any amount.</p>
+              </div>
+            ) : null}
             {product ? (
               <div className="rounded-list bg-card p-4">
                 <div className="text-body font-medium">{product.name}</div>
@@ -684,7 +790,7 @@ function ItemRow({ it, weightKg }: { it: DraftItem; weightKg: number }) {
           <div className="truncate text-body font-medium">{it.name}</div>
           <div className={cn("text-[clamp(13px,3.8vw,14px)]", low ? "text-warn" : "text-muted")}>
             {it.grams ? `${Math.round(it.grams)} g` : it.quantity ? `${it.quantity}${it.unit ? ` ${it.unit}` : ""}` : "1 portion"}
-            {it.basis === "database" ? ", from food table" : it.basis === "saved" ? ", your saved food" : it.basis === "estimate" ? ", AI estimate" : ""}
+            {it.basis === "database" ? ", from food table" : it.basis === "label" ? ", from label" : it.basis === "saved" ? ", your saved food" : it.basis === "estimate" ? ", AI estimate" : ""}
             {low ? `. ${copy.log.check}` : ""}
           </div>
         </div>

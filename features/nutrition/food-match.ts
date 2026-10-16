@@ -2,7 +2,7 @@
 // and protein from grams. The model supplies a name and a weight; the numbers come from here.
 import { foods, type Food } from "@/content/foods";
 
-const STOP = new Set(["a", "an", "the", "some", "of", "with", "and", "my", "piece", "plate", "bowl", "serving", "portion", "big", "small", "large", "medium"]);
+const STOP = new Set(["a", "an", "the", "some", "of", "with", "and", "my", "plain", "natural", "regular", "normal", "unsweetened", "piece", "plate", "bowl", "serving", "portion", "big", "small", "large", "medium"]);
 
 function stem(w: string): string {
   if (w.length > 4 && w.endsWith("ies")) return w.slice(0, -3) + "y";
@@ -23,6 +23,22 @@ export function tokens(text: string): string[] {
 type Entry = { food: Food; candidates: { text: string; set: Set<string> }[] };
 
 let index: Entry[] | null = null;
+let weights: Map<string, number> | null = null;
+
+/** A word that few foods use (greek, skyr) says more than one many use (plain, yogurt). */
+function weightOf(t: string): number {
+  if (!weights) {
+    const df = new Map<string, number>();
+    for (const e of getIndex()) {
+      const seen = new Set<string>();
+      for (const c of e.candidates) for (const w of c.set) seen.add(w);
+      for (const w of seen) df.set(w, (df.get(w) ?? 0) + 1);
+    }
+    const n = getIndex().length;
+    weights = new Map([...df].map(([w, d]) => [w, Math.log(1 + n / d)] as const));
+  }
+  return weights.get(t) ?? Math.log(1 + getIndex().length);
+}
 function getIndex(): Entry[] {
   if (index) return index;
   index = foods.map((food) => ({
@@ -48,6 +64,7 @@ export function matchFood(name: string): Match | null {
   if (q.length === 0) return null;
   const qText = q.join(" ");
   const qSet = new Set(q);
+  const qW = [...qSet].reduce((s, t) => s + weightOf(t), 0);
   const wantsRaw = q.some((w) => STATE_WORDS[w] === "raw");
 
   let best: Match | null = null;
@@ -59,12 +76,17 @@ export function matchFood(name: string): Match | null {
       if (c.text === qText) score = 1;
       else {
         let inter = 0;
-        for (const t of c.set) if (qSet.has(t)) inter += 1;
-        const candInQuery = inter / c.set.size;
-        const queryInCand = inter / qSet.size;
-        if (candInQuery === 1) score = 0.72 + 0.28 * (c.set.size / qSet.size);
-        else if (queryInCand === 1) score = 0.6 + 0.3 * (qSet.size / c.set.size);
-        else score = 0.5 * (inter / (c.set.size + qSet.size - inter));
+        let candW = 0;
+        for (const t of c.set) {
+          const w = weightOf(t);
+          candW += w;
+          if (qSet.has(t)) inter += w;
+        }
+        const candInQuery = inter / candW;
+        const queryInCand = inter / qW;
+        if (candInQuery > 0.999) score = 0.72 + 0.28 * (candW / qW);
+        else if (queryInCand > 0.999) score = 0.6 + 0.3 * (qW / candW);
+        else score = 0.5 * (inter / (candW + qW - inter));
       }
       if (score > s) s = score;
     }

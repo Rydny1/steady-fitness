@@ -186,8 +186,10 @@ export type Database = {
           kcal: number;
           protein_g: number;
           use_count: number;
+          per100_kcal: number | null;
+          per100_protein: number | null;
         },
-        "id" | "user_id" | "quantity" | "unit" | "protein_g" | "use_count"
+        "id" | "user_id" | "quantity" | "unit" | "protein_g" | "use_count" | "per100_kcal" | "per100_protein"
       >;
       day_checkins: Table<
         {
