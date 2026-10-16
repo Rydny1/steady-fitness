@@ -5,6 +5,7 @@ import { updatePassword, type FormState } from "@/features/auth/actions";
 import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
+import { PASSWORD_HINT, PASSWORD_MIN, PASSWORD_PATTERN } from "@/lib/password";
 
 const initial: FormState = {};
 
@@ -21,7 +22,9 @@ export default function UpdatePasswordPage() {
           label={copy.login.password}
           name="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={PASSWORD_MIN}
+          pattern={PASSWORD_PATTERN}
+          title={PASSWORD_HINT}
           required
         />
         {state.error ? (

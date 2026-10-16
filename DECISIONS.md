@@ -67,3 +67,7 @@ Every call made outside the spec docs, and every change the owner asked for afte
 - **Read a label:** the AI only copies the printed nutrition table; code converts per serving to per 100 g, checks energy against protein, carbs and fat (4/4/9), converts kJ mistaken for kcal, and warns when the numbers do not add up. The person confirms, and the food is saved with its exact per 100 g values (migration 0012).
 - **Matcher fix:** rare words decide (greek beats plain), generic words (plain, natural) are ignored. "Greek yogurt, plain" used to land on plain yogurt (3.5 g protein per 100 g instead of 9).
 - Free AI options were compared (Gemini lite first, Groq as a text-only fallback candidate). Not switched; health data goes to whichever provider is used.
+
+## Round 9 (owner changes)
+
+- **Password rule:** 6+ characters with a number and a capital (was 12+), shown small above the field before anyone types it (`lib/password.ts`, one rule for the screen and the server). Shorter passwords are easier to guess; optional two-step sign-in is the offset. If Supabase Auth has its own minimum length above 6, it must be lowered to 6 in the dashboard (Authentication, Providers, Email).

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { passwordRule } from "@/lib/password";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { claimSignupSlot } from "@/lib/signup";
@@ -51,7 +52,7 @@ export async function requestPasswordReset(
   return { ok: true };
 }
 
-const passwordSchema = z.object({ password: z.string().min(12).max(200) });
+const passwordSchema = z.object({ password: passwordRule });
 
 export async function updatePassword(
   _prev: FormState,
@@ -72,14 +73,14 @@ export async function updatePassword(
 const signUpSchema = z
   .object({
     email: z.string().trim().toLowerCase().email().max(254),
-    password: z.string().min(12).max(200),
+    password: passwordRule,
     confirm: z.string().max(200),
     agree: z.literal("on"),
   })
   .refine((v) => v.password === v.confirm);
 
 /**
- * Normal sign-up: email and a 12+ character password, explicit consent for health data
+ * Normal sign-up: email and a password (6+ characters, a number, a capital), explicit consent for health data
  * (GDPR Art. 9). Created confirmed (no email round trip yet), limited to 5 new accounts an hour
  * per address, then signed in. Two-step sign-in is set up on the next screen.
  */
@@ -102,7 +103,7 @@ export async function createAccount(
     password: parsed.data.password,
     email_confirm: true,
     // The database only accepts accounts that carry this token (checked against Vault), so the
-    // public Auth endpoint cannot be used to skip the 12-character rule, consent or the rate guard.
+    // public Auth endpoint cannot be used to skip the password rule, consent or the rate guard.
     user_metadata: {
       steady_signup_token: env().SIGNUP_TOKEN,
       consent_health_data_at: new Date().toISOString(),

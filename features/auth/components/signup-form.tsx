@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/field";
 import { PasswordField } from "@/components/ui/password-field";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/content/copy";
+import { PASSWORD_HINT, PASSWORD_MIN, PASSWORD_PATTERN } from "@/lib/password";
 
 const initial: FormState = {};
 
@@ -27,14 +28,17 @@ export function SignupForm() {
           label={copy.login.password}
           name="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={PASSWORD_MIN}
+          pattern={PASSWORD_PATTERN}
+          title={PASSWORD_HINT}
           required
         />
+        <p className="-mt-2 text-caption text-muted">{PASSWORD_HINT}</p>
         <PasswordField
           label={copy.login.confirm}
           name="confirm"
           autoComplete="new-password"
-          minLength={12}
+          minLength={PASSWORD_MIN}
           required
         />
       </div>
