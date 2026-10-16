@@ -82,7 +82,7 @@ export default async function SettingsPage() {
         currentKg={last === null ? null : Number(last)}
         plan={(plan.data ?? []).map((p) => ({ weekday: p.weekday, sessionKey: p.session_key }))}
         habits={habits.data ?? []}
-        prefs={(prefs.data ?? []).map((p) => ({ kind: p.kind, atTime: p.at_time, enabled: p.enabled }))}
+        prefs={(prefs.data ?? []).map((p) => ({ kind: p.kind, atTime: p.at_time.slice(0, 5), enabled: p.enabled }))}
         wakeTime={profile.wake_time}
         mfaOn={(factors.data?.totp ?? []).some((f) => f.status === "verified")}
         email={user.email ?? ""}

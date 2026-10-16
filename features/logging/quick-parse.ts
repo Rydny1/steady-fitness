@@ -30,6 +30,20 @@ const ACTIVITY_WORDS: [RegExp, ActivityT][] = [
   [/\b(?:circuit|hiit)\b/, "circuit"],
 ];
 
+const UNIT_W: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+const TENS_W: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+
+/** "forty five" becomes 45, "an hour and a half" becomes 90 minutes. Voice typing says it in words. */
+export function normalizeSpoken(text: string): string {
+  return text
+    .replace(/\b(?:an|one|1) hour and a half\b/g, "90 minutes")
+    .replace(/\b(\d+(?:\.\d+)?) and a half (?:hours?|hrs?)\b/g, (_m, n: string) => `${Math.round((Number(n) + 0.5) * 60)} minutes`)
+    .replace(/\bthere and back\b|\bround trip\b|\bboth ways\b|\beach direction\b/g, "each way")
+    .replace(/\b(?:a )?quarter of an hour\b|\ba quarter hour\b/g, "15 minutes")
+    .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[- ](one|two|three|four|five|six|seven|eight|nine)\b/g, (_m, t: string, u: string) => String((TENS_W[t] ?? 0) + (UNIT_W[u] ?? 0)))
+    .replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b/g, (_m, t: string) => String(TENS_W[t] ?? 0));
+}
+
 export type QuickResult = {
   items: DraftItem[];
   /** Clauses the rules could not read. These go to the AI. */
@@ -37,7 +51,7 @@ export type QuickResult = {
 };
 
 const FILLER =
-  /^(?:(?:i|we|so|and|also|then|just|today|yesterday|this morning|this afternoon|tonight|this evening|had|ate|eaten|have|drank|did|do|for (?:breakfast|lunch|dinner|a snack|snack)|about|around|like|some|my)\b\s*)+/;
+  /^(?:(?:i|we|so|and|also|then|just|today|yesterday|this morning|this afternoon|tonight|this evening|had|ate|eaten|have|drank|did|do|for (?:breakfast|lunch|dinner|a snack|snack)|about|around|roughly|like|some|my|only|was|is|were|(?:breakfast|lunch|dinner|snack)(?: was| is)?)\b\s*)+/;
 
 function duration(clause: string): number | null {
   let total = 0;
@@ -92,10 +106,10 @@ function readFast(clause: string): DraftItem | null {
   return { kind: "food", name: "Fasting", quantity: null, unit: null, kcal: 0, protein_g: 0, confidence: 1, basis: "estimate", grams: null, per100: null };
 }
 
-const EX = String.raw`(bench press|bench|squats?|deadlifts?|pull-?ups?|chin-?ups?|push-?ups?|press-?ups?|bicep curls?|curls?|rows?|dips|lunges?|abs|crunch(?:es)?|sit-?ups?|planks?|shoulder press|overhead press|lat pull-?downs?|leg press|leg curls?|leg extensions?|flys?|burpees|calf raises?|hip thrusts?)`;
+const EX = String.raw`(bench press|bench|squats?|deadlifts?|pull[- ]?ups?|chin[- ]?ups?|push[- ]?ups?|press[- ]?ups?|bicep curls?|curls?|rows?|dips|lunges?|abs|crunch(?:es)?|sit[- ]?ups?|planks?|shoulder press|overhead press|lat pull[- ]?downs?|leg press|leg curls?|leg extensions?|flys?|burpees|calf raises?|hip thrusts?)`;
 
 /** Exercise words safe to take on their own (no "chips and dips"). */
-const EX_BARE = String.raw`(bench press|bench|squats?|deadlifts?|pull-?ups?|chin-?ups?|push-?ups?|press-?ups?|bicep curls?|crunch(?:es)?|sit-?ups?|planks?|shoulder press|overhead press|lat pull-?downs?|leg press|leg curls?|leg extensions?|burpees|calf raises?|hip thrusts?)`;
+const EX_BARE = String.raw`(bench press|bench|squats?|deadlifts?|pull[- ]?ups?|chin[- ]?ups?|push[- ]?ups?|press[- ]?ups?|bicep curls?|crunch(?:es)?|sit[- ]?ups?|planks?|shoulder press|overhead press|lat pull[- ]?downs?|leg press|leg curls?|leg extensions?|burpees|calf raises?|hip thrusts?)`;
 
 /** "4 sets of 30 abs", "bench press 4x8 at 60 kg", or just "did bench press". */
 function readStrength(clause: string): DraftItem | null {
@@ -160,11 +174,13 @@ function readActivity(clause: string): DraftItem | null {
     hike,
   });
   if (!r) return null;
+  // "20 minutes each way" is 40.
+  const twice = /\beach way\b/.test(clause) ? 2 : 1;
   return {
     kind: "activity",
     activity_type: type,
     session_key: type === "football" ? "football" : type === "run" ? "run" : null,
-    duration_min: Math.max(1, Math.min(600, r.durationMin)),
+    duration_min: Math.max(1, Math.min(600, r.durationMin * twice)),
     rpe: null,
     speed_kmh: hike ? null : r.speedKmh,
     note: r.note,
@@ -175,6 +191,8 @@ function readActivity(clause: string): DraftItem | null {
 const UNITS = String.raw`(g|grams?|kg|ml|l|litres?|liters?|cups?|slices?|pieces?|spoons?|tablespoons?|tbsp|tsp|teaspoons?|bowls?|plates?|cans?|bottles?|glass(?:es)?)`;
 
 function readFood(clause: string, saved: readonly SavedLookup[]): DraftItem | null {
+  // "a whole pizza", "a large coffee", "half a cake": the table's usual portion would be wrong.
+  if (/\b(?:whole|entire|half|quarter|large|big|huge|small|mini|double|triple|couple|few|several|handful|extra|lots?|bit of)\b/.test(clause)) return null;
   const m = clause.match(new RegExp(`^(?:${NUM}\\s*)?(?:${UNITS}\\s+)?(?:of\\s+)?(.+)$`));
   if (!m) return null;
   const qty = m[1] ? num(m[1]) : null;
@@ -205,8 +223,7 @@ function readFood(clause: string, saved: readonly SavedLookup[]): DraftItem | nu
 /** Reads what it can with rules. The rest comes back in `leftover`. */
 export function quickParse(text: string, saved: readonly SavedLookup[] = []): QuickResult {
   // A dot between digits is a decimal point (2.5 km), not the end of a sentence.
-  const cleaned = text
-    .toLowerCase()
+  const cleaned = normalizeSpoken(text.toLowerCase())
     .replace(/(\d),(\d{3})\b/g, "$1$2")
     .replace(/(\d)\.(\d)/g, "$1\u0001$2")
     .replace(/\s+/g, " ")
@@ -222,6 +239,11 @@ export function quickParse(text: string, saved: readonly SavedLookup[] = []): Qu
     const fast = readFast(clause);
     if (fast) {
       items.push(fast);
+      continue;
+    }
+    // "no sugar", "without cheese", "didn't have breakfast": the rules do not do negation, the AI does.
+    if (/\b(?:no|not|without|didn'?t|did not|never|except|skipped)\b/.test(clause)) {
+      leftover.push(clause);
       continue;
     }
     const lift = readStrength(clause);
@@ -241,5 +263,21 @@ export function quickParse(text: string, saved: readonly SavedLookup[] = []): Qu
     }
     leftover.push(clause);
   }
-  return { items, leftover };
+  // "4 sets of squats, 3 of leg press, about 50 mins": the time is the whole gym session.
+  const hasStrength = items.some((i) => i.kind === "activity" && i.strength);
+  const rest: string[] = [];
+  for (const clause of leftover) {
+    const bare = clause.match(/^(?:for |about |around |roughly |approximately )*(\d+(?:\.\d+)?\s*(?:min|mins|minutes?|h|hrs?|hours?))$/);
+    if (hasStrength && bare) {
+      const mins = duration(bare[1] ?? "");
+      if (mins !== null) {
+        items.push({ kind: "activity", activity_type: "gym", session_key: null, duration_min: Math.max(1, Math.min(600, Math.round(mins))), rpe: null, speed_kmh: null, note: null });
+        continue;
+      }
+    }
+    // A rest day is not something to log.
+    if (/^(?:no|not|didn'?t do any|skipped) (?:gym|training|workout|run|exercise|session|football)\b/.test(clause)) continue;
+    rest.push(clause);
+  }
+  return { items, leftover: rest };
 }
