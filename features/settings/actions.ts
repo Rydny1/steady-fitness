@@ -170,12 +170,19 @@ const prefsSchema = z.object({
     .array(
       z.object({
         kind: z.enum(["wake_gym", "wake_run", "log_nudge", "last_call", "weekly", "photo_day"]),
-        atTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        // The database hands back 21:30:00; the phone sends 21:30. Both are fine.
+        atTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
+          .transform((t) => t.slice(0, 5)),
         enabled: z.boolean(),
       }),
     )
     .max(6),
-  wakeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  wakeTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
+    .transform((t) => t.slice(0, 5)),
 });
 
 export async function saveNotificationPrefs(input: unknown): Promise<SettingsOutcome> {
