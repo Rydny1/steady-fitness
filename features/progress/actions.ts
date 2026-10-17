@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { isDay, todayRiga, weekStart } from "@/lib/dates";
 
 export type ProgressOutcome = { ok: true } | { ok: false; reason: "signed_out" | "invalid" | "failed" };
@@ -24,7 +24,7 @@ const pickSchema = z.object({
 /** Picks this week's challenge. One per week, chosen once. */
 export async function pickChallenge(input: unknown): Promise<ProgressOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = pickSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { todayRiga } from "@/lib/dates";
 import { activityKcal } from "@/features/nutrition/targets";
 import { getExercise } from "@/content/exercises";
@@ -16,7 +16,7 @@ const startSchema = z.object({ sessionKey: z.enum(["gym_a", "gym_b", "gym_c"]) }
 /** Starts today's gym session, or returns the unfinished one so a reload never loses sets. */
 export async function startSession(input: unknown): Promise<TrainOutcome<{ sessionId: string }>> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = startSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -53,7 +53,7 @@ const setSchema = z.object({
 
 export async function saveSet(input: unknown): Promise<TrainOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = setSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -78,7 +78,7 @@ export async function saveSet(input: unknown): Promise<TrainOutcome> {
 
 export async function undoSet(input: unknown): Promise<TrainOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = z
     .object({
@@ -105,7 +105,7 @@ const finishSchema = z.object({
 /** Finishes the session and records it as a gym activity, so rings and Callus see it. */
 export async function finishSession(input: unknown): Promise<TrainOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = finishSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };

@@ -71,3 +71,10 @@ Every call made outside the spec docs, and every change the owner asked for afte
 ## Round 9 (owner changes)
 
 - **Password rule:** 6+ characters with a number and a capital (was 12+), shown small above the field before anyone types it (`lib/password.ts`, one rule for the screen and the server). Shorter passwords are easier to guess; optional two-step sign-in is the offset. If Supabase Auth has its own minimum length above 6, it must be lowered to 6 in the dashboard (Authentication, Providers, Email).
+
+## Round 10 (owner changes)
+
+- **Previous days are fully editable:** the day page has the promises list as well as the log (tick what you forgot). Edits revalidate the day and Today.
+- **One definition of the rings** (`features/game/day-rings.ts`) used by Today, the day pages and the week rings in Progress. Training counts every minute of any activity (a 68 minute walk on a rest day fills the ring) against what the day asks (planned sessions added up, 10 on a rest day). A day with nothing logged shows no deficit ring. Before, the ring came from "session done" while the number came from minutes, and the week rings still used the old eaten-over-limit fuel ring.
+- **Up to three sessions a day** (migration 0013: weekly_plan keyed by user, weekday and session). Settings has tap-to-pick chips per weekday; Train shows a tab per session; a day is "done" when all planned sessions are done (a football or run entry counts even without a session key).
+- **Responsiveness:** root cause was the proxy rebuilding the request headers before the refreshed cookies were applied, so the page behind it still read the expired token after the hourly refresh (taps did nothing until a reload). Fixed in `proxy.ts`. Server actions now read the signed claims (`getUserFast`) instead of calling Supabase Auth on every tap, and `touch-action: manipulation` removes the tap delay.

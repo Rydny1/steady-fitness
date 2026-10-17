@@ -478,37 +478,57 @@ function PlanSheet({
   pending: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (days: { weekday: number; sessionKey: SessionKeyT }[]) => void;
+  onSave: (days: { weekday: number; sessionKeys: SessionKeyT[] }[]) => void;
 }) {
-  const [days, setDays] = useState(
-    Array.from({ length: 7 }, (_, i) => p.plan.find((d) => d.weekday === i + 1)?.sessionKey ?? "rest"),
+  const [days, setDays] = useState<SessionKeyT[][]>(
+    Array.from({ length: 7 }, (_, i) => p.plan.filter((d) => d.weekday === i + 1 && d.sessionKey !== "rest").map((d) => d.sessionKey)),
   );
+  const options = SESSION_OPTIONS.filter((o) => o.key !== "rest");
+  const toggle = (i: number, key: SessionKeyT) =>
+    setDays((prev) =>
+      prev.map((keys, j) => {
+        if (j !== i) return keys;
+        if (keys.includes(key)) return keys.filter((k) => k !== key);
+        return keys.length >= 3 ? keys : [...keys, key];
+      }),
+    );
   return (
     <SheetFrame title={copy.settings.plan} onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSave(days.map((sessionKey, i) => ({ weekday: i + 1, sessionKey })));
+          onSave(days.map((sessionKeys, i) => ({ weekday: i + 1, sessionKeys })));
         }}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
       >
-        {days.map((k, i) => (
-          <label key={i} className="flex items-center gap-3">
-            <span className="w-24 text-small text-muted">{WEEKDAYS[i]}</span>
-            <select
-              value={k}
-              onChange={(e) =>
-                setDays((prev) => prev.map((v, j) => (j === i ? (e.target.value as SessionKeyT) : v)))
-              }
-              className="h-12 flex-1 rounded-ctl border-0 bg-card px-3 text-body"
-            >
-              {SESSION_OPTIONS.map((o) => (
-                <option key={o.key} value={o.key}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        <p className="text-caption text-muted">Tap up to three a day. None is a rest day.</p>
+        {days.map((keys, i) => (
+          <div key={i}>
+            <div className="flex items-baseline justify-between">
+              <span className="text-small font-semibold">{WEEKDAYS[i]}</span>
+              {keys.length === 0 ? <span className="text-caption text-muted">Rest</span> : null}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {options.map((o) => {
+                const on = keys.includes(o.key);
+                return (
+                  <button
+                    key={o.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(i, o.key)}
+                    className={cn(
+                      "min-h-11 rounded-full px-3.5 text-small font-semibold",
+                      on ? "bg-ink text-white" : "bg-card text-muted",
+                      !on && keys.length >= 3 && "opacity-40",
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ))}
         <ErrorLine error={error} />
         <Button type="submit" big disabled={pending} className="mt-2 w-full">

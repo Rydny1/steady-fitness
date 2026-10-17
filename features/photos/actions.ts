@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 
 export type PhotoOutcome =
@@ -28,7 +28,7 @@ const progressSchema = z.object({
 /** The file is already in Storage (client upload, RLS checks the folder). This records it. */
 export async function recordProgressPhoto(input: unknown): Promise<PhotoOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = progressSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -49,7 +49,7 @@ const deleteSchema = z.object({ id: z.uuid() });
 
 export async function deletePhoto(input: unknown): Promise<PhotoOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = deleteSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };

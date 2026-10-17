@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ageOn, todayRiga } from "@/lib/dates";
 import { MAX_PROMISES } from "./defaults";
@@ -15,7 +15,7 @@ export type SettingsOutcome =
 
 async function userOrNull() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+  const { data } = await getUserFast(supabase);
   return { supabase, user: data.user };
 }
 
@@ -72,21 +72,15 @@ export async function saveTargets(input: unknown): Promise<SettingsOutcome> {
   return { ok: true };
 }
 
+const sessionKeyEnum = z.enum(["gym_a", "gym_b", "gym_c", "run", "run_intervals", "football", "stretch", "rest"]);
+
 const planSchema = z.object({
   days: z
     .array(
       z.object({
         weekday: z.number().int().min(1).max(7),
-        sessionKey: z.enum([
-          "gym_a",
-          "gym_b",
-          "gym_c",
-          "run",
-          "run_intervals",
-          "football",
-          "stretch",
-          "rest",
-        ]),
+        // Up to three sessions a day (a run in the morning, football in the evening). None is a rest day.
+        sessionKeys: z.array(sessionKeyEnum).max(3),
       }),
     )
     .length(7),
@@ -98,11 +92,20 @@ export async function savePlan(input: unknown): Promise<SettingsOutcome> {
   const parsed = planSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
 
-  const { error } = await supabase.from("weekly_plan").upsert(
-    parsed.data.days.map((d) => ({ weekday: d.weekday, session_key: d.sessionKey })),
-    { onConflict: "user_id,weekday" },
-  );
+  const rows = parsed.data.days.flatMap((d) => {
+    const keys = [...new Set(d.sessionKeys.filter((k) => k !== "rest"))];
+    return (keys.length > 0 ? keys : ["rest" as const]).map((k) => ({ weekday: d.weekday, session_key: k }));
+  });
+  // Add the new rows first, then drop what is no longer planned, so a failure never leaves an empty plan.
+  const { error } = await supabase.from("weekly_plan").upsert(rows, { onConflict: "user_id,weekday,session_key" });
   if (error) return { ok: false, reason: "failed" };
+  const { data: existing } = await supabase.from("weekly_plan").select("weekday,session_key");
+  const keep = new Set(rows.map((r) => `${r.weekday}:${r.session_key}`));
+  for (const e of existing ?? []) {
+    if (!keep.has(`${e.weekday}:${e.session_key}`)) {
+      await supabase.from("weekly_plan").delete().eq("weekday", e.weekday).eq("session_key", e.session_key);
+    }
+  }
   revalidatePath("/settings");
   revalidatePath("/today");
   revalidatePath("/train");

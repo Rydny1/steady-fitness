@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { canFreeze } from "@/features/game/freeze";
 import { latestLedger } from "@/features/data/ledger";
@@ -18,7 +18,7 @@ const toggleSchema = z.object({ habitId: z.uuid(), day: dayField });
 
 export async function toggleHabit(input: unknown): Promise<SimpleOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = toggleSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -43,6 +43,7 @@ export async function toggleHabit(input: unknown): Promise<SimpleOutcome> {
     if (error) return { ok: false, reason: "failed" };
   }
   revalidatePath("/today");
+  revalidatePath("/day/[date]", "page");
   return { ok: true };
 }
 
@@ -59,7 +60,7 @@ const SICK_PER_MONTH = 3;
 
 export async function saveCheckin(input: unknown): Promise<SimpleOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = checkinSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -99,7 +100,7 @@ const seenSchema = z.object({ key: z.enum(["chapter_event", "adaptive_note"]) })
 /** The level card and the adaptive budget note each show once. */
 export async function markSeen(input: unknown): Promise<SimpleOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = seenSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -125,7 +126,7 @@ const ackSchema = z.object({ keys: z.array(z.string().min(1).max(40)).min(1).max
 /** Remember which trophies the person has seen celebrated, so the popup shows each once. */
 export async function ackTrophies(input: unknown): Promise<SimpleOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = ackSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -145,7 +146,7 @@ export type FreezeOutcome = { ok: true } | { ok: false; reason: "signed_out" | "
 /** Set a streak freeze for today. It costs Callus only if nothing is logged by the end of the day. */
 export async function freezeStreak(): Promise<FreezeOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const today = todayRiga();
   const [{ data: row }, ledger] = await Promise.all([

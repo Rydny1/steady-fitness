@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { ageOn, todayRiga } from "@/lib/dates";
 import { computeTargets } from "@/features/nutrition/targets";
 import {
@@ -33,7 +33,7 @@ const schema = z.object({
 
 export type OnboardingInput = z.infer<typeof schema>;
 
-function nameFromEmail(email: string | undefined): string {
+function nameFromEmail(email: string | null | undefined): string {
   const local = (email ?? "").split("@")[0] ?? "";
   const clean = local.replace(/[^a-zA-Z]/g, "").slice(0, 20);
   return clean ? clean.slice(0, 1).toLocaleUpperCase("en") + clean.slice(1).toLowerCase() : "Friend";
@@ -41,7 +41,7 @@ function nameFromEmail(email: string | undefined): string {
 
 export async function completeOnboarding(input: OnboardingInput): Promise<OnboardingOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
 
   const parsed = schema.safeParse(input);

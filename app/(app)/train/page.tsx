@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check, Repeat } from "lucide-react";
 import { requireProfile } from "@/lib/session";
 import { addDays, isDay, isoWeekday, weekDays, weekStart, weekdayShort } from "@/lib/dates";
-import { loadDayFacts, planKey, type PlanMap } from "@/features/data/day-facts";
+import { loadDayFacts, planKeys, toPlanMap, type PlanMap } from "@/features/data/day-facts";
 import { exercises, exercisesForSession, sessions, type Exercise } from "@/content/exercises";
 import { stretchRoutine } from "@/content/stretch";
 import { loadHistory, hintLabel, lastLabel } from "@/features/training/data";
@@ -58,9 +58,9 @@ function toCard(e: Exercise, history: Awaited<ReturnType<typeof loadHistory>>): 
 export default async function TrainPage({
   searchParams,
 }: {
-  searchParams: Promise<{ d?: string }>;
+  searchParams: Promise<{ d?: string; s?: string }>;
 }) {
-  const { d } = await searchParams;
+  const { d, s } = await searchParams;
   const { supabase, user, today } = await requireProfile();
   const ws = weekStart(today);
   const days = weekDays(ws);
@@ -71,10 +71,15 @@ export default async function TrainPage({
     supabase.from("weekly_plan").select("weekday,session_key"),
   ]);
 
-  const plan: PlanMap = new Map((planRows.data ?? []).map((p) => [p.weekday, p.session_key] as const));
-  const keyOn = (day: string): SessionKeyT => plan.get(isoWeekday(day)) ?? "rest";
-  const key = keyOn(selected);
-  const playable = planKey(plan, selected);
+  const plan: PlanMap = toPlanMap(planRows.data ?? []);
+  // A day can hold up to three sessions. Real ones first; a day with none is a rest day.
+  const keysOn = (day: string): SessionKeyT[] => {
+    const real = planKeys(plan, day);
+    return real.length > 0 ? real : [(plan.get(isoWeekday(day)) ?? ["rest"]).includes("stretch") ? "stretch" : "rest"];
+  };
+  const dayKeys = keysOn(selected);
+  const key: SessionKeyT = s && (dayKeys as string[]).includes(s) ? (s as SessionKeyT) : (dayKeys[0] ?? "rest");
+  const playable = key !== "rest" && key !== "stretch" ? key : null;
 
   const gymKey = key === "gym_a" || key === "gym_b" || key === "gym_c" ? key : null;
   const gymExercises = gymKey ? exercisesForSession(gymKey) : [];
@@ -109,18 +114,18 @@ export default async function TrainPage({
 
       <nav aria-label="Week" className="mx-4 mt-4 grid grid-cols-7 gap-1">
         {days.map((day) => {
-          const k = keyOn(day);
+          const ks = keysOn(day);
           const isSel = day === selected;
           const isToday = day === today;
           const fact = facts.find((f) => f.day === day);
-          const planned = k !== "rest" && k !== "stretch";
+          const planned = ks.filter((k) => k !== "rest" && k !== "stretch");
           const doneDay = Boolean(fact?.sessionDone) && day <= today;
           return (
             <Link
               key={day}
               href={`/train?d=${day}`}
               aria-current={isSel ? "date" : undefined}
-              aria-label={`${weekdayShort(day)} ${Number(day.slice(8))}, ${SESSION_NAMES[k]}`}
+              aria-label={`${weekdayShort(day)} ${Number(day.slice(8))}, ${ks.map((k) => SESSION_NAMES[k]).join(" and ")}`}
               className={cn(
                 "flex h-16 flex-col items-center justify-center gap-0.5 rounded-ctl text-nav",
                 isSel ? "bg-ink text-white" : "bg-card text-muted",
@@ -134,8 +139,12 @@ export default async function TrainPage({
               <span className="flex h-3 items-center">
                 {doneDay ? (
                   <Check size={12} strokeWidth={3} aria-hidden="true" className={isSel ? "text-white" : "text-fuel"} />
-                ) : planned ? (
-                  <span className={cn("h-1.5 w-1.5 rounded-full", isSel ? "bg-white" : "bg-train")} />
+                ) : planned.length > 0 ? (
+                  <span className="flex gap-[3px]">
+                    {planned.map((k) => (
+                      <span key={k} className={cn("h-1.5 w-1.5 rounded-full", isSel ? "bg-white" : "bg-train")} />
+                    ))}
+                  </span>
                 ) : null}
               </span>
             </Link>
@@ -143,6 +152,22 @@ export default async function TrainPage({
         })}
       </nav>
 
+
+      {dayKeys.length > 1 ? (
+        <div className="mx-4 mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Sessions today">
+          {dayKeys.map((k) => (
+            <Link
+              key={k}
+              href={`/train?d=${selected}&s=${k}`}
+              role="tab"
+              aria-selected={k === key}
+              className={cn("min-h-11 rounded-full px-4 py-2.5 text-small font-semibold", k === key ? "bg-ink text-white" : "bg-card text-muted")}
+            >
+              {SESSION_NAMES[k]}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {heroSlug ? (
         <section

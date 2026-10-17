@@ -98,16 +98,6 @@ export type TodayData = {
   adaptiveNote: string | null;
 };
 
-const PLANNED_MINUTES: Record<SessionKeyT, number> = {
-  gym_a: 45,
-  gym_b: 45,
-  gym_c: 45,
-  run: 30,
-  run_intervals: 40,
-  football: 60,
-  stretch: 10,
-  rest: 10,
-};
 
 const ACTIVITY_NAMES: Record<Row<"activity_entries">["activity_type"], string> = {
   football: "Football",
@@ -197,13 +187,10 @@ export async function loadToday(
   const budget = dayBudget(facts.budgetKcal, facts.burnedKcal);
   const left = budget - facts.eatenKcal;
 
-  const planned = facts.plannedKey;
-  const trainPlanned = planned ? PLANNED_MINUTES[planned] : PLANNED_MINUTES.rest;
-  const trainMinutes = planned
-    ? (acts.data ?? [])
-        .filter((a) => a.activity_type !== "stretch")
-        .reduce((sum, a) => sum + a.duration_min, 0)
-    : facts.stretchMinutes;
+  // One definition of "trained" for every ring: all the minutes you moved, against what the day asks.
+  const planned = facts.pendingKey ?? facts.plannedKey;
+  const trainPlanned = facts.plannedMinutes;
+  const trainMinutes = facts.activityMinutes;
 
   const prev = ledger;
   const preview = previewDay({
@@ -304,7 +291,7 @@ export async function loadToday(
     trainDone: trainMinutes,
     trainPlanned,
     sessionKey: planned,
-    sessionName: planned ? SESSION_NAMES[planned] : SESSION_NAMES.rest,
+    sessionName: facts.plannedKeys.length > 0 ? facts.plannedKeys.map((k) => SESSION_NAMES[k]).join(" + ") : SESSION_NAMES.rest,
     line: lineFor(today, formName),
     form: { name: formName, callus: callusLive, livePoints: preview.points, coachLine: coach },
     chapter: {

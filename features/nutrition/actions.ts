@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { isDay, todayRiga, weekStart } from "@/lib/dates";
 import { batchMeals } from "@/content/meals";
 
@@ -19,7 +19,7 @@ const picksSchema = z.object({
 /** Remembers which recipes were picked for the week (user_flags, one row per week). */
 export async function savePicks(input: unknown): Promise<FuelOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = picksSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -46,7 +46,7 @@ const checkSchema = z.object({
 
 export async function saveShoppingChecks(input: unknown): Promise<FuelOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = checkSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -76,7 +76,7 @@ export type RecipeOutcome =
 /** Your own recipe: name, kcal and protein per portion. It joins the saved foods, one tap to log. */
 export async function saveRecipe(input: unknown): Promise<RecipeOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = recipeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -97,7 +97,7 @@ export async function saveRecipe(input: unknown): Promise<RecipeOutcome> {
 
 export async function deleteRecipe(input: unknown): Promise<RecipeOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = z.object({ id: z.uuid() }).safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };

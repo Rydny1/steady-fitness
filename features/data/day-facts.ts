@@ -4,6 +4,7 @@ import type { Database, Row, SessionKeyT } from "@/lib/supabase/types";
 import { dayOfTimestamp, isoWeekday, rangeDays } from "@/lib/dates";
 import { computeRings, sessionStatus, type DayRecord } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { plannedMinutes } from "@/features/game/day-rings";
 import { pageAll } from "@/lib/page-all";
 
 type Db = SupabaseClient<Database>;
@@ -11,7 +12,16 @@ type Db = SupabaseClient<Database>;
 /** Everything the game and the dashboard need to know about one day. */
 export type DayFacts = {
   day: string;
+  /** The first planned session of the day (null on a rest day). */
   plannedKey: SessionKeyT | null;
+  /** Every planned session of the day, up to three. */
+  plannedKeys: SessionKeyT[];
+  /** The first planned session not done yet. */
+  pendingKey: SessionKeyT | null;
+  /** Every minute of activity logged that day, of any kind. */
+  activityMinutes: number;
+  /** Minutes the day asks for (planned sessions added up, 10 on a rest day). */
+  plannedMinutes: number;
   /** A log row was created on the day itself. Only these count for score and streak. */
   loggedOnDay: boolean;
   /** Any entry exists for the day (including back-filled ones). */
@@ -49,11 +59,22 @@ export function targetsFor(day: string, all: Targets[]): Targets | null {
   return found ?? sorted[0] ?? null;
 }
 
-export type PlanMap = Map<number, SessionKeyT>;
+export type PlanMap = Map<number, SessionKeyT[]>;
+
+/** The planned sessions of a day, rest and stretch left out. */
+export function planKeys(plan: PlanMap, day: string): SessionKeyT[] {
+  return (plan.get(isoWeekday(day)) ?? []).filter((k) => k !== "rest" && k !== "stretch");
+}
 
 export function planKey(plan: PlanMap, day: string): SessionKeyT | null {
-  const key = plan.get(isoWeekday(day));
-  return !key || key === "rest" || key === "stretch" ? null : key;
+  return planKeys(plan, day)[0] ?? null;
+}
+
+/** weekly_plan rows (one per weekday and session) into the plan. */
+export function toPlanMap(rows: readonly { weekday: number; session_key: SessionKeyT }[]): PlanMap {
+  const m: PlanMap = new Map();
+  for (const r of rows) m.set(r.weekday, [...(m.get(r.weekday) ?? []), r.session_key]);
+  return m;
 }
 
 /** Loads the facts for each day in [from, to], in order. Every query filters by user id, so the same
@@ -131,9 +152,7 @@ export async function loadDayFacts(
   ]);
   const habitsTotal = habitCount.count ?? 5;
 
-  const planMap: PlanMap = new Map(
-    (plan.data ?? []).map((p) => [p.weekday, p.session_key] as const),
-  );
+  const planMap: PlanMap = toPlanMap(plan.data ?? []);
   const targetRows = targets.data ?? [];
 
   const foodBy = new Map((food.data ?? []).map((r) => [r.day ?? "", r] as const));
@@ -147,23 +166,33 @@ export async function loadDayFacts(
 
   return rangeDays(from, to).map((day): DayFacts => {
     const t = targetsFor(day, targetRows);
-    const key = planKey(planMap, day);
+    const keys = planKeys(planMap, day);
+    const key = keys[0] ?? null;
     const dayActs = actsBy.get(day) ?? [];
     const daySess = sessBy.get(day) ?? [];
     const dayLogs = logsBy.get(day) ?? [];
     const f = foodBy.get(day);
     const ck = checkinBy.get(day);
 
-    const sessionDone =
-      key !== null &&
-      (daySess.some((s) => s.session_key === key) ||
-        dayActs.some((a) => a.session_key === key) ||
-        (key.startsWith("gym") && dayActs.some((a) => a.activity_type === "gym")));
+    // A planned session is done when it was started, logged against its key, or logged as the
+    // same kind of activity (a football entry is football even if it carries no session key).
+    const isDone = (k: SessionKeyT) =>
+      daySess.some((s) => s.session_key === k) ||
+      dayActs.some((a) => a.session_key === k) ||
+      (k.startsWith("gym") && dayActs.some((a) => a.activity_type === "gym")) ||
+      (k === "football" && dayActs.some((a) => a.activity_type === "football")) ||
+      ((k === "run" || k === "run_intervals") && dayActs.some((a) => a.activity_type === "run"));
+    const sessionDone = keys.length > 0 && keys.every(isDone);
+    const pendingKey = keys.find((k) => !isDone(k)) ?? null;
 
     const starts = daySess.map((s) => hourRiga(s.started_at));
     return {
       day,
       plannedKey: key,
+      plannedKeys: keys,
+      pendingKey,
+      activityMinutes: dayActs.reduce((s, a) => s + a.duration_min, 0),
+      plannedMinutes: plannedMinutes(keys),
       loggedOnDay: dayLogs.some((l) => dayOfTimestamp(l.created_at) === day),
       anyEntry: Boolean(f) || dayActs.length > 0 || dayLogs.length > 0,
       eatenKcal: f?.kcal_in ?? 0,

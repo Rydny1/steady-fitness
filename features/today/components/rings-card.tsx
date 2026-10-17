@@ -1,9 +1,10 @@
-import type { Rings } from "@/features/game";
+import type { DayRings } from "@/features/game/day-rings";
 import { copy } from "@/content/copy";
 import { InfoTip } from "@/components/info-tip";
 
 type Props = {
-  rings: Rings;
+  /** deficit, protein and training progress: one definition for every screen. */
+  progress: DayRings;
   /** Net so far today (eaten minus the day's burn) and the target net, both signed. */
   fuel: { net: number; target: number; goal: "lose" | "gain" | "maintain" };
   protein: { eaten: number; target: number };
@@ -54,15 +55,14 @@ function Ring({
 
 const nf = new Intl.NumberFormat("en-GB");
 
-export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
+export function RingsCard({ progress, fuel, protein, train, footer }: Props) {
   // Size of the deficit (or surplus when gaining) against the one you chose.
   const sign = fuel.goal === "gain" ? 1 : -1;
   const got = Math.max(0, sign * fuel.net);
   const want = Math.max(1, Math.abs(fuel.target));
-  const deficitProgress = got / want;
-  const label = `Rings: ${fuel.goal === "gain" ? "surplus" : "deficit"} ${Math.round(deficitProgress * 100)} percent, protein ${Math.round(
-    rings.protein.progress * 100,
-  )} percent, train ${Math.round(rings.train.progress * 100)} percent`;
+  const label = `Rings: ${fuel.goal === "gain" ? "surplus" : "deficit"} ${Math.round(progress.deficit * 100)} percent, protein ${Math.round(
+    progress.protein * 100,
+  )} percent, train ${Math.round(progress.train * 100)} percent`;
   return (
     <>
       <div className="raised relative mx-4 mt-4 flex items-center gap-4 rounded-hero bg-card p-4">
@@ -74,9 +74,9 @@ export function RingsCard({ rings, fuel, protein, train, footer }: Props) {
           className="h-auto w-[clamp(108px,32vw,140px)] flex-none"
         >
           <g transform="rotate(-90 90 90)" fill="none" strokeWidth="17" strokeLinecap="round">
-            <Ring r={R[0]} color="var(--fuel)" progress={deficitProgress} />
-            <Ring r={R[1]} color="var(--protein)" progress={rings.protein.progress} />
-            <Ring r={R[2]} color="var(--train)" progress={rings.train.progress} />
+            <Ring r={R[0]} color="var(--fuel)" progress={progress.deficit} />
+            <Ring r={R[1]} color="var(--protein)" progress={progress.protein} />
+            <Ring r={R[2]} color="var(--train)" progress={progress.train} />
           </g>
         </svg>
         <div className="flex min-w-0 flex-col gap-3">

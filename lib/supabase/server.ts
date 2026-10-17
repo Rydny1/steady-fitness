@@ -38,3 +38,17 @@ export async function getUser() {
   if (error || !data.user) return null;
   return data.user;
 }
+
+type Db = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * The signed-in user, read from the token's signed claims: no round trip to Supabase on every tap,
+ * and the session is refreshed here if the token has run out (server actions may set cookies).
+ * Same shape as auth.getUser(), so call sites barely change.
+ */
+export async function getUserFast(supabase: Db): Promise<{ data: { user: { id: string; email: string | null } | null } }> {
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return { data: { user: null } };
+  return { data: { user: { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null } } };
+}

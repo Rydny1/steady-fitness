@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { todayRiga } from "@/lib/dates";
 import { activityKcal } from "@/features/nutrition/targets";
 import type { ActivityT } from "@/lib/supabase/types";
@@ -67,7 +67,7 @@ function inRange(v: unknown, min: number, max: number): number | null {
 
 export async function importOldSteady(raw: unknown): Promise<ImportOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const wrapper = input.safeParse(raw);
   if (!wrapper.success) return { ok: false, reason: "invalid" };
