@@ -19,6 +19,7 @@ import {
   winStreak,
 } from "@/features/game";
 import { dayBudget } from "@/features/nutrition/targets";
+import { dayRings } from "@/features/game/day-rings";
 import { coachRead, type CoachLine } from "@/features/insights/coach-read";
 import { dayBurn, goalFor, netKcal, type Goal } from "@/features/nutrition/energy";
 import { projectNet, type NetProjection } from "@/features/nutrition/projection";
@@ -290,7 +291,7 @@ export async function loadProgress(
   // The Coach's read: the last 14 finished days.
   const recent = facts.filter((f) => f.day >= addDays(today, -14) && f.day < today);
   const recentNets = recent.filter(countable).map(netOf);
-  const planned = recent.filter((f) => f.plannedKey && f.plannedKey !== "rest" && f.plannedKey !== "stretch");
+  const planned = recent.filter((f) => f.plannedKeys.length > 0);
   const sleeps = recent.map((f) => f.sleepHours).filter((v): v is number => v !== null);
   const coach = coachRead({
     days: recent.length,
@@ -337,13 +338,13 @@ export async function loadProgress(
 
   const weekRings = weekDays(ws).map((d, i) => {
     const f = facts.find((x) => x.day === d);
-    const rings = f ? ringsFor(f, d < today) : null;
+    const rings = f && d <= today ? dayRings(f) : null;
     return {
       day: d,
       letter: LETTERS[i] ?? "",
-      fuel: rings ? Math.min(1, rings.fuel.progress) : 0,
-      protein: rings ? Math.min(1, rings.protein.progress) : 0,
-      train: rings ? rings.train.progress : 0,
+      fuel: rings ? Math.min(1, rings.deficit) : 0,
+      protein: rings ? Math.min(1, rings.protein) : 0,
+      train: rings ? Math.min(1, rings.train) : 0,
       today: d === today,
     };
   });

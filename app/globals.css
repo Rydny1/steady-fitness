@@ -346,3 +346,22 @@ button:active:not(:disabled) {
 .flame-glow {
   filter: drop-shadow(0 0 6px rgba(242, 179, 0, 0.55));
 }
+
+/* Taps answer at once: no double-tap-to-zoom wait on anything you press. */
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary,
+[role="button"],
+[role="tab"] {
+  touch-action: manipulation;
+}
+button,
+[role="button"],
+[role="tab"],
+summary {
+  cursor: pointer;
+}

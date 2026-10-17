@@ -6,6 +6,8 @@ import { loadToday } from "@/features/data/today";
 import { addDays, formatDayLong, isDay } from "@/lib/dates";
 import { deficitStatus } from "@/features/nutrition/energy";
 import { moveLine } from "@/features/game/streak-moments";
+import { dayRings } from "@/features/game/day-rings";
+import { PromisesList, PromisesProvider } from "@/features/today/components/promises";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { LogList } from "@/features/today/components/log-list";
 
@@ -48,7 +50,7 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
       <h1 className="mx-4 mt-2 text-title font-bold tracking-[-0.8px]">{formatDayLong(date)}</h1>
 
       <RingsCard
-        rings={d.rings}
+        progress={dayRings(d.facts)}
         fuel={{ net, target: d.energy.plannedNet, goal: d.energy.goal }}
         protein={{ eaten: d.facts.proteinG, target: d.facts.proteinTargetG }}
         train={{ done: d.trainDone, planned: d.trainPlanned }}
@@ -63,6 +65,10 @@ export default async function DayPage({ params }: { params: Promise<{ date: stri
         <Plus size={18} strokeWidth={2.2} aria-hidden="true" />
         Add to this day
       </Link>
+      {/* Forgot to tick a promise? Fix it here. */}
+      <PromisesProvider habits={d.habits} day={date}>
+        <PromisesList />
+      </PromisesProvider>
       <LogList foods={d.foods} activities={d.activities} photoUrls={{}} />
     </main>
   );

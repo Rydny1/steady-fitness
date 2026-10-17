@@ -5,6 +5,7 @@ import { capitalize } from "@/lib/utils";
 import { loadToday } from "@/features/data/today";
 import { deficitStatus } from "@/features/nutrition/energy";
 import { moveLine } from "@/features/game/streak-moments";
+import { dayRings } from "@/features/game/day-rings";
 import { addDays, formatDayLong, greeting } from "@/lib/dates";
 import { RingsCard } from "@/features/today/components/rings-card";
 import { FormCard } from "@/features/today/components/form-card";
@@ -75,7 +76,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       ) : null}
 
       <RingsCard
-        rings={d.rings}
+        progress={dayRings(d.facts)}
         fuel={{ net, target: d.energy.plannedNet, goal: d.energy.goal }}
         protein={{ eaten: d.facts.proteinG, target: d.facts.proteinTargetG }}
         train={{ done: d.trainDone, planned: d.trainPlanned }}

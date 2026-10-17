@@ -1,0 +1,30 @@
+
+# I ran four kilometers
+{"ok":false,"reason":"error"}
+
+# I ran four kilometers
+{"model":"gemini-3.1-flash-lite","items":[{"kind":"activity","name":"run","type":"run","dur":null,"km":4,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":9,"note":"4 km at a typical 6:40/km"}}],"unclear":[]}
+
+# I walked 5000 steps, then 45 minutes of football, and had two boiled eggs
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"walk","type":"walk","dur":null,"km":null,"steps":5000,"pace":null,"resolved":{"durationMin":45,"speedKmh":5,"note":"5,000 steps, about 3.8 km, at a typical 12:00/km"}},{"kind":"activity","name":"football","type":"football","dur":45,"km":null,"steps":null,"pace":null,"resolved":{"durationMin":45,"speedKmh":null,"note":null}},{"kind":"food","name":"egg","type":null,"dur":null,"km":null,"steps":null,"pace":null,"resolved":null}],"unclear":[]}
+
+# ran 5k in 27 minutes this morning
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"ran","type":"run","dur":27,"km":5,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":11.1,"note":"5 km in 27 min"}}],"unclear":[]}
+
+# I ran four kilometers
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"run","type":"run","dur":null,"km":4,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":9,"note":"4 km at a typical 6:40/km"}}],"unclear":[]}
+
+# I walked 5000 steps, then 45 minutes of football, and had two boiled eggs
+{"model":"gemini-3.1-flash-lite","items":[{"kind":"activity","name":"walk","type":"walk","dur":null,"km":null,"steps":5000,"pace":null,"resolved":{"durationMin":45,"speedKmh":5,"note":"5,000 steps, about 3.8 km, at a typical 12:00/km"}},{"kind":"activity","name":"football","type":"football","dur":45,"km":null,"steps":null,"pace":null,"resolved":{"durationMin":45,"speedKmh":null,"note":null}},{"kind":"food","name":"boiled egg","type":null,"dur":null,"km":null,"steps":null,"pace":null,"resolved":null}],"unclear":[]}
+
+# ran 5k in 27 minutes this morning
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"ran","type":"run","dur":27,"km":5,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":11.1,"note":"5 km in 27 min"}}],"unclear":[]}
+
+# I ran four kilometers
+{"model":"gemini-3.1-flash-lite","items":[{"kind":"activity","name":"run","type":"run","dur":null,"km":4,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":9,"note":"4 km at a typical 6:40/km"}}],"unclear":[]}
+
+# I walked 5000 steps, then 45 minutes of football, and had two boiled eggs
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"walk","type":"walk","dur":null,"km":null,"steps":5000,"pace":null,"resolved":{"durationMin":45,"speedKmh":5,"note":"5,000 steps, about 3.8 km, at a typical 12:00/km"}},{"kind":"activity","name":"football","type":"football","dur":45,"km":null,"steps":null,"pace":null,"resolved":{"durationMin":45,"speedKmh":null,"note":null}},{"kind":"food","name":"egg boiled","type":null,"dur":null,"km":null,"steps":null,"pace":null,"resolved":null}],"unclear":[]}
+
+# ran 5k in 27 minutes this morning
+{"model":"gemini-3.5-flash-lite","items":[{"kind":"activity","name":"run","type":"run","dur":27,"km":5,"steps":null,"pace":null,"resolved":{"durationMin":27,"speedKmh":11.1,"note":"5 km in 27 min"}}],"unclear":[]}

@@ -39,7 +39,12 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request: { headers: requestHeaders } });
+          // Rebuild the headers AFTER the cookies changed: otherwise the page behind the proxy still
+          // reads the old, expired token and treats a refreshed session as signed out.
+          const fresh = new Headers(request.headers);
+          fresh.set("x-nonce", nonce);
+          fresh.set("Content-Security-Policy", csp);
+          response = NextResponse.next({ request: { headers: fresh } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

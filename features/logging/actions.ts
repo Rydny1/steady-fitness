@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { overLimit } from "@/lib/rate-limit";
 import { addDays, isDay, todayRiga } from "@/lib/dates";
 import { estimateMealPhoto, parseLog, readLabel } from "@/lib/ai/gemini";
@@ -135,7 +135,7 @@ function toDraft(item: ParsedItem, saved: readonly SavedLookup[]): DraftItem | n
 /** Voice or typed text in, draft items out. Nothing is saved to food or activity yet. */
 export async function parseLogAction(input: unknown): Promise<ParseOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
 
   const parsed = parseInput.safeParse(input);
@@ -206,7 +206,7 @@ const photoInput = z.object({
 /** Meal photo estimate. Only a meal photo the user just tapped Estimate on is sent. */
 export async function estimateMealAction(input: unknown): Promise<ParseOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
 
   const parsed = photoInput.safeParse(input);
@@ -244,7 +244,7 @@ export async function estimateMealAction(input: unknown): Promise<ParseOutcome> 
 /** Confirmed items in: food, activity (calories computed here), body measurements. */
 export async function saveEntries(input: SaveEntriesInput): Promise<SaveEntriesOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
 
   const parsed = saveEntriesSchema.safeParse(input);
@@ -451,7 +451,7 @@ const deleteInput = z.object({ kind: z.enum(["food", "activity"]), id: z.uuid() 
 
 export async function deleteEntry(input: unknown): Promise<SaveOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = deleteInput.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -476,7 +476,7 @@ const updateInput = z.object({
 /** Edit a saved food entry. Changing only the amount recalculates the numbers. */
 export async function updateFoodEntry(input: unknown): Promise<SaveOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = updateInput.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
@@ -529,7 +529,7 @@ export type LabelOutcome =
 /** Read the nutrition label on a pack. The AI copies the numbers; code checks they add up. */
 export async function readLabelAction(input: unknown): Promise<LabelOutcome> {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!auth.user) return { ok: false, reason: "signed_out" };
   const parsed = labelInput.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserFast } from "@/lib/supabase/server";
 import { todayRiga } from "@/lib/dates";
 import { netInsight } from "@/lib/ai/gemini";
 import { paceSentence, type NetProjection } from "@/features/nutrition/projection";
@@ -41,7 +41,7 @@ function grounded(text: string, p: NetProjection): boolean {
 export async function getNetInsight(raw: unknown): Promise<{ text: string; ai: boolean }> {
   const parsed = input.safeParse(raw);
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth } = await getUserFast(supabase);
   if (!parsed.success || !auth.user) return { text: "", ai: false };
   const p = parsed.data;
   const projection: NetProjection = { ...p, avgNet: p.avgNet };
