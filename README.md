@@ -8,6 +8,13 @@ No streak guilt. No 40-tab dashboard. One quiet app that logs by voice, counts h
 
 Live: <https://steady-fitness.vercel.app>
 
+<p align="center">
+  <img src="docs/images/today.png" width="23%" alt="Today">
+  <img src="docs/images/train.png" width="23%" alt="Train">
+  <img src="docs/images/log.png" width="23%" alt="Log">
+  <img src="docs/images/progress.png" width="23%" alt="Progress">
+</p>
+
 ---
 
 ## Why this exists
@@ -95,8 +102,6 @@ Plain phrases are read by rules, instantly. For everything else the AI names the
 
 Pick a goal weight and a number of weeks. Steady suggests a daily deficit (or surplus, to gain), tells you plainly what pace that is, and you can change it. Today shows the deficit so far against your target and how much you can still eat.
 
-Logging is built the same way: simple things ("ran 4 km", "5000 steps", "2 eggs") are read by rules, instantly, with no AI. Only the rest goes to Gemini, and the numbers always come from code.
-
 ## Streaks, levels, trophies
 
 A streak circle fills with the promises you kept today (any number, up to nine). A week of circles, a weekly deficit goal, and a streak freeze that costs Callus. Callus gets harder to earn the higher it climbs. Eight levels (Rookie to Icon) run a year, and 43 trophies in nine groups keep going until the goal is met.
@@ -122,7 +127,7 @@ Your daily budget and the Monday budget adjustment use the same goal logic. 7,70
 | Data | Supabase: Postgres, Auth, private Storage |
 | AI | Gemini, with a speed-ranked model fallback chain |
 | Hosting | Vercel |
-| Tests | Vitest. 240+ unit tests on the pure engine |
+| Tests | Vitest. 350+ tests on the pure engine |
 
 ### Shape of the code
 
@@ -170,7 +175,7 @@ You need Node 20+, a Supabase project, a Gemini API key, and a Vercel account.
 
 ```bash
 git clone <this repo>
-cd steady
+cd steady-fitness
 npm install
 cp .env.example .env.local   # then fill in the values
 npm run dev
@@ -186,6 +191,8 @@ Environment variables (names only, never commit values):
 | `GEMINI_API_KEY` | Gemini key |
 | `GEMINI_MODEL` | Preferred model |
 | `GEMINI_FALLBACK_MODELS` | Comma list, tried in speed order |
+| `NEXT_PUBLIC_APP_URL` | Public app URL |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web-push keys |
 | `CRON_SECRET` | Bearer secret for the scheduled tick |
 | `SIGNUP_TOKEN` | Secret the sign-up gate checks |
 
@@ -217,5 +224,3 @@ npx vitest run     # unit tests
 `PRODUCT.md` what it does · `GAME.md` how scoring works · `DESIGN.md` how it looks · `ARCHITECTURE.md` how it's built · `DECISIONS.md` every change of mind, with the reason · `QA_REPORT.md` what was tested
 
 ---
-
-Built to be steady. Not perfect. Steady.
